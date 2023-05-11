@@ -1,6 +1,12 @@
 # tinyterraNodes
 A selection of custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI).
 
+## Installation
+Navigate to the **_ComfyUI/custom_nodes_** directory, and run:
+
+`git clone https://github.com/TinyTerra/ComfyUI_tinyterraNodes.git`
+
+
 # Nodes
 ## tt/Pipe
 **pipeIN**
