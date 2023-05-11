@@ -26,7 +26,7 @@ class ttN_pipe_IN:
 
     CATEGORY = "tt/pipe"
 
-    def flush(self, model, seed, pos=0, neg=0, latent=0, vae=0, clip=0, image=0, ):
+    def flush(self, model, pos=0, neg=0, latent=0, vae=0, clip=0, image=0, seed=0):
         pipe_line = (model, pos, neg, latent, vae, clip, image, seed, )
         return (pipe_line, )
 
@@ -258,7 +258,7 @@ class ttN_seed:
     def plant(seed):
         return seed,
 
-print("\033[92m[t TTNodes Loaded t]\033[0m")
+print("\033[92m[t ttNodes Loaded t]\033[0m")
 
 # A dictionary that contains all nodes you want to export with their names
 # NOTE: names should be globally unique
