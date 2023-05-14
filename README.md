@@ -53,14 +53,14 @@ Update/Overwrite any of the 8 original inputs in a Pipe line with new informatio
 
 **pipe > basic_pipe**
 
-Convert ttN pipe line to basic pipe (to be compatible with [ImpactPack](https://github.com/ltdrdata/ComfyUI-Impact-Pack))
+Convert ttN pipe line to basic pipe (to be compatible with [ImpactPack](https://github.com/ltdrdata/ComfyUI-Impact-Pack)), WITH original pipe throughput
 + _**Inputs -** pipe[model, conditioning, conditioning, samples, vae, clip, image, seed]_
-+ _**Outputs -** basic_pipe[model, clip, vae, conditioning, conditioning]_
++ _**Outputs -** basic_pipe[model, clip, vae, conditioning, conditioning], pipe_
 
 **pipe > Detailer Pipe**
-Convert ttN pipe line to detailer pipe (to be compatible with [ImpactPack](https://github.com/ltdrdata/ComfyUI-Impact-Pack))
+Convert ttN pipe line to detailer pipe (to be compatible with [ImpactPack](https://github.com/ltdrdata/ComfyUI-Impact-Pack)), WITH original pipe throughput
 + _**Inputs -** pipe[model, conditioning, conditioning, samples, vae, clip, image, seed], bbox_detector, sam_model_opt_
-+ _**Outputs -** detailer_pipe[model, vae, conditioning, conditioning, bbox_detector, sam_model_opt]_
++ _**Outputs -** detailer_pipe[model, vae, conditioning, conditioning, bbox_detector, sam_model_opt], pipe_
 
 
 ## ttN/Text

@@ -1162,16 +1162,16 @@ class ttN_pipe_2BASIC:
                 },
             }
 
-    RETURN_TYPES = ("BASIC_PIPE",)
-    RETURN_NAMES = ("basic_pipe",)
+    RETURN_TYPES = ("BASIC_PIPE", "PIPE_LINE",)
+    RETURN_NAMES = ("basic_pipe", "pipe",)
     FUNCTION = "flush"
 
     CATEGORY = "ttN/pipe"
     
     def flush(self, pipe):
         model, pos, neg, _, vae, clip, _, _ = pipe
-        pipe = (model, clip, vae, pos, neg)
-        return (pipe, )
+        basic_pipe = (model, clip, vae, pos, neg)
+        return (basic_pipe, pipe, )
 
 class ttN_pipe_2DETAILER:
     @classmethod
@@ -1181,16 +1181,16 @@ class ttN_pipe_2DETAILER:
                 "optional": {"sam_model_opt": ("SAM_MODEL", ), },
                 }
 
-    RETURN_TYPES = ("DETAILER_PIPE", )
-    RETURN_NAMES = ("detailer_pipe", )
+    RETURN_TYPES = ("DETAILER_PIPE", "PIPE_LINE" )
+    RETURN_NAMES = ("detailer_pipe", "pipe")
     FUNCTION = "flush"
 
     CATEGORY = "ttN/pipe"
 
     def flush(self, pipe, bbox_detector, sam_model_opt=None):
         model, positive, negative, _, vae, _, _, _ = pipe
-        pipe = model, vae, positive, negative, bbox_detector, sam_model_opt
-        return (pipe, )
+        detailer_pipe = model, vae, positive, negative, bbox_detector, sam_model_opt
+        return (detailer_pipe, pipe, )
 
 #ttN/text 
 class ttN_text:
