@@ -204,7 +204,7 @@ def load_lora(lora_name, model, clip, strength_model, strength_clip):
 
 
 # -------------- ttN Pipe Loader S-------------- #
-# ttN Pipe Loader (Modifed from TSC Efficient Loader)
+# ttN Pipe Loader (Modifed from TSC Efficient Loader and Advanced clip text encode)
 from .adv_encode import advanced_encode
 class ttN_TSC_pipeLoader:
 
@@ -1150,6 +1150,48 @@ class ttN_pipe_EDIT:
 
         return (pipe, )
 
+class ttN_pipe_2BASIC:
+    def __init__(self):
+        pass
+    
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "pipe": ("PIPE_LINE",),
+                },
+            }
+
+    RETURN_TYPES = ("BASIC_PIPE",)
+    RETURN_NAMES = ("basic_pipe",)
+    FUNCTION = "flush"
+
+    CATEGORY = "ttN/pipe"
+    
+    def flush(self, pipe):
+        model, pos, neg, _, vae, clip, _, _ = pipe
+        pipe = (model, clip, vae, pos, neg)
+        return (pipe, )
+
+class ttN_pipe_2DETAILER:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {"pipe": ("PIPE_LINE",),
+                             "bbox_detector": ("BBOX_DETECTOR", ), },
+                "optional": {"sam_model_opt": ("SAM_MODEL", ), },
+                }
+
+    RETURN_TYPES = ("DETAILER_PIPE", )
+    RETURN_NAMES = ("detailer_pipe", )
+    FUNCTION = "flush"
+
+    CATEGORY = "ttN/pipe"
+
+    def flush(self, pipe, bbox_detector, sam_model_opt=None):
+        model, positive, negative, _, vae, _, _, _ = pipe
+        pipe = model, vae, positive, negative, bbox_detector, sam_model_opt
+        return (pipe, )
+
 #ttN/text 
 class ttN_text:
     def __init__(self):
@@ -1271,6 +1313,8 @@ NODE_CLASS_MAPPINGS = {
     "ttN pipeIN": ttN_pipe_IN,
     "ttN pipeOUT": ttN_pipe_OUT,
     "ttN pipeEDIT": ttN_pipe_EDIT,
+    "ttN pipe2BASIC": ttN_pipe_2BASIC,
+    "ttN pipe2DETAILER": ttN_pipe_2DETAILER,
 
     "ttN text": ttN_text,
     "ttN text3BOX_3WAYconcat": ttN_text3BOX_3WAYconcat,    
@@ -1286,7 +1330,9 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN pipeIN": "pipeIN",
     "ttN pipeOUT": "pipeOUT",
     "ttN pipeEDIT": "pipeEDIT",
-
+    "ttN pipe2BASIC": "pipe > basic_pipe",
+    "ttN pipe2DETAILER": "pipe > detailer_pipe",
+    
     #tt/text
     "ttN text7BOX_concat": "7x TXT Loader Concat",
     "ttN text3BOX_3WAYconcat": "3x TXT Loader MultiConcat",

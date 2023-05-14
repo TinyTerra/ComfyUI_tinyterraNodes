@@ -30,7 +30,6 @@ With pipeLoader and pipeKSampler:
 
 <img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/c806c2e3-2efb-44cb-bdf0-3fbc20251456"  width="50%">
 
-
 **pipeIN**
 
 Encode up to 8 frequently used inputs into a single Pipe line.
@@ -48,6 +47,18 @@ Decode single Pipe line into the 8 original outputs, AND a Pipe throughput.
 Update/Overwrite any of the 8 original inputs in a Pipe line with new information.
 + _**Inputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
 + _**Outputs -** pipe_
+
+**pipe > basic_pipe**
+
+Convert ttN pipe line to basic pipe (to be compatible with [ImpactPack](https://github.com/ltdrdata/ComfyUI-Impact-Pack))
++ _**Inputs -** pipe[model, conditioning, conditioning, samples, vae, clip, image, seed]_
++ _**Outputs -** basic_pipe[model, clip, vae, conditioning, conditioning]_
+
+**pipe > Detailer Pipe**
+Convert ttN pipe line to detailer pipe (to be compatible with [ImpactPack](https://github.com/ltdrdata/ComfyUI-Impact-Pack))
++ _**Inputs -** pipe[model, conditioning, conditioning, samples, vae, clip, image, seed], bbox_detector, sam_model_opt_
++ _**Outputs -** detailer_pipe[model, vae, conditioning, conditioning, bbox_detector, sam_model_opt]_
+
 
 ## ttN/Text
 **Text**
