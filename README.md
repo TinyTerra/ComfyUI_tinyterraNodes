@@ -22,6 +22,15 @@ Combination of Efficiency Loader and Advanced CLIP Text Encode with an additiona
 + _**Inputs -** pipe, (optional pipe overrides), script, (Lora, model strength, clip strength), (upscale method, factor, crop), sampler state, steps, cfg, sampler name, scheduler, denoise, (image output [None, Preview, Save]), Save_Prefix_
 + _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
 
+Old node layout:
+
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/32b189de-42e3-4464-b3b2-4e0e225e6abe"  width="50%">
+
+With pipeLoader and pipeKSampler:
+
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/c806c2e3-2efb-44cb-bdf0-3fbc20251456"  width="50%">
+
+
 **pipeIN**
 
 Encode up to 8 frequently used inputs into a single Pipe line.
