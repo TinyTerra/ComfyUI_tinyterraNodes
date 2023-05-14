@@ -6,6 +6,9 @@ Navigate to the **_ComfyUI/custom_nodes_** directory, and run:
 
 `git clone https://github.com/TinyTerra/ComfyUI_tinyterraNodes.git`
 
+# AutoUpdate
+On the first run, a config.json file will be created with - "autoUpdate" = false.
+If you want the node pack to auto update when you start Comfy set this to true.
 
 # Nodes
 ## ttN/Pipe
