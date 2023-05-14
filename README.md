@@ -8,7 +8,20 @@ Navigate to the **_ComfyUI/custom_nodes_** directory, and run:
 
 
 # Nodes
-## tt/Pipe
+## ttN/Pipe
+
+**pipeLoader** (Modified from [Efficiency Nodes](https://github.com/LucianoCirino/efficiency-nodes-comfyui) and [ADV_CLIP_emb](https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb))
+
+Combination of Efficiency Loader and Advanced CLIP Text Encode with an additional pipe output
++ _**Inputs -** model, vae, clip skip, (lora1, modelstrength clipstrength), (Lora2, modelstrength clipstrength), (Lora3, modelstrength clipstrength), (positive prompt, token normalization, weight interpretation), (negative prompt, token normalization, weight interpretation), (latent width, height), batch size, seed_
++ _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
+
+**pipeKSampler** (Modified from [Efficiency Nodes](https://github.com/LucianoCirino/efficiency-nodes-comfyui) and [QOLS_Omar92](https://github.com/omar92/ComfyUI-QualityOfLifeSuit_Omar92))
+
+Combination of Efficiency Loader and Advanced CLIP Text Encode with an additional pipe output
++ _**Inputs -** pipe, (optional pipe overrides), script, (Lora, model strength, clip strength), (upscale method, factor, crop), sampler state, steps, cfg, sampler name, scheduler, denoise, (image output [None, Preview, Save]), Save_Prefix_
++ _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
+
 **pipeIN**
 
 Encode up to 8 frequently used inputs into a single Pipe line.
@@ -27,17 +40,11 @@ Update/Overwrite any of the 8 original inputs in a Pipe line with new informatio
 + _**Inputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
 + _**Outputs -** pipe_
 
-## tt/Text
+## ttN/Text
 **Text**
 
 Basic TextBox Loader.
 + _**Outputs -** text (STRING)_
-
-**7x TXT Concat**
-
-7 Text Inputs concatenated with spaces into a single output.
-+ _**inputs -** text1, text2, text3, text4, text5, text6, text7 (STRING's)_
-+ _**Outputs -** concat (STRING)_
 
 **7x TXT Loader Concat**
 
@@ -51,7 +58,7 @@ Basic TextBox Loader.
 + _**inputs -** text1, text2, text3 (STRING's)_
 + _**Outputs -** text1, text2, text3, 1 & 2, 1 & 3, 2 & 3, concat (STRING's)_
 
-## tt
+## ttN
 **Seed**
 
 Basic Seed Loader.
