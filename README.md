@@ -14,7 +14,7 @@ Navigate to the **_ComfyUI/custom_nodes_** directory, and run:
 
 Combination of Efficiency Loader and Advanced CLIP Text Encode with an additional pipe output
 + _**Inputs -** model, vae, clip skip, (lora1, modelstrength clipstrength), (Lora2, modelstrength clipstrength), (Lora3, modelstrength clipstrength), (positive prompt, token normalization, weight interpretation), (negative prompt, token normalization, weight interpretation), (latent width, height), batch size, seed_
-+ _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
++ _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, seed_
 
 **pipeKSampler** (Modified from [Efficiency Nodes](https://github.com/LucianoCirino/efficiency-nodes-comfyui) and [QOLS_Omar92](https://github.com/omar92/ComfyUI-QualityOfLifeSuit_Omar92))
 

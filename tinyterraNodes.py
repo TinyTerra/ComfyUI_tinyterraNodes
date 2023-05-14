@@ -244,8 +244,8 @@ class ttN_TSC_pipeLoader:
                 "hidden": {"prompt": "PROMPT"}}
                 
 
-    RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "IMAGE", "INT", )
-    RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "image", "seed", )
+    RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT", )
+    RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed", )
 
 
     FUNCTION = "adv_pipeloader"
@@ -301,7 +301,7 @@ class ttN_TSC_pipeLoader:
 
         pipe = (model, [[positive_embeddings_final, {}]], [[negative_embeddings_final, {}]], {"samples":latent}, vae, clip, image, seed)
 
-        return (pipe, model, [[positive_embeddings_final, {}]], [[negative_embeddings_final, {}]], {"samples":latent}, vae, clip, image, seed)
+        return (pipe, model, [[positive_embeddings_final, {}]], [[negative_embeddings_final, {}]], {"samples":latent}, vae, clip, seed)
 # -------------- ttN Pipe Loader E-------------- #
 
 
@@ -394,8 +394,8 @@ class ttN_TSC_pipeKSampler:
                 {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
                 }
 
-    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "IMAGE", "INT", )
-    RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent", "vae", "image", "seed", )
+    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT", )
+    RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
     CATEGORY = "ttN/pipe"
@@ -589,7 +589,7 @@ class ttN_TSC_pipeKSampler:
                 # Enable vae decode on next Hold
                 update_value_by_id("vae_decode", my_unique_id, True)
                 return {"ui": {"images": list()},
-                        "result": (new_pipe, model, positive, negative, {"samples": latent}, vae, ttN_TSC_pipeKSampler.empty_image, seed,)}
+                        "result": (new_pipe, model, positive, negative, {"samples": latent}, vae, clip, ttN_TSC_pipeKSampler.empty_image, seed,)}
             else:
                 # Decode images and store
                 images = vae.decode(latent).cpu()
@@ -606,7 +606,7 @@ class ttN_TSC_pipeKSampler:
 
                 # Output image results to ui and node outputs
                 return {"ui": {"images": results},
-                        "result": (new_pipe, model, positive, negative, {"samples": latent}, vae, images, seed,)}
+                        "result": (new_pipe, model, positive, negative, {"samples": latent}, vae, clip, images, seed,)}
 
         # If the sampler state is "Hold"
         elif sampler_state == "Hold":
@@ -618,7 +618,7 @@ class ttN_TSC_pipeKSampler:
             # If not in preview mode, return the results in the specified format
             if image_output == "Disabled":
                 return {"ui": {"images": list()},
-                        "result": (new_pipe, model, positive, negative, last_latent, vae, ttN_TSC_pipeKSampler.empty_image, seed,)}
+                        "result": (new_pipe, model, positive, negative, last_latent, vae, clip, ttN_TSC_pipeKSampler.empty_image, seed,)}
 
             # if image_output == "Preview" or "Save":
             else:
@@ -645,7 +645,7 @@ class ttN_TSC_pipeKSampler:
 
                 # Output image results to ui and node outputs
                 return {"ui": {"images": results},
-                        "result": (new_pipe, model, positive, negative, {"samples": latent}, vae, images, seed,)}
+                        "result": (new_pipe, model, positive, negative, {"samples": latent}, vae, clip, images, seed,)}
 
         elif sampler_state == "Script":
 
@@ -662,12 +662,12 @@ class ttN_TSC_pipeKSampler:
             if (X_type == "Nothing" and Y_type == "Nothing"):
                 print('\033[31mpipeKSampler[{}] Error:\033[0m No valid script entry detected'.format(my_unique_id))
                 return {"ui": {"images": list()},
-                        "result": (new_pipe, model, positive, negative, last_latent, vae, last_images, seed)}
+                        "result": (new_pipe, model, positive, negative, last_latent, vae, clip, last_images, seed)}
 
             if vae == (None,):
                 print('\033[31mpipeKSampler[{}] Error:\033[0m VAE must be connected to use Script mode.'.format(my_unique_id))
                 return {"ui": {"images": list()},
-                        "result": (new_pipe, model, positive, negative, last_latent, vae, last_images, seed)}
+                        "result": (new_pipe, model, positive, negative, last_latent, vae, clip, last_images, seed)}
 
             # Extract the 'samples' tensor from the dictionary
             latent_image_tensor = latent_image['samples']
@@ -1036,7 +1036,7 @@ class ttN_TSC_pipeKSampler:
             new_pipe = (model, positive, negative, latent, vae, clip, images, seed,)
 
             # Output image results to ui and node outputs
-            return {"ui": {"images": results}, "result": (new_pipe, model, positive, negative, {"samples": latent_new}, vae, images, seed)}
+            return {"ui": {"images": results}, "result": (new_pipe, model, positive, negative, {"samples": latent_new}, vae, clip, images, seed)}
 # -------------- ttN Pipe KSampler E-------------- #
 
 
