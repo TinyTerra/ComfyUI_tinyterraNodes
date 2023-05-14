@@ -21,6 +21,7 @@ with open(config_path, "r") as f:
     if "autoUpdate" not in config:
         config["autoUpdate"] = False
 
+    # Attempt to update
     if config["autoUpdate"] == True:
         try:
             with subprocess.Popen(["git", "pull"], cwd=cwd_path, stdout=subprocess.PIPE) as p:
