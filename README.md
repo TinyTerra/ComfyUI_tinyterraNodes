@@ -11,7 +11,22 @@ On the first run, a config.json file will be created with - "autoUpdate" = false
 If you want the node pack to auto update when you start Comfy set this to true.
 
 # Nodes
-## ttN/Pipe
+
+## ttN/image
+
+**imageOutput**
+
+Preview or Save an image with one node, with image throughput.
++ _**Inputs -** image, image output[Preview, Save], save prefix_
++ _**Outputs -** image_
+
+**imageRemBG** (Using [RemBG](https://github.com/danielgatis/rembg))
+
+Background Removal node with optional image preview & save.
++ _**Inputs -** image, image output[Disabled, Preview, Save], save prefix_
++ _**Outputs -** image, mask_
+
+## ttN/pipe
 
 **pipeLoader** (Modified from [Efficiency Nodes](https://github.com/LucianoCirino/efficiency-nodes-comfyui) and [ADV_CLIP_emb](https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb))
 
@@ -63,7 +78,7 @@ Convert ttN pipe line to detailer pipe (to be compatible with [ImpactPack](https
 + _**Outputs -** detailer_pipe[model, vae, conditioning, conditioning, bbox_detector, sam_model_opt], pipe_
 
 
-## ttN/Text
+## ttN/text
 **Text**
 
 Basic TextBox Loader.

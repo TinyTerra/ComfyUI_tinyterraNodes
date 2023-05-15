@@ -1,61 +1,37 @@
-# tinyterraNodes for ComfyUI                                https://github.com/comfyanonymous/ComfyUI
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+# tinyterraNodes developed in 2023 by tinyterra             https://github.com/TinyTerra                                                            #
+# for ComfyUI                                               https://github.com/comfyanonymous/ComfyUI                                               #
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
 
-
-#------------------------------------------------------------------------------------------------------------------#
-# (KSampler Modified from TSC Efficiency Nodes) -           https://github.com/LucianoCirino/efficiency-nodes-comfyui
-# (upscale from QualityOfLifeSuite_Omar92) -                https://github.com/omar92/ComfyUI-QualityOfLifeSuit_Omar92
-# (Node weights from BlenderNeko/ComfyUI_ADV_CLIP_emb) -    https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb
-# (misc. from WAS node Suite) -                             https://github.com/WASasquatch/was-node-suite-comfyui
-#------------------------------------------------------------------------------------------------------------------#
-
-from comfy.sd import ModelPatcher, CLIP, VAE
-from nodes import common_ksampler
-from torch import Tensor
-from PIL import Image, ImageOps, ImageDraw, ImageFont
-from PIL.PngImagePlugin import PngInfo
-import numpy as np
-import torch
-
-from pathlib import Path
-import re
 import os
 import sys
 import json
-import folder_paths
-
-# Get the absolute path of the parent directory of the current script
-my_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Construct the absolute path to the ComfyUI directory
-comfy_dir = os.path.abspath(os.path.join(my_dir, '..', '..'))
-
-# Add the ComfyUI directory path to the sys.path list
-sys.path.append(comfy_dir)
-
-# Construct the path to the font file
-font_path = os.path.join(my_dir, 'arial.ttf')
-
-# Import functions from nodes.py in the ComfyUI directory
-import comfy.samplers
+import torch
 import comfy.sd
 import comfy.utils
+import numpy as np
+import folder_paths
+import comfy.samplers
+from pathlib import Path
+from nodes import common_ksampler
+from PIL.PngImagePlugin import PngInfo
+from PIL import Image, ImageDraw, ImageFont
+from comfy.sd import ModelPatcher, CLIP, VAE
+
+# Get absolute path's of the current parent directory, of the ComfyUI directory and add to sys.path list
+my_dir = Path(__file__).parent
+comfy_dir = Path(my_dir).parent.parent
+sys.path.append(comfy_dir)
+font_path = os.path.join(my_dir, 'arial.ttf')
 
 MAX_RESOLUTION=8192
 
-# Tensor to PIL (grabbed from WAS Suite)
+# Tensor to PIL & PIL to Tensor (from WAS Suite)
 def tensor2pil(image: torch.Tensor) -> Image.Image:
     return Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
 
-# Convert PIL to Tensor (grabbed from WAS Suite)
 def pil2tensor(image: Image.Image) -> torch.Tensor:
     return torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
-
-def resolve_input_links(prompt, input_value):
-    if isinstance(input_value, list) and len(input_value) == 2:
-        input_id, input_index = input_value
-        return prompt[input_id]['inputs'][list(prompt[input_id]['inputs'].keys())[input_index]]
-    return input_value
-
 
 # Cache models in RAM
 loaded_objects = {
@@ -65,20 +41,6 @@ loaded_objects = {
     "vae": [],   # (vae_name, vae)
     "lora": [] # (lora_name, model_name, model_lora, clip_lora, strength_model, strength_clip)
 }
-
-def print_loaded_objects_entries():
-    print("\n" + "-" * 40)  # Print an empty line followed by a separator line
-
-    for key in ["ckpt", "clip", "bvae", "vae", "lora"]:
-        print(f"{key.capitalize()} entries:")
-        for entry in loaded_objects[key]:
-            truncated_name = entry[0][:20]
-            print(f"  Name: {truncated_name}\n  Location: {entry[1]}")
-            if len(entry) == 3:
-                print(f"  Entry[2]: {entry[2]}")
-        print("-" * 40)  # Print a separator line
-
-    print("\n")  # Print an empty line
 
 def update_loaded_objects(prompt):
     global loaded_objects
@@ -203,11 +165,11 @@ def load_lora(lora_name, model, clip, strength_model, strength_clip):
     return model_lora, clip_lora
 
 
-# -------------- ttN Pipe Loader S-------------- #
+#---------------------------------------------------------------ttN Pipe Loader START---------------------------------------------------------------#
+
 # ttN Pipe Loader (Modifed from TSC Efficient Loader and Advanced clip text encode)
 from .adv_encode import advanced_encode
 class ttN_TSC_pipeLoader:
-
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": { 
@@ -241,12 +203,10 @@ class ttN_TSC_pipeLoader:
 
                         "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff,}),
                         },
-                "hidden": {"prompt": "PROMPT"}}
-                
+                "hidden": {"prompt": "PROMPT"}}             
 
     RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT", )
     RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed", )
-
 
     FUNCTION = "adv_pipeloader"
     CATEGORY = "ttN/pipe"
@@ -287,8 +247,6 @@ class ttN_TSC_pipeLoader:
         if vae_name != "Baked VAE":
             vae = load_vae(vae_name)
 
-        #print_loaded_objects_entries()
-
         # CLIP skip
         if not clip:
             raise Exception("No CLIP found")
@@ -302,13 +260,11 @@ class ttN_TSC_pipeLoader:
         pipe = (model, [[positive_embeddings_final, {}]], [[negative_embeddings_final, {}]], {"samples":latent}, vae, clip, image, seed)
 
         return (pipe, model, [[positive_embeddings_final, {}]], [[negative_embeddings_final, {}]], {"samples":latent}, vae, clip, seed)
-# -------------- ttN Pipe Loader E-------------- #
+#---------------------------------------------------------------ttN Pipe Loader END-----------------------------------------------------------------#
 
 
-# -------------- ttN Pipe KSampler S-------------- #
-# ttN pipeKSampler (Modified from TSC KSampler (Advanced), Upscale from QualityOfLifeSuite_Omar92)
-# KSampler Pipe ID finder
 
+#Functions for upscaling
 def enforce_mul_of_64(d):
     leftover = d % 8          # 8 is the number of pixels per byte
     if leftover != 0:         # if the number of pixels is not a multiple of 8
@@ -341,6 +297,90 @@ def upscale(samples, upscale_method, factor, crop):
         )
         return (s,)
 
+# Functions for previewing & saving images
+def compute_vars(input, images):
+    input = input.replace("%width%", str(images[0].shape[1]))
+    input = input.replace("%height%", str(images[0].shape[0]))
+    return input
+
+def get_counter(output_folder, filename):
+    try:
+        files = os.listdir(output_folder)
+        counter = max([int(file.split("_")[-2]) for file in files if file.startswith(filename) and file.split(".")[-2].endswith("_")]) + 1
+
+    except ValueError:
+        counter = 1
+
+    except FileNotFoundError:
+        os.makedirs(output_folder, exist_ok=True)
+        counter = 1
+
+    # Check if the filename already exists in the output folder.
+    # If it does, increment the counter
+    while filename in files:
+        counter += 1
+
+    return counter
+
+def save_image(self, img, results, output_folder, filename, subfolder, counter, metadata):
+    file = f"{filename}_{counter:05}_.png"
+    img.save(os.path.join(output_folder, file), pnginfo=metadata, compress_level=4)
+    if results != None:
+        results.append({
+            "filename": file,
+            "subfolder": subfolder,
+            "type": self.type
+        });
+    counter += 1
+    return results, counter
+
+def output_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo):
+
+    if not os.path.exists(self.output_dir):
+        os.makedirs(self.output_dir) 
+
+    p_prefix = compute_vars(preview_prefix, images)
+    p_subfolder = os.path.dirname(os.path.normpath(p_prefix))
+    p_filename = os.path.basename(os.path.normpath(p_prefix))
+    p_output_folder = os.path.join(self.output_dir, p_subfolder)
+    p_counter = get_counter(p_output_folder, p_filename)
+
+    if image_output == "Save":
+        s_prefix = compute_vars(save_prefix, images)
+        s_subfolder = os.path.dirname(os.path.normpath(s_prefix))
+        s_filename = os.path.basename(os.path.normpath(s_prefix))
+        s_output_folder = os.path.join(self.save_dir, s_subfolder)
+        s_counter = get_counter(s_output_folder, s_filename)
+
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir)  
+
+    # Create the images
+    results = list()
+    for image in images:
+        i = 255. * image.cpu().numpy()
+        img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+        metadata = PngInfo()
+        if prompt is not None:
+            metadata.add_text("prompt", json.dumps(prompt))
+        if extra_pnginfo is not None:
+            for x in extra_pnginfo:
+                metadata.add_text(x, json.dumps(extra_pnginfo[x]))
+
+        # Save the preview Image.
+        results, p_counter = save_image(self, img, results, p_output_folder, p_filename, p_subfolder, p_counter, metadata)
+
+        # Save the image.
+        if image_output == "Save":
+            s_counter = save_image(self, img, None, s_output_folder, s_filename, s_subfolder, s_counter, metadata)[1]
+
+    return results
+
+
+
+#---------------------------------------------------------------ttN Pipe KSampler START-------------------------------------------------------------#
+
+# ttN pipeKSampler (Modified from TSC KSampler (Advanced), Upscale from QualityOfLifeSuite_Omar92)
 last_helds: dict[str, list] = {
     "results": [],
     "latent": [],
@@ -432,86 +472,6 @@ class ttN_TSC_pipeKSampler:
         if upscale_method != "None":
             latent_image = upscale(latent_image, upscale_method, factor, crop)[0]
             
-
-        # Functions for previewing & saving images in Ksampler
-        def compute_vars(input):
-            input = input.replace("%width%", str(images[0].shape[1]))
-            input = input.replace("%height%", str(images[0].shape[0]))
-            return input
-
-        def get_counter(output_folder, filename):
-            try:
-                files = os.listdir(output_folder)
-                counter = max([int(file.split("_")[-2]) for file in files if file.startswith(filename) and file.split(".")[-2].endswith("_")]) + 1
-
-            except ValueError:
-                counter = 1
-
-            except FileNotFoundError:
-                os.makedirs(output_folder, exist_ok=True)
-                counter = 1
-
-            # Check if the filename already exists in the output folder.
-            # If it does, increment the counter
-            while filename in files:
-                counter += 1
-
-            return counter
-
-        def save_image(img, results, output_folder, filename, subfolder, counter, metadata):
-            file = f"{filename}_{counter:05}_.png"
-            img.save(os.path.join(output_folder, file), pnginfo=metadata, compress_level=4)
-            if results != None:
-                results.append({
-                    "filename": file,
-                    "subfolder": subfolder,
-                    "type": self.type
-                });
-            counter += 1
-            return results, counter
-
-        def output_images(images, preview_prefix, save_prefix, image_output):
-
-            if not os.path.exists(self.output_dir):
-                os.makedirs(self.output_dir) 
-
-            p_prefix = compute_vars(preview_prefix)
-            p_subfolder = os.path.dirname(os.path.normpath(p_prefix))
-            p_filename = os.path.basename(os.path.normpath(p_prefix))
-            p_output_folder = os.path.join(self.output_dir, p_subfolder)
-            p_counter = get_counter(p_output_folder, p_filename)
-
-            if image_output == "Save":
-                s_prefix = compute_vars(save_prefix)
-                s_subfolder = os.path.dirname(os.path.normpath(s_prefix))
-                s_filename = os.path.basename(os.path.normpath(s_prefix))
-                s_output_folder = os.path.join(self.save_dir, s_subfolder)
-                s_counter = get_counter(s_output_folder, s_filename)
-
-                if not os.path.exists(self.save_dir):
-                    os.makedirs(self.save_dir)  
-
-            # Create the images
-            results = list()
-            for image in images:
-                i = 255. * image.cpu().numpy()
-                img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
-                metadata = PngInfo()
-                if prompt is not None:
-                    metadata.add_text("prompt", json.dumps(prompt))
-                if extra_pnginfo is not None:
-                    for x in extra_pnginfo:
-                        metadata.add_text(x, json.dumps(extra_pnginfo[x]))
-
-                # Save the preview Image.
-                results, p_counter = save_image(img, results, p_output_folder, p_filename, p_subfolder, p_counter, metadata)
-
-                # Save the image.
-                if image_output == "Save":
-                    s_counter = save_image(img, None, s_output_folder, s_filename, s_subfolder, s_counter, metadata)[1]
-
-            return results
-
         def get_value_by_id(key: str, my_unique_id):
             global last_helds
             for value, id_ in last_helds[key]:
@@ -599,7 +559,7 @@ class ttN_TSC_pipeKSampler:
                 update_value_by_id("vae_decode", my_unique_id, False)
 
                 # Generate image results and store
-                results = output_images(images, preview_prefix, save_prefix, image_output)
+                results = output_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
                 update_value_by_id("results", my_unique_id, results)
 
                 new_pipe = (model, positive, negative, {"samples": latent}, vae, clip, images, seed,)
@@ -634,7 +594,7 @@ class ttN_TSC_pipeKSampler:
                     update_value_by_id("vae_decode", my_unique_id, False)
 
                     # Generate image results and store
-                    results = output_images(images, preview_prefix, save_prefix, image_output)
+                    results = output_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
                     update_value_by_id("results", my_unique_id, results)
 
                 else:
@@ -1026,7 +986,7 @@ class ttN_TSC_pipeKSampler:
             update_value_by_id("images", my_unique_id, images)
 
             # Generate image results and store
-            results = output_images(images, preview_prefix, save_prefix, image_output)
+            results = output_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
             update_value_by_id("results", my_unique_id, results)
 
             # Clean loaded_objects
@@ -1037,10 +997,10 @@ class ttN_TSC_pipeKSampler:
 
             # Output image results to ui and node outputs
             return {"ui": {"images": results}, "result": (new_pipe, model, positive, negative, {"samples": latent_new}, vae, clip, images, seed)}
-# -------------- ttN Pipe KSampler E-------------- #
+#---------------------------------------------------------------ttN Pipe KSampler END---------------------------------------------------------------#
 
 
-#ttN/pipe
+#---------------------------------------------------------------ttN/pipe START----------------------------------------------------------------------#
 class ttN_pipe_IN:
     def __init__(self):
         pass
@@ -1191,8 +1151,11 @@ class ttN_pipe_2DETAILER:
         model, positive, negative, _, vae, _, _, _ = pipe
         detailer_pipe = model, vae, positive, negative, bbox_detector, sam_model_opt
         return (detailer_pipe, pipe, )
+#---------------------------------------------------------------ttN/pipe END------------------------------------------------------------------------#
 
-#ttN/text 
+
+
+#---------------------------------------------------------------ttN/text START----------------------------------------------------------------------#
 class ttN_text:
     def __init__(self):
         pass
@@ -1281,8 +1244,9 @@ class ttN_text7BOX_concat:
             if text7 is not None or '':
                 meowed = f'{meowed} {text7}'
             return text1, text2, text3, text4, text5, text6, text7, meowed
+#---------------------------------------------------------------ttN/text END------------------------------------------------------------------------#
 
-#ttN
+#-----------------------------------------------------------------ttN START----------------------------------------------------------------------#
 class ttN_seed:
     def __init__(self):
         pass
@@ -1303,42 +1267,145 @@ class ttN_seed:
     def plant(seed):
         return seed,
 
+# ttN RemBG
+try:
+    from rembg import remove
+    
+    class ttN_imageREMBG:
+        def __init__(self):
+            self.output_dir = os.path.join(comfy_dir, 'temp')
+            self.save_dir = os.path.join(comfy_dir, 'output')
+            self.type = "temp"
+        
+        @classmethod
+        def INPUT_TYPES(s):
+            return {"required": { 
+                    "image": ("IMAGE",),
+                    "image_output": (["Disabled", "Preview", "Save"],),
+                    "save_prefix": ("STRING", {"default": "ComfyUI","multiline": False}),
+                    },
+                    "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
+                }
+            
+
+        RETURN_TYPES = ("IMAGE", "MASK")
+        RETURN_NAMES = ("image", "mask")
+        FUNCTION = "remove_background"
+        CATEGORY = "ttN/image"
+        OUTPUT_NODE = True
+
+        def remove_background(self, image, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id):
+            image = remove(tensor2pil(image))
+            tensor = pil2tensor(image)
+            
+            #Get alpha mask
+            if image.getbands() != ("R", "G", "B", "A"):
+                image = image.convert("RGBA")
+            mask = None
+            if "A" in image.getbands():
+                mask = np.array(image.getchannel("A")).astype(np.float32) / 255.0
+                mask = torch.from_numpy(mask)
+                mask = 1. - mask
+            else:
+                mask = torch.zeros((64,64), dtype=torch.float32, device="cpu")
+
+            if image_output == "Disabled":
+                results = None
+            else:
+                # Define preview_prefix
+                preview_prefix = "ttNrembg_{:02d}".format(int(my_unique_id))
+                results = output_images(self, tensor, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
+
+            # Output image results to ui and node outputs
+            return {"ui": {"images": results},
+                    "result": (tensor, mask)}
+except:
+    pass
+
+class ttN_imageOUPUT:
+        def __init__(self):
+            self.output_dir = os.path.join(comfy_dir, 'temp')
+            self.save_dir = os.path.join(comfy_dir, 'output')
+            self.type = "temp"
+        
+        @classmethod
+        def INPUT_TYPES(s):
+            return {"required": { 
+                    "image": ("IMAGE",),
+                    "image_output": (["Preview", "Save"],),
+                    "save_prefix": ("STRING", {"default": "ComfyUI","multiline": False}),
+                    },
+                    "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
+                }
+            
+
+        RETURN_TYPES = ("IMAGE",)
+        RETURN_NAMES = ("image",)
+        FUNCTION = "output"
+        CATEGORY = "ttN/image"
+        OUTPUT_NODE = True
+
+        def output(self, image, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id):
+            
+            # Define preview_prefix
+            preview_prefix = "ttNimgOUT_{:02d}".format(int(my_unique_id))
+            results = output_images(self, image, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
+
+            # Output image results to ui and node outputs
+            return {"ui": {"images": results},
+                    "result": (image,)}
 
 print("\033[92m[t ttNodes Loaded t]\033[0m")
 
-NODE_CLASS_MAPPINGS = {  
+NODE_CLASS_MAPPINGS = {
+    #ttN/pipe
     "ttN pipeLoader": ttN_TSC_pipeLoader,    
     "ttN pipeKSampler": ttN_TSC_pipeKSampler,
-
     "ttN pipeIN": ttN_pipe_IN,
     "ttN pipeOUT": ttN_pipe_OUT,
     "ttN pipeEDIT": ttN_pipe_EDIT,
     "ttN pipe2BASIC": ttN_pipe_2BASIC,
     "ttN pipe2DETAILER": ttN_pipe_2DETAILER,
 
+    #ttN/text
     "ttN text": ttN_text,
     "ttN text3BOX_3WAYconcat": ttN_text3BOX_3WAYconcat,    
     "ttN text7BOX_concat": ttN_text7BOX_concat,
 
-    "ttN seed": ttN_seed,
+    #ttN/image
+    "ttN imageOutput": ttN_imageOUPUT,
+    "ttN imageREMBG": ttN_imageREMBG,
+
+    #ttN
+    "ttN seed": ttN_seed
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    #tt/pipe    
+    #ttN/pipe    
     "ttN pipeLoader": "pipeLoader",
     "ttN pipeKSampler": "pipeKSampler",
-
     "ttN pipeIN": "pipeIN",
     "ttN pipeOUT": "pipeOUT",
     "ttN pipeEDIT": "pipeEDIT",
     "ttN pipe2BASIC": "pipe > basic_pipe",
     "ttN pipe2DETAILER": "pipe > detailer_pipe",
     
-    #tt/text
+    #ttN/text
     "ttN text7BOX_concat": "7x TXT Loader Concat",
     "ttN text3BOX_3WAYconcat": "3x TXT Loader MultiConcat",
     "ttN text": "text",
 
-    #tt
-    "ttN seed": "seed",
+    #ttN/image
+    "ttN imageREMBG": "imageRemBG",
+    "ttN imageOutput": "imageOutput",
 
+    #ttN
+    "ttN seed": "seed"
 }
+
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+# (KSampler Modified from TSC Efficiency Nodes) -           https://github.com/LucianoCirino/efficiency-nodes-comfyui                               #
+# (upscale from QualityOfLifeSuite_Omar92) -                https://github.com/omar92/ComfyUI-QualityOfLifeSuit_Omar92                              #
+# (Node weights from BlenderNeko/ComfyUI_ADV_CLIP_emb) -    https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb                                     #
+# (misc. from WAS node Suite) -                             https://github.com/WASasquatch/was-node-suite-comfyui                                   #
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
