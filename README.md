@@ -83,9 +83,15 @@ Convert ttN pipe line to detailer pipe (to be compatible with [ImpactPack](https
 
 
 ## ttN/text
-**Text**
+**text**
 
 Basic TextBox Loader.
++ _**Outputs -** text (STRING)_
+
+**textDebug**
+
+Text input, to display text inside the node, with optional print to console.
++ _**inputs -** text, print_to_console_
 + _**Outputs -** text (STRING)_
 
 **7x TXT Loader Concat**

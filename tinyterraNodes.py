@@ -1176,6 +1176,41 @@ class ttN_text:
     def conmeow(text):
         return text,
 
+class ttN_textDebug:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+                    "print_to_console": ([True,False], {"default": True}),
+                    "text": ("STRING", {"default": '', "multiline": True, "forceInput": True}),
+                    },
+                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text",)
+    FUNCTION = "write"
+    OUTPUT_NODE = True
+
+    CATEGORY = "ttN/text"
+
+    @staticmethod
+    def write(print_to_console, text, prompt, extra_pnginfo, my_unique_id):
+        if print_to_console == True:
+
+            input_node = prompt[my_unique_id]["inputs"]["text"]
+
+            input_from = None
+            for node in extra_pnginfo["workflow"]["nodes"]:
+                if node['id'] == int(input_node[0]):
+                    input_from = node['outputs'][input_node[1]]['name']   
+
+            print(f'\033[92m[ttN textDebug_{my_unique_id}] - \033[0;31m\'{input_from}\':\033[0m{text}')
+        return {"ui": {"text": text},
+                "result": (text,)}
+
 class ttN_text3BOX_3WAYconcat:
     def __init__(self):
         pass
@@ -1185,10 +1220,12 @@ class ttN_text3BOX_3WAYconcat:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-            "text1": ("STRING", {"multiline": True}),
-            "text2": ("STRING", {"multiline": True}),
-            "text3": ("STRING", {"multiline": True}),
-        }}
+                    "text1": ("STRING", {"multiline": True, "default": ''}),
+                    "text2": ("STRING", {"multiline": True, "default": ''}),
+                    "text3": ("STRING", {"multiline": True, "default": ''}),
+                    "delimiter": ("STRING", {"default":",","multiline": False}),
+                    }
+        }
 
     RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING",)
     RETURN_NAMES = ("text1", "text2", "text3", "1 & 2", "1 & 3", "2 & 3", "concat",)
@@ -1196,14 +1233,19 @@ class ttN_text3BOX_3WAYconcat:
 
     CATEGORY = "ttN/text"
 
-    def conmeow(self, text1, text2, text3):
-        meowed = [
-        (f'{text1} {text2}'),
-        (f'{text1} {text3}'),
-        (f'{text2} {text3}'),
-        (f'{text1} {text2} {text3}'),
-        ]
-        return text1, text2, text3, *meowed  
+    def conmeow(self, text1='', text2='', text3='', delimiter=''):
+        text1 = '' if text1 == 'undefined' else text1
+        text2 = '' if text2 == 'undefined' else text2
+        text3 = '' if text3 == 'undefined' else text3
+
+        delimiter = f'{delimiter} '
+
+        t_1n2 = delimiter.join(text1, text2)
+        t_1n3 = delimiter.join(text1, text3)
+        t_2n3 = delimiter.join(text2, text3)
+        concat = delimiter.join(text1, text2, text3)
+       
+        return text1, text2, text3, t_1n2, t_1n3, t_2n3, concat, delimiter
 
 class ttN_text7BOX_concat:
     def __init__(self):
@@ -1214,16 +1256,16 @@ class ttN_text7BOX_concat:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-            "text1": ("STRING", {"multiline": True}),
-            "text2": ("STRING", {"multiline": True}),
-            },   
-                "optional": {
-            "text3": ("STRING", {"multiline": True}),
-            "text4": ("STRING", {"multiline": True}),
-            "text5": ("STRING", {"multiline": True}),
-            "text6": ("STRING", {"multiline": True}),
-            "text7": ("STRING", {"multiline": True}),
-        }}
+                    "text1": ("STRING", {"multiline": True, "default": ''}),
+                    "text2": ("STRING", {"multiline": True, "default": ''}),
+                    "text3": ("STRING", {"multiline": True, "default": ''}),
+                    "text4": ("STRING", {"multiline": True, "default": ''}),
+                    "text5": ("STRING", {"multiline": True, "default": ''}),
+                    "text6": ("STRING", {"multiline": True, "default": ''}),
+                    "text7": ("STRING", {"multiline": True, "default": ''}),
+                    "delimiter": ("STRING", {"default":",","multiline": False}),
+                    }
+        }
 
     RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING", "STRING",)
     RETURN_NAMES = ("text1", "text2", "text3", "text4", "text5", "text6", "text7", "concat",)
@@ -1231,19 +1273,19 @@ class ttN_text7BOX_concat:
 
     CATEGORY = "ttN/text"
 
-    def conmeow(self, text1, text2, text3=None, text4=None, text5=None, text6=None, text7=None,):
-            meowed = (f'{text1} {text2}')
-            if text3 is not None or '':
-                meowed = f'{meowed} {text3}'
-            if text4 is not None or '':
-                meowed = f'{meowed} {text4}'
-            if text5 is not None or '':
-                meowed = f'{meowed} {text5}'
-            if text6 is not None or '':
-                meowed = f'{meowed} {text6}'
-            if text7 is not None or '':
-                meowed = f'{meowed} {text7}'
-            return text1, text2, text3, text4, text5, text6, text7, meowed
+    def conmeow(self, text1, text2, text3, text4, text5, text6, text7, delimiter):
+            text1 = '' if text1 == 'undefined' else text1
+            text2 = '' if text2 == 'undefined' else text2
+            text3 = '' if text3 == 'undefined' else text3
+            text4 = '' if text4 == 'undefined' else text4
+            text5 = '' if text5 == 'undefined' else text5
+            text6 = '' if text6 == 'undefined' else text6
+            text7 = '' if text7 == 'undefined' else text7
+            
+            texts = [text1, text2, text3, text4, text5, text6, text7]
+            delimiter = f'{delimiter} '            
+            concat = delimiter.join(text for text in texts if text)
+            return text1, text2, text3, text4, text5, text6, text7, concat
 #---------------------------------------------------------------ttN/text END------------------------------------------------------------------------#
 
 #-----------------------------------------------------------------ttN START----------------------------------------------------------------------#
@@ -1320,7 +1362,25 @@ try:
             return {"ui": {"images": results},
                     "result": (tensor, mask)}
 except:
-    pass
+    class ttN_imageREMBG:
+        def __init__(self):
+            pass
+        
+        @classmethod
+        def INPUT_TYPES(s):
+            return {"required": { 
+                        "error": ("STRING",{"default": "RemBG is not installed", "multiline": False, 'readonly': True}),
+                        "link": ("STRING",{"default": "https://github.com/danielgatis/rembg", "multiline": False}),
+                    },
+                }
+            
+
+        RETURN_TYPES = ("")
+        FUNCTION = "remove_background"
+        CATEGORY = "ttN/image"
+
+        def remove_background(error):
+            return None
 
 class ttN_imageOUPUT:
         def __init__(self):
@@ -1369,6 +1429,7 @@ NODE_CLASS_MAPPINGS = {
 
     #ttN/text
     "ttN text": ttN_text,
+    "ttN textDebug": ttN_textDebug,
     "ttN text3BOX_3WAYconcat": ttN_text3BOX_3WAYconcat,    
     "ttN text7BOX_concat": ttN_text7BOX_concat,
 
@@ -1390,9 +1451,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN pipe2DETAILER": "pipe > detailer_pipe",
     
     #ttN/text
+    "ttN text": "text",
+    "ttN textDebug": "textDebug",
     "ttN text7BOX_concat": "7x TXT Loader Concat",
     "ttN text3BOX_3WAYconcat": "3x TXT Loader MultiConcat",
-    "ttN text": "text",
 
     #ttN/image
     "ttN imageREMBG": "imageRemBG",
