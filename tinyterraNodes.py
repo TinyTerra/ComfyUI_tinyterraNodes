@@ -1183,7 +1183,7 @@ class ttN_textDebug:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "print_to_console": ([True,False], {"default": True}),
+                    "print_to_console": ([False, True],),
                     "text": ("STRING", {"default": '', "multiline": True, "forceInput": True}),
                     },
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
@@ -1240,10 +1240,10 @@ class ttN_text3BOX_3WAYconcat:
 
         delimiter = f'{delimiter} '
 
-        t_1n2 = delimiter.join(text1, text2)
-        t_1n3 = delimiter.join(text1, text3)
-        t_2n3 = delimiter.join(text2, text3)
-        concat = delimiter.join(text1, text2, text3)
+        t_1n2 = delimiter.join([text1, text2])
+        t_1n3 = delimiter.join([text1, text3])
+        t_2n3 = delimiter.join([text2, text3])
+        concat = delimiter.join([text1, text2, text3])
        
         return text1, text2, text3, t_1n2, t_1n3, t_2n3, concat, delimiter
 
