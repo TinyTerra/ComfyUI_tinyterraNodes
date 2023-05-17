@@ -778,6 +778,9 @@ class ttN_TSC_pipeKSampler:
                 image_list.append(pil_image)
                 size_list.append(pil_image.size)
 
+                # Save the original image
+                output_images(self, image, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
+
                 # Update max dimensions
                 max_width = max(max_width, pil_image.width)
                 max_height = max(max_height, pil_image.height)
