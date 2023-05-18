@@ -469,7 +469,7 @@ class ttN_TSC_pipeKSampler:
         if optional_clip != None:
             clip = optional_clip
 
-        if optional_seed != None:
+        if optional_seed != None or 'undefined':
             seed = optional_seed
 
         #Send latent to upscaler
