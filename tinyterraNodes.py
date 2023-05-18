@@ -434,8 +434,8 @@ class ttN_TSC_pipeKSampler:
                 {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
                 }
 
-    RETURN_TYPES = ("PIPE_LINE", "INT", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE",)
-    RETURN_NAMES = ("pipe", "seed", "model", "positive", "negative", "latent","vae", "clip", "image", )
+    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
+    RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
     CATEGORY = "ttN/pipe"
@@ -444,7 +444,7 @@ class ttN_TSC_pipeKSampler:
                optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, seed=None, script=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None,):
 
         optional_seed = seed
-        
+
         #unpack Pipe
         model, positive, negative, latent_image, vae, clip, image, seed = pipe
 
