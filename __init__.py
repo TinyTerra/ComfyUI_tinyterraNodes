@@ -57,7 +57,7 @@ with open(config_path, "r") as f:
         except:
             try:
                 print("\033[92m[ttNodes] \033[0;31mREMBG is not installed. Attempting to install...\033[0m")
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "rembg[gpu]"])
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "rembg[gpu]", "--user"])
                 c_rembg = False
             except:
                 c_rembg = False
