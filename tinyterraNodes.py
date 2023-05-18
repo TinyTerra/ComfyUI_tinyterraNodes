@@ -38,7 +38,7 @@ loaded_objects = {
     "ckpt": [], # (ckpt_name, model)
     "clip": [], # (ckpt_name, clip)
     "bvae": [], # (ckpt_name, vae)
-    "vae": [],   # (vae_name, vae)
+    "vae": [],  # (vae_name, vae)
     "lora": [] # (lora_name, model_name, model_lora, clip_lora, strength_model, strength_clip)
 }
 

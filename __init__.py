@@ -1,79 +1,97 @@
-# ------- CONFIG -------- #
-import json
-import subprocess
+# ------- IMPORTS ------- #
 from pathlib import Path
-import folder_paths
-import os
+import configparser
+import subprocess
 import shutil
+import os
 import sys
 
 # ------- CONFIG -------- #
-comfy_path = os.path.dirname(folder_paths.__file__)
 cwd_path = Path(__file__).parent
-config_path = cwd_path / "config.json"
+comfy_path = cwd_path.parent.parent
+sitepkg = comfy_path.parent / 'python_embeded' / 'Lib'  / 'site-packages'
+python_exe = comfy_path.parent / 'python_embeded' / 'python.exe'
 
-# Creates a config file if it does not exist
-if not config_path.is_file():
-    with open(config_path, "w") as f:
-        json.dump({
-            "autoUpdate": False,
-            "install_rembg": True,
-        }, f, indent=4)
+if not os.path.exists(python_exe):
+    python_exe = sys.executable
 
-# Open config file
-with open(config_path, "r") as f:
-    config = json.load(f)  
 
-    # if autoUpdate = true: attempt to update
-    if "autoUpdate" not in config:
-        c_autoUpdate = False 
-        config["autoUpdate"] = False
+old_config_path = cwd_path / "config.json"
+if old_config_path.is_file():
+    os.remove(old_config_path)
+
+config_path = cwd_path / "config.ini"
+
+def createConfig():
+    #section > option > value
+    settings = {
+        "auto_update": False,
+        "install_rembg": True,
+    }
+
+    config = configparser.ConfigParser()
+    config['ttNodes'] = settings
+        
+    with open(config_path, 'w') as f:
+        config.write(f)
+
+def configRead(opt=None):
+    config = configparser.ConfigParser()
+    config.read(config_path)
+
+    settings = {}
+    for section in config.sections():
+        for option, value in config.items(section):
+            settings[option] = value
+
+    if opt == None:
+        return settings
     else:
-        c_autoUpdate = config["autoUpdate"]
+        return settings[opt]
 
-    if c_autoUpdate == True:
+def configWrite(option, value, section="ttNodes"):
+    config = configparser.ConfigParser()
+    config.read(config_path)
+    config.set(section, str(option), str(value))
+    with open(config_path, 'w') as f:
+        config.write(f)
+
+
+if not os.path.isfile(config_path):
+    createConfig()
+
+if configRead("auto_update") == 'True':
+    try:
+        with subprocess.Popen(["git", "pull"], cwd=cwd_path, stdout=subprocess.PIPE) as p:
+            p.wait()
+            result = p.communicate()[0].decode()
+            if result == "Already up to date.\n":
+                pass
+            else:
+                print("\033[92m[t ttNodes Updated t]\033[0m")
+    except:
+        pass
+
+
+try:
+    from rembg import remove
+    configWrite("install_rembg", 'Already Installed')
+except:
+    if not configRead("install_rembg") == 'Failed to install':
         try:
-            with subprocess.Popen(["git", "pull"], cwd=cwd_path, stdout=subprocess.PIPE) as p:
-                p.wait()
-                result = p.communicate()[0].decode()
-                if result == "Already up to date.\n":
-                    pass
-                else:
-                    print("\033[92m[t ttNodes Updated t]\033[0m")
+            print("\033[92m[ttNodes] \033[0;31mREMBG is not installed. Attempting to install...\033[0m")
+            if os.path.exists(sitepkg):
+                p = subprocess.Popen([python_exe, "-m", "pip", "install", "rembg[gpu]"], cwd=sitepkg)
+            else:
+                p = subprocess.Popen([python_exe, "-m", "pip", "install", "rembg[gpu]"])
+            p.wait()
+            print("\033[92m[ttNodes] REMBG Installed!\033[0m")
+
+            configWrite("install_rembg", 'Installed successfully')
         except:
-            pass
+            configWrite("install_rembg", 'Failed to install')
+            print("\033[92m[ttNodes] \033[0;31mFailed to install REMBG.\033[0m")
 
-    # if rembg not installed: attempt to install
-    if "install_rembg" not in config:
-        c_rembg = True
-        config["install_rembg"] = True
-    else:
-        c_rembg = config["install_rembg"]
-    
-    if c_rembg == True:
-        try:
-            from rembg import remove
-            c_rembg = False
-        except:
-            try:
-                print("\033[92m[ttNodes] \033[0;31mREMBG is not installed. Attempting to install...\033[0m")
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "rembg[gpu]", "--user"])
-                c_rembg = False
-            except:
-                c_rembg = False
-                print("\033[92m[ttNodes] \033[0;31mFailed to install REMBG.\033[0m")
-
-    if c_autoUpdate != config["autoUpdate"] or c_rembg != config["install_rembg"]:
-        updateConfig = True
-    else:
-        updateConfig = False
-
-if updateConfig == True:
-    with open(config_path, "w") as f:
-        json.dump({
-            "autoUpdate": c_autoUpdate,
-            "rembg": c_rembg
-        }, f, indent=4)
 
 # --------- JS ---------- #
 def copy_js():
