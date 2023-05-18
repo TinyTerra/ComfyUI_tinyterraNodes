@@ -200,13 +200,11 @@ class ttN_TSC_pipeLoader:
                         "empty_latent_width": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 64}),
                         "empty_latent_height": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 64}),
                         "batch_size": ("INT", {"default": 1, "min": 1, "max": 64}),
-
-                        "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff,}),
                         },
                 "hidden": {"prompt": "PROMPT"}}             
 
-    RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT", )
-    RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed", )
+    RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", )
+    RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", )
 
     FUNCTION = "adv_pipeloader"
     CATEGORY = "ttN/pipe"
@@ -217,7 +215,7 @@ class ttN_TSC_pipeLoader:
                        lora3_name, lora3_model_strength, lora3_clip_strength, 
                        positive, positive_token_normalization, positive_weight_interpretation, 
                        negative, negative_token_normalization, negative_weight_interpretation, 
-                       empty_latent_width, empty_latent_height, batch_size, seed, prompt=None):
+                       empty_latent_width, empty_latent_height, batch_size, prompt=None):
 
         model: ModelPatcher | None = None
         clip: CLIP | None = None
@@ -256,6 +254,7 @@ class ttN_TSC_pipeLoader:
         positive_embeddings_final = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0)
         negative_embeddings_final = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0)
         image=None
+        seed=None
 
         pipe = (model, [[positive_embeddings_final, {}]], [[negative_embeddings_final, {}]], {"samples":latent}, vae, clip, image, seed)
 
@@ -404,6 +403,8 @@ class ttN_TSC_pipeKSampler:
         return {"required":
                 {"pipe": ("PIPE_LINE",),
                  
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+
                 "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
                 "lora_model_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
                 "lora_clip_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
@@ -427,22 +428,23 @@ class ttN_TSC_pipeKSampler:
                  "optional_latent": ("LATENT",),
                  "optional_vae": ("VAE",),
                  "optional_clip": ("CLIP",),
-                 "optional_seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
                  "script": ("SCRIPT",),
                 },
                 "hidden":
                 {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
                 }
 
-    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT", )
-    RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
+    RETURN_TYPES = ("PIPE_LINE", "INT", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE",)
+    RETURN_NAMES = ("pipe", "seed", "model", "positive", "negative", "latent","vae", "clip", "image", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
     CATEGORY = "ttN/pipe"
 
     def sample(self, pipe, lora_name, lora_model_strength, lora_clip_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
-               optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, optional_seed=None, script=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None,):
+               optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, seed=None, script=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None,):
 
+        optional_seed = seed
+        
         #unpack Pipe
         model, positive, negative, latent_image, vae, clip, image, seed = pipe
 
@@ -1292,6 +1294,7 @@ class ttN_text7BOX_concat:
 #---------------------------------------------------------------ttN/text END------------------------------------------------------------------------#
 
 #-----------------------------------------------------------------ttN START----------------------------------------------------------------------#
+
 class ttN_seed:
     def __init__(self):
         pass
@@ -1305,12 +1308,34 @@ class ttN_seed:
     RETURN_TYPES = ("INT",)
     RETURN_NAMES = ("seed",)
     FUNCTION = "plant"
+    OUTPUT_NODE = True
 
     CATEGORY = "ttN"
 
     @staticmethod
     def plant(seed):
         return seed,
+
+class ttN_INT2TEXT:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+                    "int": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
+        }}
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text",)
+    FUNCTION = "stringify"
+
+    CATEGORY = "ttN"
+
+    @staticmethod
+    def stringify(int):
+        string = str(int)
+        return string,
 
 # ttN RemBG
 try:
@@ -1435,6 +1460,7 @@ NODE_CLASS_MAPPINGS = {
     "ttN textDebug": ttN_textDebug,
     "ttN text3BOX_3WAYconcat": ttN_text3BOX_3WAYconcat,    
     "ttN text7BOX_concat": ttN_text7BOX_concat,
+    "ttN int2text": ttN_INT2TEXT,
 
     #ttN/image
     "ttN imageOutput": ttN_imageOUPUT,
@@ -1458,6 +1484,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN textDebug": "textDebug",
     "ttN text7BOX_concat": "7x TXT Loader Concat",
     "ttN text3BOX_3WAYconcat": "3x TXT Loader MultiConcat",
+    "ttN int2text": "int > text",
 
     #ttN/image
     "ttN imageREMBG": "imageRemBG",

@@ -5,6 +5,7 @@ from pathlib import Path
 import folder_paths
 import os
 import shutil
+import sys
 
 # ------- CONFIG -------- #
 comfy_path = os.path.dirname(folder_paths.__file__)
@@ -55,9 +56,8 @@ with open(config_path, "r") as f:
             c_rembg = False
         except:
             try:
-                import pip
                 print("\033[92m[ttNodes] \033[0;31mREMBG is not installed. Attempting to install...\033[0m")
-                pip.main(["-m install", "rembg[gpu]"])
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "rembg[gpu]"])
                 c_rembg = False
             except:
                 c_rembg = False
