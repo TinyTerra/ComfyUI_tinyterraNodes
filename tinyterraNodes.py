@@ -46,16 +46,18 @@ def update_loaded_objects(prompt):
     global loaded_objects
 
     # Extract all Efficient Loader class type entries
-    efficient_loader_entries = [entry for entry in prompt.values() if entry["class_type"] == "Efficient Loader"]
+    ttN_pipeLoader_entries = [entry for entry in prompt.values() if entry["class_type"] == "ttN pipeLoader"]
 
     # Collect all desired model, vae, and lora names
     desired_ckpt_names = set()
     desired_vae_names = set()
     desired_lora_names = set()
-    for entry in efficient_loader_entries:
+    for entry in ttN_pipeLoader_entries:
         desired_ckpt_names.add(entry["inputs"]["ckpt_name"])
         desired_vae_names.add(entry["inputs"]["vae_name"])
-        desired_lora_names.add(entry["inputs"]["lora_name"])
+        desired_lora_names.add(entry["inputs"]["lora1_name"])
+        desired_lora_names.add(entry["inputs"]["lora2_name"])
+        desired_lora_names.add(entry["inputs"]["lora3_name"])
 
     # Check and clear unused ckpt, clip, and bvae entries
     for list_key in ["ckpt", "clip", "bvae"]:
