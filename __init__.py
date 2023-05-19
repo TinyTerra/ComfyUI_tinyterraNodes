@@ -79,7 +79,7 @@ try:
     from rembg import remove
     configWrite("install_rembg", 'Already Installed')
 except:
-    if not configRead("install_rembg") == 'Failed to install':
+    if not configRead("install_rembg") == 'Failed to install' or 'Installed successfully':
         try:
             print("\033[92m[ttNodes] \033[0;31mREMBG is not installed. Attempting to install...\033[0m")
             p = subprocess.Popen([sys.executable, "-m", "pip", "install", "rembg[gpu]"])
