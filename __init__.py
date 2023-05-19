@@ -10,13 +10,10 @@ import sys
 cwd_path = Path(__file__).parent
 comfy_path = cwd_path.parent.parent
 sitepkg = comfy_path.parent / 'python_embeded' / 'Lib'  / 'site-packages'
-python_exe = comfy_path.parent / 'python_embeded' / 'python.exe'
+script_path = comfy_path.parent  / 'python_embeded' / 'Scripts'
 
 sys.path.append(str(sitepkg))
-
-if not os.path.exists(python_exe):
-    python_exe = sys.executable
-
+sys.path.append(str(script_path))
 
 old_config_path = cwd_path / "config.json"
 if old_config_path.is_file():
