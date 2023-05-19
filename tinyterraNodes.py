@@ -207,11 +207,12 @@ class ttN_TSC_pipeLoader:
                         "empty_latent_width": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 64}),
                         "empty_latent_height": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 64}),
                         "batch_size": ("INT", {"default": 1, "min": 1, "max": 64}),
+                        "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                         },
                 "hidden": {"prompt": "PROMPT"}}             
 
-    RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", )
-    RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", )
+    RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT",)
+    RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "SEED",)
 
     FUNCTION = "adv_pipeloader"
     CATEGORY = "ttN/pipe"
@@ -222,7 +223,7 @@ class ttN_TSC_pipeLoader:
                        lora3_name, lora3_model_strength, lora3_clip_strength, 
                        positive, positive_token_normalization, positive_weight_interpretation, 
                        negative, negative_token_normalization, negative_weight_interpretation, 
-                       empty_latent_width, empty_latent_height, batch_size, prompt=None):
+                       empty_latent_width, empty_latent_height, batch_size, seed, prompt=None):
 
         model: ModelPatcher | None = None
         clip: CLIP | None = None
@@ -261,7 +262,6 @@ class ttN_TSC_pipeLoader:
         positive_embeddings_final = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0)
         negative_embeddings_final = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0)
         image=None
-        seed=None
 
         pipe = (model, [[positive_embeddings_final, {}]], [[negative_embeddings_final, {}]], {"samples":latent}, vae, clip, image, seed)
 
@@ -409,8 +409,6 @@ class ttN_TSC_pipeKSampler:
     def INPUT_TYPES(cls):
         return {"required":
                 {"pipe": ("PIPE_LINE",),
-                 
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
 
                 "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
                 "lora_model_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
@@ -429,7 +427,8 @@ class ttN_TSC_pipeKSampler:
                  "save_prefix": ("STRING", {"default": "ComfyUI","multiline": False})
                 },
                 "optional": 
-                {"optional_model": ("MODEL",),
+                {"seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                 "optional_model": ("MODEL",),
                  "optional_positive": ("CONDITIONING",),
                  "optional_negative": ("CONDITIONING",),
                  "optional_latent": ("LATENT",),
@@ -450,10 +449,8 @@ class ttN_TSC_pipeKSampler:
     def sample(self, pipe, lora_name, lora_model_strength, lora_clip_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
                optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, seed=None, script=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None,):
 
-        optional_seed = seed
-
         #unpack Pipe
-        model, positive, negative, latent_image, vae, clip, image, seed = pipe
+        model, positive, negative, latent_image, vae, clip, image, pipe_seed = pipe
 
         #Optional overrides
         if optional_model != None:
@@ -474,8 +471,8 @@ class ttN_TSC_pipeKSampler:
         if optional_clip != None:
             clip = optional_clip
 
-        if optional_seed != None or 'undefined':
-            seed = optional_seed
+        if seed in (None, 'undefined'):
+            seed = pipe_seed
 
         #Send latent to upscaler
         if upscale_method != "None":

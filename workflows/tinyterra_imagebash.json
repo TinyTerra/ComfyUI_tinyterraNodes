@@ -1,150 +1,7 @@
 {
-  "last_node_id": 135,
-  "last_link_id": 206,
+  "last_node_id": 143,
+  "last_link_id": 228,
   "nodes": [
-    {
-      "id": 83,
-      "type": "ttN pipeLoader",
-      "pos": [
-        23,
-        47
-      ],
-      "size": {
-        "0": 448.61474609375,
-        "1": 944.34375
-      },
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "pipe",
-          "type": "PIPE_LINE",
-          "links": [
-            157,
-            188
-          ],
-          "shape": 3,
-          "slot_index": 0
-        },
-        {
-          "name": "model",
-          "type": "MODEL",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "positive",
-          "type": "CONDITIONING",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "negative",
-          "type": "CONDITIONING",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "latent",
-          "type": "LATENT",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "vae",
-          "type": "VAE",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "links": [
-            190
-          ],
-          "shape": 3,
-          "slot_index": 6
-        },
-        {
-          "name": "seed",
-          "type": "INT",
-          "links": [],
-          "shape": 3,
-          "slot_index": 7
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "ttN pipeLoader"
-      },
-      "widgets_values": [
-        "Good\\deliberate_v2.safetensors",
-        "vae-ft-mse-840000-ema-pruned.safetensors",
-        -1,
-        "None",
-        1,
-        1,
-        "None",
-        1,
-        1,
-        "None",
-        1,
-        1,
-        "(RAW photo:1.2), perfect composition, (masterpiece, 8k, absurdres, best quality, intricate), realistic, raytracing, dark forest, mystical, pathway",
-        "none",
-        "comfy++",
-        "(semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, digital art, anime, manga:1.3), out of frame, cropped, cut off, poorly made, username, signature, watermark, unattractive, blurry, boring, sketch, lacklustre, repetitive, worst quality, low quality, jpeg artefacts, poorly lit, overexposed, underexposed, glitch, error, out of focus, amateur, (poorly drawn hands, poorly drawn face:1.2), deformed iris, deformed pupils, morbid, duplicate, mutilated, extra fingers, mutated hands, poorly drawn eyes, mutation, deformed, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck, incoherent, cloned face, cloned body, blur, blurry,(nsfw),(naked),(nude)",
-        "none",
-        "comfy++",
-        768,
-        512,
-        1,
-        302086422941626,
-        "fixed"
-      ]
-    },
-    {
-      "id": 117,
-      "type": "BNK_CLIPTextEncodeAdvanced",
-      "pos": [
-        532,
-        -13
-      ],
-      "size": {
-        "0": 359.4644775390625,
-        "1": 148.47698974609375
-      },
-      "flags": {},
-      "order": 4,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "link": 190
-        }
-      ],
-      "outputs": [
-        {
-          "name": "CONDITIONING",
-          "type": "CONDITIONING",
-          "links": [
-            162
-          ],
-          "shape": 3,
-          "slot_index": 0
-        }
-      ],
-      "title": "CLIP TE Adv - Subject",
-      "properties": {
-        "Node name for S&R": "BNK_CLIPTextEncodeAdvanced"
-      },
-      "widgets_values": [
-        "(RAW photo:1.2), perfect composition, (masterpiece, 8k, absurdres, best quality, intricate), realistic, raytracing, horse, wide shot, side on, full body",
-        "none",
-        "comfy++"
-      ]
-    },
     {
       "id": 127,
       "type": "Reroute",
@@ -157,13 +14,13 @@
         26
       ],
       "flags": {},
-      "order": 3,
+      "order": 2,
       "mode": 0,
       "inputs": [
         {
           "name": "",
           "type": "*",
-          "link": 188
+          "link": 226
         }
       ],
       "outputs": [
@@ -178,188 +35,9 @@
       "properties": {
         "showOutputText": true,
         "horizontal": false
-      }
-    },
-    {
-      "id": 98,
-      "type": "ttN pipeKSampler",
-      "pos": [
-        504,
-        180
-      ],
-      "size": {
-        "0": 426.27685546875,
-        "1": 805.7512817382812
       },
-      "flags": {},
-      "order": 2,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "pipe",
-          "type": "PIPE_LINE",
-          "link": 157
-        },
-        {
-          "name": "optional_model",
-          "type": "MODEL",
-          "link": null
-        },
-        {
-          "name": "optional_positive",
-          "type": "CONDITIONING",
-          "link": null
-        },
-        {
-          "name": "optional_negative",
-          "type": "CONDITIONING",
-          "link": null
-        },
-        {
-          "name": "optional_latent",
-          "type": "LATENT",
-          "link": null,
-          "slot_index": 4
-        },
-        {
-          "name": "optional_vae",
-          "type": "VAE",
-          "link": null
-        },
-        {
-          "name": "optional_clip",
-          "type": "CLIP",
-          "link": null,
-          "slot_index": 6
-        },
-        {
-          "name": "optional_seed",
-          "type": "INT",
-          "link": null
-        },
-        {
-          "name": "script",
-          "type": "SCRIPT",
-          "link": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "pipe",
-          "type": "PIPE_LINE",
-          "links": [],
-          "shape": 3,
-          "slot_index": 0
-        },
-        {
-          "name": "model",
-          "type": "MODEL",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "positive",
-          "type": "CONDITIONING",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "negative",
-          "type": "CONDITIONING",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "latent",
-          "type": "LATENT",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "vae",
-          "type": "VAE",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "links": [],
-          "shape": 3,
-          "slot_index": 6
-        },
-        {
-          "name": "image",
-          "type": "IMAGE",
-          "links": [
-            202
-          ],
-          "shape": 3,
-          "slot_index": 7
-        },
-        {
-          "name": "seed",
-          "type": "INT",
-          "links": null,
-          "shape": 3
-        }
-      ],
-      "title": "pipeKSampler (Background)",
-      "properties": {
-        "Node name for S&R": "ttN pipeKSampler"
-      },
-      "widgets_values": [
-        "None",
-        1,
-        1,
-        "None",
-        2,
-        "disabled",
-        "Sample",
-        "24",
-        8,
-        "dpmpp_sde",
-        "karras",
-        1,
-        "Save",
-        "Comfy"
-      ]
-    },
-    {
-      "id": 132,
-      "type": "Reroute",
-      "pos": [
-        1006,
-        -44
-      ],
-      "size": [
-        82,
-        26
-      ],
-      "flags": {},
-      "order": 5,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "",
-          "type": "*",
-          "link": 202
-        }
-      ],
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": [
-            203
-          ],
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "showOutputText": true,
-        "horizontal": false
-      }
+      "color": "#222",
+      "bgcolor": "#000"
     },
     {
       "id": 126,
@@ -375,7 +53,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 6,
+      "order": 5,
       "mode": 0,
       "inputs": [
         {
@@ -438,8 +116,8 @@
           "name": "pipe",
           "type": "PIPE_LINE",
           "links": [
-            187,
-            192
+            192,
+            219
           ],
           "shape": 3,
           "slot_index": 8
@@ -447,263 +125,9 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeOUT"
-      }
-    },
-    {
-      "id": 121,
-      "type": "BNK_CLIPTextEncodeAdvanced",
-      "pos": [
-        1493,
-        0
-      ],
-      "size": {
-        "0": 462.8277587890625,
-        "1": 135.6024932861328
       },
-      "flags": {},
-      "order": 11,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "link": 193
-        }
-      ],
-      "outputs": [
-        {
-          "name": "CONDITIONING",
-          "type": "CONDITIONING",
-          "links": [
-            174
-          ],
-          "shape": 3,
-          "slot_index": 0
-        }
-      ],
-      "title": "CLIP TE Adv - Merge",
-      "properties": {
-        "Node name for S&R": "BNK_CLIPTextEncodeAdvanced"
-      },
-      "widgets_values": [
-        "(RAW photo:1.2), perfect composition, (masterpiece, 8k, absurdres, best quality, intricate), realistic, raytracing, dark forest, mystical, pathway, horse, wide shot, side on, full body",
-        "none",
-        "comfy++"
-      ]
-    },
-    {
-      "id": 120,
-      "type": "ttN pipeKSampler",
-      "pos": [
-        2158,
-        42
-      ],
-      "size": {
-        "0": 819.8922729492188,
-        "1": 1070.835693359375
-      },
-      "flags": {},
-      "order": 16,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "pipe",
-          "type": "PIPE_LINE",
-          "link": 201
-        },
-        {
-          "name": "optional_model",
-          "type": "MODEL",
-          "link": null
-        },
-        {
-          "name": "optional_positive",
-          "type": "CONDITIONING",
-          "link": 174
-        },
-        {
-          "name": "optional_negative",
-          "type": "CONDITIONING",
-          "link": null
-        },
-        {
-          "name": "optional_latent",
-          "type": "LATENT",
-          "link": 172
-        },
-        {
-          "name": "optional_vae",
-          "type": "VAE",
-          "link": null
-        },
-        {
-          "name": "optional_clip",
-          "type": "CLIP",
-          "link": null
-        },
-        {
-          "name": "optional_seed",
-          "type": "INT",
-          "link": null
-        },
-        {
-          "name": "script",
-          "type": "SCRIPT",
-          "link": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "pipe",
-          "type": "PIPE_LINE",
-          "links": [],
-          "shape": 3,
-          "slot_index": 0
-        },
-        {
-          "name": "model",
-          "type": "MODEL",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "positive",
-          "type": "CONDITIONING",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "negative",
-          "type": "CONDITIONING",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "latent",
-          "type": "LATENT",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "vae",
-          "type": "VAE",
-          "links": [],
-          "shape": 3,
-          "slot_index": 5
-        },
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "links": [],
-          "shape": 3,
-          "slot_index": 6
-        },
-        {
-          "name": "image",
-          "type": "IMAGE",
-          "links": [],
-          "shape": 3,
-          "slot_index": 7
-        },
-        {
-          "name": "seed",
-          "type": "INT",
-          "links": null,
-          "shape": 3
-        }
-      ],
-      "title": "pipeKSampler - Merge/Upscale",
-      "properties": {
-        "Node name for S&R": "ttN pipeKSampler"
-      },
-      "widgets_values": [
-        "add_detail.safetensors",
-        0.3,
-        0,
-        "nearest-exact",
-        2,
-        "disabled",
-        "Sample",
-        "24",
-        8,
-        "euler_ancestral",
-        "karras",
-        0.55,
-        "Save",
-        "Comfy"
-      ]
-    },
-    {
-      "id": 99,
-      "type": "EmptyLatentImage",
-      "pos": [
-        994,
-        30
-      ],
-      "size": {
-        "0": 210,
-        "1": 110.67469787597656
-      },
-      "flags": {
-        "collapsed": false
-      },
-      "order": 1,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "LATENT",
-          "type": "LATENT",
-          "links": [
-            160
-          ],
-          "shape": 3,
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "EmptyLatentImage"
-      },
-      "widgets_values": [
-        512,
-        512,
-        1
-      ]
-    },
-    {
-      "id": 133,
-      "type": "Reroute",
-      "pos": [
-        1329,
-        -40
-      ],
-      "size": [
-        82,
-        26
-      ],
-      "flags": {},
-      "order": 7,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "",
-          "type": "*",
-          "link": 203
-        }
-      ],
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": [
-            204
-          ],
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "showOutputText": true,
-        "horizontal": false
-      }
+      "color": "#222",
+      "bgcolor": "#000"
     },
     {
       "id": 129,
@@ -719,7 +143,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 9,
+      "order": 7,
       "mode": 0,
       "inputs": [
         {
@@ -793,7 +217,9 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeOUT"
-      }
+      },
+      "color": "#222",
+      "bgcolor": "#000"
     },
     {
       "id": 131,
@@ -809,7 +235,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 12,
+      "order": 11,
       "mode": 0,
       "inputs": [
         {
@@ -875,7 +301,7 @@
           "name": "pipe",
           "type": "PIPE_LINE",
           "links": [
-            201
+            222
           ],
           "shape": 3,
           "slot_index": 8
@@ -883,65 +309,136 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeOUT"
-      }
+      },
+      "color": "#222",
+      "bgcolor": "#000"
     },
     {
-      "id": 112,
-      "type": "ttN imageREMBG",
+      "id": 121,
+      "type": "BNK_CLIPTextEncodeAdvanced",
       "pos": [
-        1286,
-        328
+        1493,
+        0
       ],
-      "size": [
-        210,
-        314
-      ],
-      "flags": {
-        "collapsed": false
+      "size": {
+        "0": 462.8277587890625,
+        "1": 135.6024932861328
       },
+      "flags": {},
       "order": 10,
       "mode": 0,
       "inputs": [
         {
-          "name": "image",
-          "type": "IMAGE",
-          "link": 166
+          "name": "clip",
+          "type": "CLIP",
+          "link": 193
         }
       ],
       "outputs": [
         {
-          "name": "image",
-          "type": "IMAGE",
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
           "links": [
-            149
+            223
           ],
           "shape": 3,
           "slot_index": 0
-        },
+        }
+      ],
+      "title": "CLIP TE Adv - Merge",
+      "properties": {
+        "Node name for S&R": "BNK_CLIPTextEncodeAdvanced"
+      },
+      "widgets_values": [
+        "(RAW photo:1.2), perfect composition, (masterpiece, 8k, absurdres, best quality, intricate), realistic, raytracing, dark forest, mystical, pathway, horse, wide shot, side on, full body",
+        "none",
+        "comfy++"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 133,
+      "type": "Reroute",
+      "pos": [
+        1330,
+        -40
+      ],
+      "size": [
+        82,
+        26
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
         {
-          "name": "mask",
-          "type": "MASK",
+          "name": "",
+          "type": "*",
+          "link": 203
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
           "links": [
-            150
+            204
           ],
-          "shape": 3,
-          "slot_index": 1
+          "slot_index": 0
         }
       ],
       "properties": {
-        "Node name for S&R": "ttN imageREMBG"
+        "showOutputText": true,
+        "horizontal": false
       },
-      "widgets_values": [
-        "Preview",
-        "ComfyUI"
-      ]
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
+    },
+    {
+      "id": 132,
+      "type": "Reroute",
+      "pos": [
+        1004,
+        -40
+      ],
+      "size": [
+        82,
+        26
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "",
+          "type": "*",
+          "link": 218
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            203
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "showOutputText": true,
+        "horizontal": false
+      },
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
     },
     {
       "id": 119,
       "type": "VAEEncode",
       "pos": [
-        1998,
-        147
+        2011,
+        121
       ],
       "size": {
         "0": 140,
@@ -969,7 +466,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            172
+            224
           ],
           "shape": 3,
           "slot_index": 0
@@ -977,18 +474,64 @@
       ],
       "properties": {
         "Node name for S&R": "VAEEncode"
-      }
+      },
+      "color": "#322",
+      "bgcolor": "#533"
     },
     {
-      "id": 84,
+      "id": 117,
+      "type": "BNK_CLIPTextEncodeAdvanced",
+      "pos": [
+        534,
+        -19
+      ],
+      "size": {
+        "0": 359.4644775390625,
+        "1": 148.47698974609375
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 225
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            220
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "CLIP TE Adv - Subject",
+      "properties": {
+        "Node name for S&R": "BNK_CLIPTextEncodeAdvanced"
+      },
+      "widgets_values": [
+        "(RAW photo:1.2), perfect composition, (masterpiece, 8k, absurdres, best quality, intricate), realistic, raytracing, horse, wide shot, side on, full body",
+        "none",
+        "comfy++"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 141,
       "type": "ttN pipeKSampler",
       "pos": [
-        976,
-        185
+        934,
+        174
       ],
       "size": [
-        282.00744254606934,
-        798.4828988011718
+        298.52733459472665,
+        819.3887634277344
       ],
       "flags": {},
       "order": 8,
@@ -997,7 +540,7 @@
         {
           "name": "pipe",
           "type": "PIPE_LINE",
-          "link": 187
+          "link": 219
         },
         {
           "name": "optional_model",
@@ -1007,7 +550,7 @@
         {
           "name": "optional_positive",
           "type": "CONDITIONING",
-          "link": 162
+          "link": 220
         },
         {
           "name": "optional_negative",
@@ -1017,7 +560,7 @@
         {
           "name": "optional_latent",
           "type": "LATENT",
-          "link": 160
+          "link": 221
         },
         {
           "name": "optional_vae",
@@ -1030,21 +573,170 @@
           "link": null
         },
         {
-          "name": "optional_seed",
-          "type": "INT",
-          "link": null
-        },
-        {
           "name": "script",
           "type": "SCRIPT",
           "link": null
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "seed",
+            "config": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709552000
+              }
+            ]
+          }
         }
       ],
       "outputs": [
         {
           "name": "pipe",
           "type": "PIPE_LINE",
-          "links": [],
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            228
+          ],
+          "shape": 3,
+          "slot_index": 7
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ttN pipeKSampler"
+      },
+      "widgets_values": [
+        "None",
+        1,
+        1,
+        "None",
+        2,
+        "disabled",
+        "Sample",
+        "24",
+        8,
+        "euler_ancestral",
+        "karras",
+        1,
+        "Save",
+        "Comfy",
+        789002982143492,
+        "randomize"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 99,
+      "type": "EmptyLatentImage",
+      "pos": [
+        991,
+        27
+      ],
+      "size": {
+        "0": 210,
+        "1": 110.67469787597656
+      },
+      "flags": {
+        "collapsed": false
+      },
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            221
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptyLatentImage"
+      },
+      "widgets_values": [
+        512,
+        512,
+        1
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 143,
+      "type": "ttN pipeLoader",
+      "pos": [
+        -42,
+        45
+      ],
+      "size": [
+        481.1092570312503,
+        946.6528158203128
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "links": [
+            226,
+            227
+          ],
           "shape": 3,
           "slot_index": 0
         },
@@ -1075,73 +767,77 @@
         {
           "name": "vae",
           "type": "VAE",
-          "links": [],
-          "shape": 3,
-          "slot_index": 5
+          "links": null,
+          "shape": 3
         },
         {
           "name": "clip",
           "type": "CLIP",
-          "links": [],
+          "links": [
+            225
+          ],
           "shape": 3,
           "slot_index": 6
         },
         {
-          "name": "image",
-          "type": "IMAGE",
-          "links": [
-            166
-          ],
-          "shape": 3,
-          "slot_index": 7
-        },
-        {
-          "name": "seed",
+          "name": "SEED",
           "type": "INT",
           "links": null,
           "shape": 3
         }
       ],
-      "title": "pipeKSampler (Subject)",
       "properties": {
-        "Node name for S&R": "ttN pipeKSampler"
+        "Node name for S&R": "ttN pipeLoader"
       },
       "widgets_values": [
+        "Good\\deliberate_v2.safetensors",
+        "vae-ft-mse-840000-ema-pruned.safetensors",
+        -1,
         "None",
         1,
         1,
         "None",
-        2,
-        "disabled",
-        "Sample",
-        "24",
-        8,
-        "euler_ancestral",
-        "karras",
         1,
-        "Save",
-        "Comfy"
-      ]
+        1,
+        "None",
+        1,
+        1,
+        "(RAW photo:1.2), perfect composition, (masterpiece, 8k, absurdres, best quality, intricate), realistic, raytracing, dark forest, mystical, pathway",
+        "none",
+        "comfy++",
+        "(semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, digital art, anime, manga:1.3), out of frame, cropped, cut off, poorly made, username, signature, watermark, unattractive, blurry, boring, sketch, lacklustre, repetitive, worst quality, low quality, jpeg artefacts, poorly lit, overexposed, underexposed, glitch, error, out of focus, amateur, (poorly drawn hands, poorly drawn face:1.2), deformed iris, deformed pupils, morbid, duplicate, mutilated, extra fingers, mutated hands, poorly drawn eyes, mutation, deformed, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck, incoherent, cloned face, cloned body, blur, blurry,(nsfw),(naked),(nude)",
+        "none",
+        "comfy++",
+        768,
+        512,
+        1,
+        302086422941626,
+        "fixed"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
     },
     {
-      "id": 135,
-      "type": "ttN imageOutput",
+      "id": 112,
+      "type": "ttN imageREMBG",
       "pos": [
-        1767,
-        309
+        1250,
+        329
       ],
-      "size": [
-        352.06810942382754,
-        310.4549291748044
-      ],
-      "flags": {},
-      "order": 14,
+      "size": {
+        "0": 210,
+        "1": 314
+      },
+      "flags": {
+        "collapsed": false
+      },
+      "order": 12,
       "mode": 0,
       "inputs": [
         {
           "name": "image",
           "type": "IMAGE",
-          "link": 205
+          "link": 228
         }
       ],
       "outputs": [
@@ -1149,29 +845,40 @@
           "name": "image",
           "type": "IMAGE",
           "links": [
-            206
+            149
           ],
           "shape": 3,
           "slot_index": 0
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": [
+            150
+          ],
+          "shape": 3,
+          "slot_index": 1
         }
       ],
       "properties": {
-        "Node name for S&R": "ttN imageOutput"
+        "Node name for S&R": "ttN imageREMBG"
       },
       "widgets_values": [
         "Preview",
         "ComfyUI"
-      ]
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
     },
     {
       "id": 106,
       "type": "Image Overlay",
       "pos": [
-        1515,
-        324
+        1498,
+        322
       ],
       "size": [
-        242.99177187500027,
+        252.95153299804724,
         290
       ],
       "flags": {},
@@ -1218,7 +925,360 @@
         140,
         0,
         0
-      ]
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 135,
+      "type": "ttN imageOutput",
+      "pos": [
+        1776,
+        322
+      ],
+      "size": {
+        "0": 352.068115234375,
+        "1": 310.4549255371094
+      },
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 205
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            206
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ttN imageOutput"
+      },
+      "widgets_values": [
+        "Preview",
+        "ComfyUI"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 140,
+      "type": "ttN pipeKSampler",
+      "pos": [
+        458,
+        174
+      ],
+      "size": [
+        434.4862069091798,
+        812.1036730957032
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "link": 227
+        },
+        {
+          "name": "optional_model",
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "optional_positive",
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "optional_negative",
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "optional_latent",
+          "type": "LATENT",
+          "link": null
+        },
+        {
+          "name": "optional_vae",
+          "type": "VAE",
+          "link": null
+        },
+        {
+          "name": "optional_clip",
+          "type": "CLIP",
+          "link": null
+        },
+        {
+          "name": "script",
+          "type": "SCRIPT",
+          "link": null
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "seed",
+            "config": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709552000
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            218
+          ],
+          "shape": 3,
+          "slot_index": 7
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ttN pipeKSampler"
+      },
+      "widgets_values": [
+        "None",
+        1,
+        1,
+        "None",
+        2,
+        "disabled",
+        "Sample",
+        "24",
+        8,
+        "dpmpp_sde",
+        "karras",
+        1,
+        "Save",
+        "Comfy",
+        1103653817850807,
+        "randomize"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 142,
+      "type": "ttN pipeKSampler",
+      "pos": [
+        2176,
+        -88
+      ],
+      "size": [
+        852.7412069091802,
+        1091.4066730957034
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "link": 222
+        },
+        {
+          "name": "optional_model",
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "optional_positive",
+          "type": "CONDITIONING",
+          "link": 223
+        },
+        {
+          "name": "optional_negative",
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "optional_latent",
+          "type": "LATENT",
+          "link": 224
+        },
+        {
+          "name": "optional_vae",
+          "type": "VAE",
+          "link": null
+        },
+        {
+          "name": "optional_clip",
+          "type": "CLIP",
+          "link": null
+        },
+        {
+          "name": "script",
+          "type": "SCRIPT",
+          "link": null
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "seed",
+            "config": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709552000
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [],
+          "shape": 3,
+          "slot_index": 7
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "title": "pipeKSampler Merge/Upscale",
+      "properties": {
+        "Node name for S&R": "ttN pipeKSampler"
+      },
+      "widgets_values": [
+        "add_detail.safetensors",
+        1,
+        1,
+        "nearest-exact",
+        2,
+        "disabled",
+        "Sample",
+        "24",
+        8,
+        "euler_ancestral",
+        "karras",
+        0.55,
+        "Save",
+        "Comfy",
+        29989707776547,
+        "randomize"
+      ],
+      "color": "#233",
+      "bgcolor": "#355"
     }
   ],
   "links": [
@@ -1239,84 +1299,12 @@
       "MASK"
     ],
     [
-      157,
-      83,
-      0,
-      98,
-      0,
-      "PIPE_LINE"
-    ],
-    [
-      160,
-      99,
-      0,
-      84,
-      4,
-      "LATENT"
-    ],
-    [
-      162,
-      117,
-      0,
-      84,
-      2,
-      "CONDITIONING"
-    ],
-    [
-      166,
-      84,
-      7,
-      112,
-      0,
-      "IMAGE"
-    ],
-    [
-      172,
-      119,
-      0,
-      120,
-      4,
-      "LATENT"
-    ],
-    [
-      174,
-      121,
-      0,
-      120,
-      2,
-      "CONDITIONING"
-    ],
-    [
-      187,
-      126,
-      8,
-      84,
-      0,
-      "PIPE_LINE"
-    ],
-    [
-      188,
-      83,
-      0,
-      127,
-      0,
-      "*"
-    ],
-    [
       189,
       127,
       0,
       126,
       0,
       "PIPE_LINE"
-    ],
-    [
-      190,
-      83,
-      6,
-      117,
-      0,
-      "CLIP"
     ],
     [
       192,
@@ -1351,22 +1339,6 @@
       "VAE"
     ],
     [
-      201,
-      131,
-      8,
-      120,
-      0,
-      "PIPE_LINE"
-    ],
-    [
-      202,
-      98,
-      7,
-      132,
-      0,
-      "*"
-    ],
-    [
       203,
       132,
       0,
@@ -1395,6 +1367,94 @@
       135,
       0,
       119,
+      0,
+      "IMAGE"
+    ],
+    [
+      218,
+      140,
+      7,
+      132,
+      0,
+      "*"
+    ],
+    [
+      219,
+      126,
+      8,
+      141,
+      0,
+      "PIPE_LINE"
+    ],
+    [
+      220,
+      117,
+      0,
+      141,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      221,
+      99,
+      0,
+      141,
+      4,
+      "LATENT"
+    ],
+    [
+      222,
+      131,
+      8,
+      142,
+      0,
+      "PIPE_LINE"
+    ],
+    [
+      223,
+      121,
+      0,
+      142,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      224,
+      119,
+      0,
+      142,
+      4,
+      "LATENT"
+    ],
+    [
+      225,
+      143,
+      6,
+      117,
+      0,
+      "CLIP"
+    ],
+    [
+      226,
+      143,
+      0,
+      127,
+      0,
+      "*"
+    ],
+    [
+      227,
+      143,
+      0,
+      140,
+      0,
+      "PIPE_LINE"
+    ],
+    [
+      228,
+      141,
+      7,
+      112,
       0,
       "IMAGE"
     ]
