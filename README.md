@@ -27,7 +27,7 @@ Background Removal node with optional image preview & save.
 + _**Outputs -** image, mask_
 
 Example of a photobashing workflow using pipeNodes, imageRemBG, imageOutput and nodes from [ADV_CLIP_emb](https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb) and [ImpactPack](https://github.com/ltdrdata/ComfyUI-Impact-Pack/tree/Main):
-![photobash](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/23630d1c-778e-440c-8fd9-c05bec0d64ec)
+![photobash](workflows/tinyterra_imagebash.png)
 
 
 ## ttN/pipe
@@ -110,4 +110,10 @@ Text input, to display text inside the node, with optional print to console.
 **Seed**
 
 Basic Seed Loader.
-+ _**Outputs -** Seed (INT)_
++ _**Outputs -** seed (INT)_
+
+**int > text**
+
+Converts an INT to a STRING.
++ _**Inputs -** int (INT)_
++ _**Outputs -** text (STRING)_
