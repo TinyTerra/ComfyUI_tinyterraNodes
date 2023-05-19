@@ -12,6 +12,8 @@ comfy_path = cwd_path.parent.parent
 sitepkg = comfy_path.parent / 'python_embeded' / 'Lib'  / 'site-packages'
 python_exe = comfy_path.parent / 'python_embeded' / 'python.exe'
 
+sys.path.append(str(sitepkg))
+
 if not os.path.exists(python_exe):
     python_exe = sys.executable
 
@@ -80,10 +82,7 @@ except:
     if not configRead("install_rembg") == 'Failed to install':
         try:
             print("\033[92m[ttNodes] \033[0;31mREMBG is not installed. Attempting to install...\033[0m")
-            if os.path.exists(sitepkg):
-                p = subprocess.Popen([python_exe, "-m", "pip", "install", "rembg[gpu]"], cwd=sitepkg)
-            else:
-                p = subprocess.Popen([python_exe, "-m", "pip", "install", "rembg[gpu]"])
+            p = subprocess.Popen([sys.executable, "-m", "pip", "install", "rembg[gpu]"])
             p.wait()
             print("\033[92m[ttNodes] REMBG Installed!\033[0m")
 
