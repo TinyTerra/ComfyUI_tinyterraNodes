@@ -21,8 +21,10 @@ from comfy.sd import ModelPatcher, CLIP, VAE
 # Get absolute path's of the current parent directory, of the ComfyUI directory and add to sys.path list
 my_dir = Path(__file__).parent
 comfy_dir = Path(my_dir).parent.parent
-sys.path.append(comfy_dir)
+sys.path.append(str(comfy_dir))
 font_path = os.path.join(my_dir, 'arial.ttf')
+sitepkg = comfy_dir.parent / 'python_embeded' / 'Lib'  / 'site-packages'
+sys.path.append(str(sitepkg))
 
 MAX_RESOLUTION=8192
 
