@@ -106,8 +106,18 @@ Text input, to display text inside the node, with optional print to console.
 + _**inputs -** text1, text2, text3 (STRING's)_
 + _**Outputs -** text1, text2, text3, 1 & 2, 1 & 3, 2 & 3, concat (STRING's)_
 
-## ttN
+## ttN/util
 **Seed**
 
 Basic Seed Loader.
 + _**Outputs -** Seed (INT)_
+
+**float**
+
+float loader and converter
++ _**inputs -** float (FLOAT)_
++ _**Outputs -** float, int, text (FLOAT, INT, STRING)_
+
+int loader and converter
++ _**inputs -** int (INT)_
++ _**Outputs -** int, float, text (INT, FLOAT, STRING)_

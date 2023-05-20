@@ -4,6 +4,7 @@
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
 import os
+import re
 import sys
 import json
 import torch
@@ -1172,7 +1173,7 @@ class ttN_text:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-            "text": ("STRING", {"default": '', "multiline": True}),
+                    "text": ("STRING", {"default": "", "multiline": True}),
         }}
 
     RETURN_TYPES = ("STRING",)
@@ -1184,7 +1185,7 @@ class ttN_text:
     @staticmethod
     def conmeow(text):
         return text,
-
+    
 class ttN_textDebug:
     def __init__(self):
         pass
@@ -1220,11 +1221,42 @@ class ttN_textDebug:
         return {"ui": {"text": text},
                 "result": (text,)}
 
+class ttN_concat:
+    def __init__(self):
+        pass
+    """
+    Concatenate 2 strings
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+                    "text1": ("STRING", {"multiline": True, "default": ''}),
+                    "text2": ("STRING", {"multiline": True, "default": ''}),
+                    "text3": ("STRING", {"multiline": True, "default": ''}),
+                    "delimiter": ("STRING", {"default":",","multiline": False}),
+                    }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("concat",)
+    FUNCTION = "conmeow"
+
+    CATEGORY = "ttN/text"
+
+    def conmeow(self, text1='', text2='', text3='', delimiter=''):
+        text1 = '' if text1 == 'undefined' else text1
+        text2 = '' if text2 == 'undefined' else text2
+        text3 = '' if text3 == 'undefined' else text3
+
+        concat = delimiter.join([text1, text2, text3])
+       
+        return concat
+
 class ttN_text3BOX_3WAYconcat:
     def __init__(self):
         pass
     """
-    Concatenate 3 strings, seperated by a space, in various ways.
+    Concatenate 3 strings, in various ways.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -1247,20 +1279,18 @@ class ttN_text3BOX_3WAYconcat:
         text2 = '' if text2 == 'undefined' else text2
         text3 = '' if text3 == 'undefined' else text3
 
-        delimiter = f'{delimiter} '
-
         t_1n2 = delimiter.join([text1, text2])
         t_1n3 = delimiter.join([text1, text3])
         t_2n3 = delimiter.join([text2, text3])
         concat = delimiter.join([text1, text2, text3])
        
-        return text1, text2, text3, t_1n2, t_1n3, t_2n3, concat, delimiter
+        return text1, text2, text3, t_1n2, t_1n3, t_2n3, concat
 
 class ttN_text7BOX_concat:
     def __init__(self):
         pass
     """
-    Concatenate many strings, seperated by a space
+    Concatenate many strings
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -1291,15 +1321,53 @@ class ttN_text7BOX_concat:
             text6 = '' if text6 == 'undefined' else text6
             text7 = '' if text7 == 'undefined' else text7
             
-            texts = [text1, text2, text3, text4, text5, text6, text7]
-            delimiter = f'{delimiter} '            
+            texts = [text1, text2, text3, text4, text5, text6, text7]        
             concat = delimiter.join(text for text in texts if text)
             return text1, text2, text3, text4, text5, text6, text7, concat
 #---------------------------------------------------------------ttN/text END------------------------------------------------------------------------#
 
-#-----------------------------------------------------------------ttN START----------------------------------------------------------------------#
+#---------------------------------------------------------------ttN/util START----------------------------------------------------------------------#
+class ttN_INT:
+    def __init__(self):
+        pass
 
-class ttN_seed:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+                    "int": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+        }}
+
+    RETURN_TYPES = ("INT", "FLOAT", "STRING",)
+    RETURN_NAMES = ("int", "float", "text",)
+    FUNCTION = "convert"
+
+    CATEGORY = "ttN/util"
+
+    @staticmethod
+    def convert(int):
+        return int, float(int), str(int)
+
+class ttN_FLOAT:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+                    "float": ("FLOAT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+        }}
+
+    RETURN_TYPES = ("FLOAT", "INT", "STRING",)
+    RETURN_NAMES = ("float", "int", "text",)
+    FUNCTION = "convert"
+
+    CATEGORY = "ttN/util"
+
+    @staticmethod
+    def convert(float):
+        return float, int(float), str(float)
+
+class ttN_SEED:
     def __init__(self):
         pass
 
@@ -1314,33 +1382,15 @@ class ttN_seed:
     FUNCTION = "plant"
     OUTPUT_NODE = True
 
-    CATEGORY = "ttN"
+    CATEGORY = "ttN/util"
 
     @staticmethod
     def plant(seed):
         return seed,
+#---------------------------------------------------------------ttN/util End------------------------------------------------------------------------#
 
-class ttN_INT2TEXT:
-    def __init__(self):
-        pass
 
-    @classmethod
-    def INPUT_TYPES(s):
-        return {"required": {
-                    "int": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
-        }}
-
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("text",)
-    FUNCTION = "stringify"
-
-    CATEGORY = "ttN"
-
-    @staticmethod
-    def stringify(int):
-        string = str(int)
-        return string,
-
+#---------------------------------------------------------------ttN/image START---------------------------------------------------------------------#
 # ttN RemBG
 try:
     from rembg import remove
@@ -1446,6 +1496,7 @@ class ttN_imageOUPUT:
             # Output image results to ui and node outputs
             return {"ui": {"images": results},
                     "result": (image,)}
+#---------------------------------------------------------------ttN/image END-----------------------------------------------------------------------#
 
 print("\033[92m[t ttNodes Loaded t]\033[0m")
 
@@ -1462,16 +1513,18 @@ NODE_CLASS_MAPPINGS = {
     #ttN/text
     "ttN text": ttN_text,
     "ttN textDebug": ttN_textDebug,
+    "ttN concat": ttN_concat,
     "ttN text3BOX_3WAYconcat": ttN_text3BOX_3WAYconcat,    
     "ttN text7BOX_concat": ttN_text7BOX_concat,
-    "ttN int2text": ttN_INT2TEXT,
 
     #ttN/image
     "ttN imageOutput": ttN_imageOUPUT,
     "ttN imageREMBG": ttN_imageREMBG,
 
-    #ttN
-    "ttN seed": ttN_seed
+    #ttN/util
+    "ttN int": ttN_INT,
+    "ttN float": ttN_FLOAT,
+    "ttN seed": ttN_SEED
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     #ttN/pipe    
@@ -1486,15 +1539,17 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     #ttN/text
     "ttN text": "text",
     "ttN textDebug": "textDebug",
+    "ttN concat": "textConcat",
     "ttN text7BOX_concat": "7x TXT Loader Concat",
     "ttN text3BOX_3WAYconcat": "3x TXT Loader MultiConcat",
-    "ttN int2text": "int > text",
 
     #ttN/image
     "ttN imageREMBG": "imageRemBG",
     "ttN imageOutput": "imageOutput",
 
-    #ttN
+    #ttN/util
+    "ttN int": "int",
+    "ttN float": "float",
     "ttN seed": "seed"
 }
 
