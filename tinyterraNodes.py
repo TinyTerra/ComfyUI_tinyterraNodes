@@ -213,7 +213,7 @@ class ttN_TSC_pipeLoader:
                 "hidden": {"prompt": "PROMPT"}}             
 
     RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT",)
-    RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "SEED",)
+    RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed",)
 
     FUNCTION = "adv_pipeloader"
     CATEGORY = "ttN/pipe"
@@ -304,65 +304,18 @@ def upscale(samples, upscale_method, factor, crop):
         )
         return (s,)
 
-# Functions for previewing & saving images
-def compute_vars(input, images):
-    input = input.replace("%width%", str(images[0].shape[1]))
-    input = input.replace("%height%", str(images[0].shape[0]))
-    return input
-
-def get_counter(output_folder, filename):
-    try:
-        files = os.listdir(output_folder)
-        counter = max([int(file.split("_")[-2]) for file in files if file.startswith(filename) and file.split(".")[-2].endswith("_")]) + 1
-
-    except ValueError:
-        counter = 1
-
-    except FileNotFoundError:
-        os.makedirs(output_folder, exist_ok=True)
-        counter = 1
-
-    # Check if the filename already exists in the output folder.
-    # If it does, increment the counter
-    while filename in files:
-        counter += 1
-
-    return counter
-
-def save_image(self, img, results, output_folder, filename, subfolder, counter, metadata):
-    file = f"{filename}_{counter:05}_.png"
-    img.save(os.path.join(output_folder, file), pnginfo=metadata, compress_level=4)
-    if results != None:
-        results.append({
-            "filename": file,
-            "subfolder": subfolder,
-            "type": self.type
-        });
-    counter += 1
-    return results, counter
-
-def output_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo):
-
-    if not os.path.exists(self.output_dir):
-        os.makedirs(self.output_dir) 
-
-    p_prefix = compute_vars(preview_prefix, images)
-    p_subfolder = os.path.dirname(os.path.normpath(p_prefix))
-    p_filename = os.path.basename(os.path.normpath(p_prefix))
-    p_output_folder = os.path.join(self.output_dir, p_subfolder)
-    p_counter = get_counter(p_output_folder, p_filename)
+def save_images(self, images, preview_prefix, save_prefix, image_output, prompt=None, extra_pnginfo=None):
 
     if image_output == "Save":
-        s_prefix = compute_vars(save_prefix, images)
-        s_subfolder = os.path.dirname(os.path.normpath(s_prefix))
-        s_filename = os.path.basename(os.path.normpath(s_prefix))
-        s_output_folder = os.path.join(self.save_dir, s_subfolder)
-        s_counter = get_counter(s_output_folder, s_filename)
+        output_dir = folder_paths.get_output_directory()
+        filename_prefix = save_prefix
+        type = "output"
+    elif image_output == "Preview":
+        output_dir = folder_paths.get_temp_directory()
+        filename_prefix = preview_prefix
+        type = "temp"
 
-        if not os.path.exists(self.save_dir):
-            os.makedirs(self.save_dir)  
-
-    # Create the images
+    full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, output_dir, images[0].shape[1], images[0].shape[0])
     results = list()
     for image in images:
         i = 255. * image.cpu().numpy()
@@ -374,15 +327,16 @@ def output_images(self, images, preview_prefix, save_prefix, image_output, promp
             for x in extra_pnginfo:
                 metadata.add_text(x, json.dumps(extra_pnginfo[x]))
 
-        # Save the preview Image.
-        results, p_counter = save_image(self, img, results, p_output_folder, p_filename, p_subfolder, p_counter, metadata)
-
-        # Save the image.
-        if image_output == "Save":
-            s_counter = save_image(self, img, None, s_output_folder, s_filename, s_subfolder, s_counter, metadata)[1]
+        file = f"{filename}_{counter:05}_.png"
+        img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=4)
+        results.append({
+            "filename": file,
+            "subfolder": subfolder,
+            "type": type
+        })
+        counter += 1
 
     return results
-
 
 
 #---------------------------------------------------------------ttN Pipe KSampler START-------------------------------------------------------------#
@@ -401,9 +355,7 @@ class ttN_TSC_pipeKSampler:
     crop_methods = ["disabled", "center"]
 
     def __init__(self):
-        self.output_dir = os.path.join(comfy_dir, 'temp')
-        self.save_dir = os.path.join(comfy_dir, 'output')
-        self.type = "temp"
+        pass
     
 
     @classmethod
@@ -425,7 +377,7 @@ class ttN_TSC_pipeKSampler:
                  "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
                  "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                  "image_output": (["Disabled", "Preview", "Save"],),
-                 "save_prefix": ("STRING", {"default": "ComfyUI","multiline": False})
+                 "save_prefix": ("STRING", {"default": "ComfyUI"})
                 },
                 "optional": 
                 {"seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
@@ -566,7 +518,7 @@ class ttN_TSC_pipeKSampler:
                 update_value_by_id("vae_decode", my_unique_id, False)
 
                 # Generate image results and store
-                results = output_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
+                results = save_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
                 update_value_by_id("results", my_unique_id, results)
 
                 new_pipe = (model, positive, negative, {"samples": latent}, vae, clip, images, seed,)
@@ -601,7 +553,7 @@ class ttN_TSC_pipeKSampler:
                     update_value_by_id("vae_decode", my_unique_id, False)
 
                     # Generate image results and store
-                    results = output_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
+                    results = save_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
                     update_value_by_id("results", my_unique_id, results)
 
                 else:
@@ -786,7 +738,7 @@ class ttN_TSC_pipeKSampler:
                 size_list.append(pil_image.size)
 
                 # Save the original image
-                output_images(self, image, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
+                save_images(self, image, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
 
                 # Update max dimensions
                 max_width = max(max_width, pil_image.width)
@@ -996,7 +948,7 @@ class ttN_TSC_pipeKSampler:
             update_value_by_id("images", my_unique_id, images)
 
             # Generate image results and store
-            results = output_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
+            results = save_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
             update_value_by_id("results", my_unique_id, results)
 
             # Clean loaded_objects
@@ -1397,16 +1349,14 @@ try:
     
     class ttN_imageREMBG:
         def __init__(self):
-            self.output_dir = os.path.join(comfy_dir, 'temp')
-            self.save_dir = os.path.join(comfy_dir, 'output')
-            self.type = "temp"
+            pass
         
         @classmethod
         def INPUT_TYPES(s):
             return {"required": { 
                     "image": ("IMAGE",),
                     "image_output": (["Disabled", "Preview", "Save"],),
-                    "save_prefix": ("STRING", {"default": "ComfyUI","multiline": False}),
+                    "save_prefix": ("STRING", {"default": "ComfyUI"}),
                     },
                     "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
                 }
@@ -1438,7 +1388,7 @@ try:
             else:
                 # Define preview_prefix
                 preview_prefix = "ttNrembg_{:02d}".format(int(my_unique_id))
-                results = output_images(self, tensor, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
+                results = save_images(self, tensor, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
 
             # Output image results to ui and node outputs
             return {"ui": {"images": results},
@@ -1466,16 +1416,14 @@ except:
 
 class ttN_imageOUPUT:
         def __init__(self):
-            self.output_dir = os.path.join(comfy_dir, 'temp')
-            self.save_dir = os.path.join(comfy_dir, 'output')
-            self.type = "temp"
+            pass
         
         @classmethod
         def INPUT_TYPES(s):
             return {"required": { 
                     "image": ("IMAGE",),
                     "image_output": (["Preview", "Save"],),
-                    "save_prefix": ("STRING", {"default": "ComfyUI","multiline": False}),
+                    "save_prefix": ("STRING", {"default": "ComfyUI"}),
                     },
                     "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
                 }
@@ -1491,7 +1439,7 @@ class ttN_imageOUPUT:
             
             # Define preview_prefix
             preview_prefix = "ttNimgOUT_{:02d}".format(int(my_unique_id))
-            results = output_images(self, image, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
+            results = save_images(self, image, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
 
             # Output image results to ui and node outputs
             return {"ui": {"images": results},
