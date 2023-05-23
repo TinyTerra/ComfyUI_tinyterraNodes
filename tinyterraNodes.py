@@ -14,10 +14,12 @@ import numpy as np
 import folder_paths
 import comfy.samplers
 from pathlib import Path
+import comfy.model_management
 from nodes import common_ksampler
 from PIL.PngImagePlugin import PngInfo
 from PIL import Image, ImageDraw, ImageFont
 from comfy.sd import ModelPatcher, CLIP, VAE
+from comfy_extras.chainner_models import model_loading
 
 # Get absolute path's of the current parent directory, of the ComfyUI directory and add to sys.path list
 my_dir = Path(__file__).parent
@@ -45,7 +47,8 @@ loaded_objects = {
     "clip": [], # (ckpt_name, clip)
     "bvae": [], # (ckpt_name, vae)
     "vae": [],  # (vae_name, vae)
-    "lora": [] # (lora_name, model_name, model_lora, clip_lora, strength_model, strength_clip)
+    "lora": [], # (lora_name, model_name, model_lora, clip_lora, strength_model, strength_clip)
+    "upscale": []  # (ckpt_name, model)
 }
 
 def update_loaded_objects(prompt):
@@ -64,6 +67,8 @@ def update_loaded_objects(prompt):
         desired_lora_names.add(entry["inputs"]["lora1_name"])
         desired_lora_names.add(entry["inputs"]["lora2_name"])
         desired_lora_names.add(entry["inputs"]["lora3_name"])
+
+    ttN_modelUP_entries = [entry for entry in prompt.values() if entry["class_type"] == "ttN ganUP"]
 
     # Check and clear unused ckpt, clip, and bvae entries
     for list_key in ["ckpt", "clip", "bvae"]:
@@ -271,6 +276,96 @@ class ttN_TSC_pipeLoader:
 
 
 
+
+class ttN_modelUP:
+    upscale_methods = ["nearest-exact", "bilinear", "area"]
+    crop_methods = ["disabled", "center"]
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { "model_name": (folder_paths.get_filename_list("upscale_models"),),
+                              "image": ("IMAGE",),
+                              "rescale_after_model": ([False, True],),
+                              "rescale_method": (s.upscale_methods,),
+                              "rescale": (["by factor", "to Width/Height"],),
+                              "factor": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 10.0, "step": 0.25}),
+                              "width": ("INT", {"default": 512, "min": 1, "max": MAX_RESOLUTION, "step": 1}),
+                              "height": ("INT", {"default": 512, "min": 1, "max": MAX_RESOLUTION, "step": 1}),
+                              "crop": (s.crop_methods,),
+                              "image_output": (["Hide", "Preview", "Save"],),
+                              "save_prefix": ("STRING", {"default": "ComfyUI"}),
+                              "output_latent": ([False, True],),
+                              "vae": ("VAE",),},
+                "hidden": {   "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
+        }
+        
+    RETURN_TYPES = ("IMAGE", "LATENT",)
+    RETURN_NAMES = ('image', "latent",)
+
+    FUNCTION = "upscale"
+    CATEGORY = "ttN/image"
+    OUTPUT_NODE = True
+
+    def vae_encode_crop_pixels(self, pixels):
+        x = (pixels.shape[1] // 8) * 8
+        y = (pixels.shape[2] // 8) * 8
+        if pixels.shape[1] != x or pixels.shape[2] != y:
+            x_offset = (pixels.shape[1] % 8) // 2
+            y_offset = (pixels.shape[2] % 8) // 2
+            pixels = pixels[:, x_offset:x + x_offset, y_offset:y + y_offset, :]
+        return pixels
+
+    def upscale(self, model_name, image, rescale_after_model, rescale_method, rescale, factor, width, height, crop, image_output, save_prefix, output_latent, vae, prompt=None, extra_pnginfo=None, my_unique_id=None):
+        # Load Model
+        model_path = folder_paths.get_full_path("upscale_models", model_name)
+        sd = comfy.utils.load_torch_file(model_path, safe_load=True)
+        upscale_model = model_loading.load_state_dict(sd).eval()
+
+        # Model upscale
+        device = comfy.model_management.get_torch_device()
+        upscale_model.to(device)
+        in_img = image.movedim(-1,-3).to(device)
+
+        tile = 128 + 64
+        overlap = 8
+        steps = in_img.shape[0] * comfy.utils.get_tiled_scale_steps(in_img.shape[3], in_img.shape[2], tile_x=tile, tile_y=tile, overlap=overlap)
+        pbar = comfy.utils.ProgressBar(steps)
+        s = comfy.utils.tiled_scale(in_img, lambda a: upscale_model(a), tile_x=tile, tile_y=tile, overlap=overlap, upscale_amount=upscale_model.scale, pbar=pbar)
+        upscale_model.cpu()
+        s = torch.clamp(s.movedim(-3,-1), min=0, max=1.0)
+
+        # Post Model Rescale
+        if rescale_after_model == True:
+            samples = s.movedim(-1, 1)
+            if rescale == "by factor" and rescale != 0:
+                height = factor * samples.shape[2]
+                width = factor * samples.shape[3]
+                if (width > MAX_RESOLUTION):
+                    width = MAX_RESOLUTION
+                if (height > MAX_RESOLUTION):
+                    height = MAX_RESOLUTION
+
+                width = int(enforce_mul_of_64(width))
+                height = int(enforce_mul_of_64(height))
+
+            s = comfy.utils.common_upscale(samples, width, height, rescale_method, crop)
+            s = s.movedim(1,-1)
+
+        # vae encode
+        if output_latent == True:
+            pixels = self.vae_encode_crop_pixels(s)
+            t = vae.encode(pixels[:,:,:,:3])
+        else:
+            t = None
+
+        if image_output == "Hide":
+            return (s, {"samples":t},)
+        else:
+            preview_prefix = "ttNmodelUP_{:02d}".format(int(my_unique_id))
+            results = save_images(self, s, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
+            return {"ui": {"images": results}, 
+                    "result": (s, {"samples":t},)}
+
 #Functions for upscaling
 def enforce_mul_of_64(d):
     leftover = d % 8          # 8 is the number of pixels per byte
@@ -356,7 +451,6 @@ class ttN_TSC_pipeKSampler:
 
     def __init__(self):
         pass
-    
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -1444,6 +1538,9 @@ class ttN_imageOUPUT:
             # Output image results to ui and node outputs
             return {"ui": {"images": results},
                     "result": (image,)}
+
+
+
 #---------------------------------------------------------------ttN/image END-----------------------------------------------------------------------#
 
 print("\033[92m[t ttNodes Loaded t]\033[0m")
@@ -1468,6 +1565,7 @@ NODE_CLASS_MAPPINGS = {
     #ttN/image
     "ttN imageOutput": ttN_imageOUPUT,
     "ttN imageREMBG": ttN_imageREMBG,
+    "ttN modelScale": ttN_modelUP,
 
     #ttN/util
     "ttN int": ttN_INT,
@@ -1494,6 +1592,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     #ttN/image
     "ttN imageREMBG": "imageRemBG",
     "ttN imageOutput": "imageOutput",
+    "ttN modelScale": "modelScale",
 
     #ttN/util
     "ttN int": "int",

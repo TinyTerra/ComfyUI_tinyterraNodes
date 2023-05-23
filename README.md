@@ -7,7 +7,7 @@ Navigate to the **_ComfyUI/custom_nodes_** directory, and run:
 `git clone https://github.com/TinyTerra/ComfyUI_tinyterraNodes.git`
 
 ### AutoUpdate
-On the first run, a config.json file will be created with - "autoUpdate" = false.
+On the first run, a config.ini file will be created with - "autoUpdate" = false.
 If you want the node pack to auto update when you start Comfy set this to true.
 
 # Nodes
@@ -28,6 +28,12 @@ Background Removal node with optional image preview & save.
 
 Example of a photobashing workflow using pipeNodes, imageRemBG, imageOutput and nodes from [ADV_CLIP_emb](https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb) and [ImpactPack](https://github.com/ltdrdata/ComfyUI-Impact-Pack/tree/Main):
 ![photobash](workflows/tinyterra_imagebash.png)
+
+**modelScale**
+
+Upscale image by model, optional rescale of result image.
++ _**Inputs -** image, vae, upscale_model, rescale_after_model[true, false], rescale[by_factor, to Width/Height], rescale method[nearest-exact, bilinear, area], factor, width, height, crop, image_output[Hide, Preview, Save], save prefix, output_latent[true, false]_
++ _**Outputs -** image, latent_
 
 
 ## ttN/pipe
