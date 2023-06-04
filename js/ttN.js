@@ -2,7 +2,7 @@ import { app } from "/scripts/app.js";
 import { ComfyWidgets } from "/scripts/widgets.js";
 
 app.registerExtension({
-	name: "tinyterra.Nodes",
+	name: "comfy.ttN",
 	async beforeRegisterNodeDef(nodeType, nodeData, app) {
 		if (nodeData.name === "ttN textDebug") {
 			const onNodeCreated = nodeType.prototype.onNodeCreated;
@@ -27,7 +27,7 @@ app.registerExtension({
 });
 
 app.registerExtension({
-	name: "ttN.SaveImageExtraOutput",
+	name: "comfy.ttN.SaveImageExtraOutput",
 	async beforeRegisterNodeDef(nodeType, nodeData, app) {
 		if (
 			nodeData.name === "ttN pipeKSampler" ||

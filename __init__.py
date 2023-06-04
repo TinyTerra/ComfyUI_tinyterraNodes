@@ -21,45 +21,72 @@ if old_config_path.is_file():
 
 config_path = cwd_path / "config.ini"
 
-def createConfig():
+def updateConfig():
     #section > option > value
-    settings = {
+    optionValues = {
+        "auto_update": "| True | False |",
+        "install_rembg": "| True | False |",
+        "apply_custom_styles": "| True | False |",
+        "link_type": "| curve | straight | direct |",
+        "pipe_line": "HEX Color Code (pipe_line link color)",
+        "int": "HEX Color Code (int link color)",
+    }
+
+    for option, value in optionValues.items():
+        configWrite("Option Values", option, value)
+
+    ttNodes = {
         "auto_update": False,
         "install_rembg": True,
     }
 
-    config = configparser.ConfigParser()
-    config['ttNodes'] = settings
-        
-    with open(config_path, 'w') as f:
-        config.write(f)
+    ttNstyles = {
+        "apply_custom_styles": False,
+        "link_type": "curve",
+        "pipe_line": "#121212",
+        "int": "#217777",
+    }
+    
+    sections = ["ttNodes", "ttNstyles"]
 
-def configRead(opt=None):
+    for sectionName in sections:
+        section = eval(sectionName)
+        for option, value in section.items():
+            if configRead(sectionName, option) == None:
+                configWrite(sectionName, option, value)
+
+def configRead(section, option):
+    config = configparser.ConfigParser()
+    config.read(config_path)
+    
+    for s in config.sections():
+        if s == section:
+            for o, v in config.items(section):
+                if o == option:
+                    return v
+
+    return None
+
+def configWrite(section, option, value):
     config = configparser.ConfigParser()
     config.read(config_path)
 
-    settings = {}
-    for section in config.sections():
-        for option, value in config.items(section):
-            settings[option] = value
+    if not config.has_section(section):
+        config.add_section(section)
 
-    if opt == None:
-        return settings
-    else:
-        return settings[opt]
-
-def configWrite(option, value, section="ttNodes"):
-    config = configparser.ConfigParser()
-    config.read(config_path)
     config.set(section, str(option), str(value))
     with open(config_path, 'w') as f:
         config.write(f)
 
 
 if not os.path.isfile(config_path):
-    createConfig()
+    config = configparser.ConfigParser()
+    with open(config_path, 'w') as f:
+        config.write(f)
 
-if configRead("auto_update") == 'True':
+updateConfig()
+
+if configRead("ttNodes", "auto_update") == 'True':
     try:
         with subprocess.Popen(["git", "pull"], cwd=cwd_path, stdout=subprocess.PIPE) as p:
             p.wait()
@@ -74,30 +101,60 @@ if configRead("auto_update") == 'True':
 
 try:
     from rembg import remove
-    configWrite("install_rembg", 'Already Installed')
+    configWrite("ttNodes", "install_rembg", 'Already Installed')
 except:
-    if configRead("install_rembg") not in ('Failed to install', 'Installed successfully'):
+    if configRead("ttNodes", "install_rembg") not in ('Failed to install', 'Installed successfully'):
         try:
             print("\033[92m[ttNodes] \033[0;31mREMBG is not installed. Attempting to install...\033[0m")
             p = subprocess.Popen([sys.executable, "-m", "pip", "install", "rembg[gpu]"])
             p.wait()
             print("\033[92m[ttNodes] REMBG Installed!\033[0m")
 
-            configWrite("install_rembg", 'Installed successfully')
+            configWrite("ttNodes", "install_rembg", 'Installed successfully')
         except:
-            configWrite("install_rembg", 'Failed to install')
+            configWrite("ttNodes", "install_rembg", 'Failed to install')
             print("\033[92m[ttNodes] \033[0;31mFailed to install REMBG.\033[0m")
 
-
 # --------- JS ---------- #
-def copy_js():
-    js_dest_path = os.path.join(comfy_path, "web", "extensions", "tinyterraNodes")
-    if not os.path.exists(js_dest_path):
-        os.makedirs(js_dest_path)
-    js_src_path = os.path.join(cwd_path, "js", "tinyterraNodes.js")
-    shutil.copy(js_src_path, js_dest_path)
+js_dest_path = os.path.join(comfy_path, "web", "extensions", "tinyterraNodes")
+mainJSfile = os.path.join(cwd_path, "js", "ttN.js")
+stylesJSfile = os.path.join(cwd_path, "js", "ttNstyles.js")
 
-copy_js()
+if not os.path.exists(js_dest_path):
+    os.makedirs(js_dest_path)
+else:
+    shutil.rmtree(js_dest_path)
+
+def copy_js(file):
+    shutil.copy(file, js_dest_path)
+
+copy_js(mainJSfile)
+
+#copy style js file
+if configRead("ttNstyles", "apply_custom_styles") == 'True':
+    link_type = configRead("ttNstyles", "link_type")
+    print("link_type:", link_type)
+    if link_type == "straight":
+        link_type = 0
+    elif link_type == "direct":
+        link_type = 1
+    else:
+        link_type = 2
+
+    pipe_line = configRead("ttNstyles", "pipe_line")
+    int_ = configRead("ttNstyles", "int")
+
+    with open(stylesJSfile, 'r') as file:
+        stylesJSlines = file.readlines()
+
+    stylesJSlines[1] = f'    "PIPE_LINE": "{pipe_line}",\n'
+    stylesJSlines[2] = f'    "INT": "{int_}",\n'
+    stylesJSlines[10] = f'		app.canvas.links_render_mode = {link_type}\n'
+
+    with open(stylesJSfile, 'w') as file:
+        file.writelines(stylesJSlines)
+    
+    copy_js(stylesJSfile)
 
 # ------- MAPPING ------- #
 from .tinyterraNodes import NODE_CLASS_MAPPINGS,  NODE_DISPLAY_NAME_MAPPINGS
