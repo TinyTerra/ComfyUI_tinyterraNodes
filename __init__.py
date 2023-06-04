@@ -124,6 +124,7 @@ if not os.path.exists(js_dest_path):
     os.makedirs(js_dest_path)
 else:
     shutil.rmtree(js_dest_path)
+    os.makedirs(js_dest_path)
 
 def copy_js(file):
     shutil.copy(file, js_dest_path)
