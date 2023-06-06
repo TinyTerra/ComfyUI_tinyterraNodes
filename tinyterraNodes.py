@@ -12,6 +12,7 @@ import comfy.utils
 import numpy as np
 import folder_paths
 import comfy.samplers
+from torch import Tensor
 from pathlib import Path
 import comfy.model_management
 from nodes import common_ksampler
@@ -54,6 +55,7 @@ def update_loaded_objects(prompt):
 
     # Extract all Efficient Loader class type entries
     ttN_pipeLoader_entries = [entry for entry in prompt.values() if entry["class_type"] == "ttN pipeLoader"]
+
 
     # Collect all desired model, vae, and lora names
     desired_ckpt_names = set()
@@ -211,7 +213,7 @@ class ttN_TSC_pipeLoader:
                         "batch_size": ("INT", {"default": 1, "min": 1, "max": 64}),
                         "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                         },
-                "hidden": {"prompt": "PROMPT"}}             
+                "hidden": {"prompt": "PROMPT"}}
 
     RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT",)
     RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed",)
@@ -233,6 +235,7 @@ class ttN_TSC_pipeLoader:
 
         # Create Empty Latent
         latent = torch.zeros([batch_size, 4, empty_latent_height // 8, empty_latent_width // 8]).cpu()
+        samples = {"samples":latent}
 
         # Clean models from loaded_objects
         update_loaded_objects(prompt)
@@ -263,15 +266,17 @@ class ttN_TSC_pipeLoader:
 
         positive_embeddings_final = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0)
         negative_embeddings_final = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0)
-        image=None
+        image = pil2tensor(Image.new('RGB', (1, 1), (0, 0, 0)))
 
-        pipe = (model, [[positive_embeddings_final, {}]], [[negative_embeddings_final, {}]], {"samples":latent}, vae, clip, image, seed)
+        pipe = (model, [[positive_embeddings_final, {}]], [[negative_embeddings_final, {}]], samples, vae, clip, image, seed)
 
-        return (pipe, model, [[positive_embeddings_final, {}]], [[negative_embeddings_final, {}]], {"samples":latent}, vae, clip, seed)
+        return (pipe, model, [[positive_embeddings_final, {}]], [[negative_embeddings_final, {}]], samples, vae, clip, seed)
 #---------------------------------------------------------------ttN Pipe Loader END-----------------------------------------------------------------#
 
 #Functions for upscaling
 def enforce_mul_of_64(d):
+    if d<=7:
+        d = 8
     leftover = d % 8          # 8 is the number of pixels per byte
     if leftover != 0:         # if the number of pixels is not a multiple of 8
         if (leftover < 4):       # if the number of pixels is less than 4
@@ -283,6 +288,7 @@ def enforce_mul_of_64(d):
 
 def upscale(samples, upscale_method, factor, crop):
         
+        samples = samples[0]
         s = samples.copy()
         x = samples["samples"].shape[3]
         y = samples["samples"].shape[2]
@@ -372,15 +378,14 @@ def save_images(self, images, preview_prefix, save_prefix, image_output, prompt=
 
 
 #---------------------------------------------------------------ttN Pipe KSampler START-------------------------------------------------------------#
-
-# ttN pipeKSampler (Modified from TSC KSampler (Advanced), Upscale from QualityOfLifeSuite_Omar92)
 last_helds: dict[str, list] = {
     "results": [],
-    "latent": [],
+    "samples": [],
     "images": [],
     "vae_decode": []
 }
-
+    
+# ttN pipeKSampler (Modified from TSC KSampler (Advanced), Upscale from QualityOfLifeSuite_Omar92)
 class ttN_TSC_pipeKSampler:
     empty_image = pil2tensor(Image.new('RGBA', (1, 1), (0, 0, 0, 0)))
     upscale_methods = ["None", "nearest-exact", "bilinear", "area"]
@@ -388,6 +393,7 @@ class ttN_TSC_pipeKSampler:
 
     def __init__(self):
         pass
+
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -433,45 +439,31 @@ class ttN_TSC_pipeKSampler:
     def sample(self, pipe, lora_name, lora_model_strength, lora_clip_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
                optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, seed=None, script=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None,):
 
-        #unpack Pipe
-        model, positive, negative, latent_image, vae, clip, image, pipe_seed = pipe
+        global last_helds
+
+        model, positive, negative, samples, vae, clip, images, pipe_seed = pipe
 
         #Optional overrides
-        if optional_model != None:
-            model = optional_model
+        model = optional_model if optional_model is not None else model
+        positive = optional_positive if optional_positive is not None else positive
+        negative = optional_negative if optional_negative is not None else negative
+        samples = optional_latent if optional_latent is not None else samples
+        vae = optional_vae if optional_vae is not None else vae
+        clip = optional_clip if optional_clip is not None else clip
 
-        if optional_positive != None:
-            positive = optional_positive
+        seed = pipe_seed if seed in (None, 'undefined') else seed
 
-        if optional_negative != None:
-            negative = optional_negative
-
-        if optional_latent != None:
-            latent_image = optional_latent
-
-        if optional_vae != None:
-            vae = optional_vae
-
-        if optional_clip != None:
-            clip = optional_clip
-
-        if seed in (None, 'undefined'):
-            seed = pipe_seed
-
-        #Send latent to upscaler
-        if upscale_method != "None":
-            latent_image = upscale(latent_image, upscale_method, factor, crop)[0]
+        #load Lora
+        if lora_name not in (None, "None"):
+            model, clip = load_lora(lora_name, model, clip, lora_model_strength, lora_clip_strength)
             
         def get_value_by_id(key: str, my_unique_id):
-            global last_helds
             for value, id_ in last_helds[key]:
                 if id_ == my_unique_id:
                     return value
             return None
 
         def update_value_by_id(key: str, my_unique_id, new_value):
-            global last_helds
-
             for i, (value, id_) in enumerate(last_helds[key]):
                 if id_ == my_unique_id:
                     last_helds[key][i] = (new_value, id_)
@@ -480,130 +472,84 @@ class ttN_TSC_pipeKSampler:
             last_helds[key].append((new_value, my_unique_id))
             return True
 
-        # Clean Efficient Loader Models from Global
-        update_loaded_objects(prompt)
+        def handle_upscale(samples, upscale_method, factor, crop):
+            if upscale_method != "None":
+                samples = upscale(samples, upscale_method, factor, crop)[0]
+            return samples
 
-        if lora_name != "None":
-            model, clip = load_lora(lora_name, model, clip, lora_model_strength, lora_clip_strength)
-
-        # Convert ID string to an integer
-        my_unique_id = int(my_unique_id)
-
-        # Vae input check
-        if vae == (None,):
-            print('\033[32mpipeKSampler[{}] Warning:\033[0m No vae input detected, preview and output image disabled.\n'.format(my_unique_id))
-            image_output = "Disabled"
-
-        # Init last_results
-        if get_value_by_id("results", my_unique_id) is None:
-            last_results = list()
-        else:
-            last_results = get_value_by_id("results", my_unique_id)
-
-        # Init last_latent
-        if get_value_by_id("latent", my_unique_id) is None:
-            last_latent = latent_image
-        else:
-            last_latent = {"samples": None}
-            last_latent["samples"] = get_value_by_id("latent", my_unique_id)
-
-        # Init last_images
-        if get_value_by_id("images", my_unique_id) == None:
-            last_images = ttN_TSC_pipeKSampler.empty_image
-        else:
-            last_images = get_value_by_id("images", my_unique_id)
-
-        # Initialize latent
-        latent: Tensor|None = None
-
-        # Define preview_prefix
-        preview_prefix = "KSpipe_{:02d}".format(my_unique_id)
-
-        # Check the current sampler state
-        if sampler_state == "Sample":
-
-            # Sample using the common KSampler function and store the samples
-            samples = common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
-                                      latent_image, denoise=denoise)
-
-            # Extract the latent samples from the returned samples dictionary
-            latent = samples[0]["samples"]
-
-            # Store the latent samples in the 'last_helds' dictionary with a unique ID
-            update_value_by_id("latent", my_unique_id, latent)
+        def init_state(my_unique_id, key, default):
+            value = get_value_by_id(key, my_unique_id)
+            if value is not None:
+                return value
+            return default
 
 
-            # If not in preview mode, return the results in the specified format
+        def process_sample_state(self, model, seed, steps, cfg, sampler_name, scheduler, positive, negative, samples, denoise, vae, clip, images, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id):
+            
+            samples = common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, samples, denoise=denoise)
+            update_value_by_id("samples", my_unique_id, samples)
+
+            new_pipe = (model, positive, negative, samples, vae, clip, images, seed)
+
             if image_output == "Disabled":
-                new_pipe = (model, positive, negative, {"samples": latent}, vae, clip, image, seed,)
-                # Enable vae decode on next Hold
                 update_value_by_id("vae_decode", my_unique_id, True)
-                return (new_pipe, model, positive, negative, {"samples": latent}, vae, clip, ttN_TSC_pipeKSampler.empty_image, seed,)
-            else:
-                # Decode images and store
-                images = vae.decode(latent).cpu()
-                update_value_by_id("images", my_unique_id, images)
+                return (new_pipe, model, positive, negative, samples, vae, clip, images, seed,)
 
-                # Disable vae decode on next Hold
+            latent = samples[0]["samples"]
+            images = vae.decode(latent).cpu()
+            update_value_by_id("images", my_unique_id, images)
+            update_value_by_id("vae_decode", my_unique_id, False)
+
+            results = save_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
+            update_value_by_id("results", my_unique_id, results)
+
+            list(new_pipe)[6] = images
+            tuple(new_pipe)
+
+            if image_output in ("Hide", "Hide/Save"):
+                return (new_pipe, model, positive, negative, samples, vae, clip, images, seed,)
+
+            return {"ui": {"images": results}, "result": (new_pipe, model, positive, negative, samples, vae, clip, images, seed,)}
+
+        def process_hold_state(self, model, positive, negative, vae, clip, seed, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id, samples, images):
+            print(f'\033[32mpipeKSampler[{my_unique_id}]:\033[0mHeld')
+
+            last_samples = init_state(my_unique_id, "samples", (samples,))
+
+            last_images = init_state(my_unique_id, "images", images)
+
+            last_results = init_state(my_unique_id, "results", list())
+
+            new_pipe = (model, positive, negative, last_samples, vae, clip, last_images, seed,)
+            if image_output == "Disabled":
+                return (new_pipe, model, positive, negative, last_samples, vae, clip, last_images, seed,)
+
+            latent = last_samples[0]["samples"]
+            if get_value_by_id("vae_decode", my_unique_id) == True:
+                images = vae.decode(latent).cpu()
+                list(new_pipe)[6] = images
+                tuple(new_pipe)
+
+                update_value_by_id("images", my_unique_id, images)
                 update_value_by_id("vae_decode", my_unique_id, False)
 
-                # Generate image results and store
                 results = save_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
                 update_value_by_id("results", my_unique_id, results)
-
-                new_pipe = (model, positive, negative, {"samples": latent}, vae, clip, images, seed,)
-
-                if image_output in ("Hide", "Hide/Save"):
-                    return (new_pipe, model, positive, negative, {"samples": latent}, vae, clip, images, seed,)
-
-                # Output image results to ui and node outputs
-                return {"ui": {"images": results},
-                        "result": (new_pipe, model, positive, negative, {"samples": latent}, vae, clip, images, seed,)}
-
-        # If the sampler state is "Hold"
-        elif sampler_state == "Hold":
-            # Print a message indicating that the KSampler is in "Hold" state with the unique ID
-            print('\033[32mpipeKSampler[{}]:\033[0mHeld'.format(my_unique_id))
-
-            new_pipe = (model, positive, negative, last_latent, vae, clip, ttN_TSC_pipeKSampler.empty_image, seed,)
-
-            # If not in preview mode, return the results in the specified format
-            if image_output == "Disabled":
-                return (new_pipe, model, positive, negative, last_latent, vae, clip, ttN_TSC_pipeKSampler.empty_image, seed,)
-
-            # if image_output == "Preview" or "Save":
             else:
-                latent = last_latent["samples"]
+                images = last_images
+                results = last_results
 
-                if get_value_by_id("vae_decode", my_unique_id) == True:
+            if image_output in ("Hide", "Hide/Save"):
+                return (new_pipe, model, positive, negative, last_samples, vae, clip, images, seed,)
 
-                    # Decode images and store
-                    images = vae.decode(latent).cpu()
-                    update_value_by_id("images", my_unique_id, images)
+            return {"ui": {"images": results}, "result": (new_pipe, model, positive, negative, last_samples, vae, clip, images, seed,)} 
 
-                    # Disable vae decode on next Hold
-                    update_value_by_id("vae_decode", my_unique_id, False)
+        def process_script_state(self, script, samples, images, vae, my_unique_id, seed, model, positive, negative, clip, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo, scheduler, steps, cfg, sampler_name, denoise):
 
-                    # Generate image results and store
-                    results = save_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
-                    update_value_by_id("results", my_unique_id, results)
-                else:
-                    images = last_images
-                    results = last_results
+            last_samples = init_state(my_unique_id, "samples", (samples,))
+            last_images = init_state(my_unique_id, "images", images)
 
-                new_pipe = (model, positive, negative, {"samples": latent}, vae, clip, ttN_TSC_pipeKSampler.empty_image, seed,)
-
-                if image_output in ("Hide", "Hide/Save"):
-                    return (new_pipe, model, positive, negative, {"samples": latent}, vae, clip, images, seed,)
-
-                # Output image results to ui and node outputs
-                return {"ui": {"images": results},
-                        "result": (new_pipe, model, positive, negative, {"samples": latent}, vae, clip, images, seed,)}
-
-        elif sampler_state == "Script":
-
-            new_pipe = (model, positive, negative, latent, vae, clip, last_images, seed,)
-
+            new_pipe = (model, positive, negative, samples, vae, clip, last_images, seed,)
             # If no script input connected, set X_type and Y_type to "Nothing"
             if script is None:
                 X_type = "Nothing"
@@ -615,15 +561,15 @@ class ttN_TSC_pipeKSampler:
             if (X_type == "Nothing" and Y_type == "Nothing"):
                 print('\033[31mpipeKSampler[{}] Error:\033[0m No valid script entry detected'.format(my_unique_id))
                 return {"ui": {"images": list()},
-                        "result": (new_pipe, model, positive, negative, last_latent, vae, clip, last_images, seed)}
+                        "result": (new_pipe, model, positive, negative, last_samples, vae, clip, last_images, seed)}
 
             if vae == (None,):
                 print('\033[31mpipeKSampler[{}] Error:\033[0m VAE must be connected to use Script mode.'.format(my_unique_id))
                 return {"ui": {"images": list()},
-                        "result": (new_pipe, model, positive, negative, last_latent, vae, clip, last_images, seed)}
+                        "result": (new_pipe, model, positive, negative, last_samples, vae, clip, last_images, seed)}
 
             # Extract the 'samples' tensor from the dictionary
-            latent_image_tensor = latent_image['samples']
+            latent_image_tensor = samples['samples']
 
             # Split the tensor into individual image tensors
             image_tensors = torch.split(latent_image_tensor, 1, dim=0)
@@ -861,9 +807,10 @@ class ttN_TSC_pipeKSampler:
 
             # Concatenate the tensors along the first dimension (dim=0)
             latent_new = torch.cat(latent_new, dim=0)
+            samples_new = {"samples": latent_new}
 
             # Store latent_new as last latent
-            update_value_by_id("latent", my_unique_id, latent_new)
+            update_value_by_id("samples", my_unique_id, samples_new)
 
             # Calculate the dimensions of the white background image
             border_size = max_width // 15
@@ -995,9 +942,32 @@ class ttN_TSC_pipeKSampler:
 
             # Output image results to ui and node outputs
             return {"ui": {"images": results}, "result": (new_pipe, model, positive, negative, {"samples": latent_new}, vae, clip, images, seed)}
+
+                
+        samples = handle_upscale(samples, upscale_method, factor, crop)
+        update_loaded_objects(prompt)
+        my_unique_id = int(my_unique_id)
+
+        if vae == (None,):
+            print(f'\033[32mpipeKSampler[{my_unique_id}] Warning:\033[0m No vae input detected, preview and output image disabled.\n')
+            image_output = "Disabled"
+
+        latent: Tensor | None = None
+        preview_prefix = f"KSpipe_{my_unique_id:02d}"
+
+        if sampler_state == "Sample":
+            return process_sample_state(self, model, seed, steps, cfg, sampler_name, scheduler, positive, negative, samples, denoise, vae, clip, images, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id)
+        
+        elif sampler_state == "Hold":
+            return process_hold_state(self, model, positive, negative, vae, clip, seed, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id, samples, images)
+        
+        elif sampler_state == "Script":
+            return process_script_state(self, script, samples, images, vae, my_unique_id, seed, model, positive, negative, clip, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo, scheduler, steps, cfg, sampler_name, denoise)
+
+
+
+
 #---------------------------------------------------------------ttN Pipe KSampler END---------------------------------------------------------------#
-
-
 #---------------------------------------------------------------ttN/pipe START----------------------------------------------------------------------#
 class ttN_pipe_IN:
     def __init__(self):
@@ -1494,8 +1464,8 @@ class ttN_modelScale:
                               "image": ("IMAGE",),
                               "rescale_after_model": ([False, True],),
                               "rescale_method": (s.upscale_methods,),
-                              "rescale": (["by factor", "to Width/Height"],),
-                              "factor": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 10.0, "step": 0.25}),
+                              "rescale": (["by percentage", "to Width/Height"],),
+                              "percent": ("INT", {"default": 50, "min": 0, "max": 1000, "step": 25}),
                               "width": ("INT", {"default": 512, "min": 1, "max": MAX_RESOLUTION, "step": 1}),
                               "height": ("INT", {"default": 512, "min": 1, "max": MAX_RESOLUTION, "step": 1}),
                               "crop": (s.crop_methods,),
@@ -1522,7 +1492,7 @@ class ttN_modelScale:
             pixels = pixels[:, x_offset:x + x_offset, y_offset:y + y_offset, :]
         return pixels
 
-    def upscale(self, model_name, image, rescale_after_model, rescale_method, rescale, factor, width, height, crop, image_output, save_prefix, output_latent, vae, prompt=None, extra_pnginfo=None, my_unique_id=None):
+    def upscale(self, model_name, image, rescale_after_model, rescale_method, rescale, percent, width, height, crop, image_output, save_prefix, output_latent, vae, prompt=None, extra_pnginfo=None, my_unique_id=None):
         # Load Model
         model_path = folder_paths.get_full_path("upscale_models", model_name)
         sd = comfy.utils.load_torch_file(model_path, safe_load=True)
@@ -1544,9 +1514,9 @@ class ttN_modelScale:
         # Post Model Rescale
         if rescale_after_model == True:
             samples = s.movedim(-1, 1)
-            if rescale == "by factor" and rescale != 0:
-                height = factor * samples.shape[2]
-                width = factor * samples.shape[3]
+            if rescale == "by percentage" and percent != 0:
+                height = percent / 100 * samples.shape[2]
+                width = percent / 100 * samples.shape[3]
                 if (width > MAX_RESOLUTION):
                     width = MAX_RESOLUTION
                 if (height > MAX_RESOLUTION):
@@ -1565,7 +1535,7 @@ class ttN_modelScale:
         else:
             t = None
 
-        preview_prefix = "ttNmodelUP_{:02d}".format(int(my_unique_id))
+        preview_prefix = "ttNhiresfix_{:02d}".format(int(my_unique_id))
         results = save_images(self, s, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
         
         if image_output in ("Hide", "Hide/Save"):
@@ -1575,8 +1545,6 @@ class ttN_modelScale:
                 "result": (s, {"samples":t},)}
 
 #---------------------------------------------------------------ttN/image END-----------------------------------------------------------------------#
-
-print("\033[92m[t ttNodes Loaded t]\033[0m")
 
 NODE_CLASS_MAPPINGS = {
     #ttN/pipe
@@ -1598,7 +1566,7 @@ NODE_CLASS_MAPPINGS = {
     #ttN/image
     "ttN imageOutput": ttN_imageOUPUT,
     "ttN imageREMBG": ttN_imageREMBG,
-    "ttN modelScale": ttN_modelScale,
+    "ttN hiresfixScale": ttN_modelScale,
 
     #ttN/util
     "ttN int": ttN_INT,
@@ -1625,7 +1593,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     #ttN/image
     "ttN imageREMBG": "imageRemBG",
     "ttN imageOutput": "imageOutput",
-    "ttN modelScale": "modelScale",
+    "ttN hiresfixScale": "hiresfixScale",
 
     #ttN/util
     "ttN int": "int",
@@ -1633,6 +1601,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN seed": "seed"
 }
 
+print("\033[92m[t ttNodes Loaded t]\033[0m")
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 # (KSampler Modified from TSC Efficiency Nodes) -           https://github.com/LucianoCirino/efficiency-nodes-comfyui                               #
