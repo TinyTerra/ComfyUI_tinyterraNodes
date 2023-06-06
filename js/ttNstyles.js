@@ -34,5 +34,15 @@ app.registerExtension({
 					return r;
 			};
 		}
+		if (nodeData.name == "ttN hiresfixScale") {
+			const onNodeCreated = nodeType.prototype.onNodeCreated;
+			nodeType.prototype.onNodeCreated = function () {
+					const r = onNodeCreated?.apply(this, arguments);
+					this.color=LGraphCanvas.node_colors.cyan.color;
+					this.bgcolor=LGraphCanvas.node_colors.cyan.bgcolor;
+					this.groupcolor = LGraphCanvas.node_colors.cyan.groupcolor;
+					return r;
+			};
+		}
     }
 });

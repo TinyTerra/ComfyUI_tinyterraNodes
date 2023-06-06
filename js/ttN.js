@@ -7,20 +7,20 @@ app.registerExtension({
 		if (nodeData.name === "ttN textDebug") {
 			const onNodeCreated = nodeType.prototype.onNodeCreated;
 			nodeType.prototype.onNodeCreated = function () {
-					const r = onNodeCreated?.apply(this, arguments);
-					const w = ComfyWidgets["STRING"](this, "text", ["STRING", { multiline: true }], app).widget;
-					w.inputEl.readOnly = true;
-					w.inputEl.style.opacity = 0.7;
-					return r;
+				const r = onNodeCreated?.apply(this, arguments);
+				const w = ComfyWidgets["STRING"](this, "text", ["STRING", { multiline: true }], app).widget;
+				w.inputEl.readOnly = true;
+				w.inputEl.style.opacity = 0.7;
+				return r;
 			};
 
 			const onExecuted = nodeType.prototype.onExecuted;
 			nodeType.prototype.onExecuted = function (message) {
-					onExecuted?.apply(this, arguments);
+				onExecuted?.apply(this, arguments);
 
-					this.widgets[1].value = message.text.join('');
+				this.widgets[1].value = message.text.join('');
 
-					this.onResize?.(this.size);
+				this.onResize?.(this.size);
 			};
 		}
 	},
@@ -33,10 +33,10 @@ app.registerExtension({
 			nodeData.name === "ttN pipeKSampler" ||
 			nodeData.name === "ttN imageOutput" ||
 			nodeData.name === "ttN imageREMBG"
-		  ) {
+		) {
 			const onNodeCreated = nodeType.prototype.onNodeCreated;
 
-         // Simple date formatter
+			// Simple date formatter
 			const parts = {
 				d: (d) => d.getDate(),
 				M: (d) => d.getMonth() + 1,
@@ -61,7 +61,7 @@ app.registerExtension({
 				});
 			}
 
-         // When the SaveImage node is created we want to override the serialization of the output name widget to run our S&R
+			// When the SaveImage node is created we want to override the serialization of the output name widget to run our S&R
 			nodeType.prototype.onNodeCreated = function () {
 				const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 
@@ -70,7 +70,7 @@ app.registerExtension({
 					return widget.value.replace(/%([^%]+)%/g, function (match, text) {
 						const split = text.split(".");
 						if (split.length !== 2) {
-                     // Special handling for dates
+							// Special handling for dates
 							if (split[0].startsWith("date:")) {
 								return formatDate(split[0].substring(5), new Date());
 							}
@@ -112,7 +112,7 @@ app.registerExtension({
 				return r;
 			};
 		} else {
-         // When any other node is created add a property to alias the node
+			// When any other node is created add a property to alias the node
 			const onNodeCreated = nodeType.prototype.onNodeCreated;
 			nodeType.prototype.onNodeCreated = function () {
 				const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
