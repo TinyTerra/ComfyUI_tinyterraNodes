@@ -122,7 +122,7 @@ def config_hex_code_validator(section, option, default):
         return default
 
 def config_value_validator(section, option, default):
-    value = config_read(section, option).lower()
+    value = str(config_read(section, option)).lower()
     if value not in optionValues[option]:
         print(f'\033[92m[{section} Config]\033[91m {option} - \'{value}\' not in {optionValues[option]}, reverting to default.\033[0m')
         config_write(section, option, default)
