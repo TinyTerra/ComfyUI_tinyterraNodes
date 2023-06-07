@@ -16,7 +16,6 @@ fetch('extensions/tinyterraNodes/embeddingsList.json')
     .then(data => {
         // Use the JSON data as a constant
         embeddingsList = data
-            .filter(embedding => embedding !== 'put_embeddings_or_textual_inversion_concepts_here')
             .map(embedding => "embedding:" + embedding); // Add "embedding:" to each element;
     })
     .catch(error => {
@@ -51,7 +50,7 @@ app.registerExtension({
                     const suggestionkey = 'embedding:';
 
                     if (suggestionkey.startsWith(currentSegmentLower) && currentSegmentLower.length > 2 || currentSegmentLower.startsWith(suggestionkey)) {
-                        const filteredEmbeddingsList = embeddingsList.filter(s => s.includes(currentSegment));
+                        const filteredEmbeddingsList = embeddingsList.filter(s => s.toLowerCase().includes(currentSegmentLower));
                         if (filteredEmbeddingsList.length > 0) {
                             displayEmbeddingsList(filteredEmbeddingsList);
                             autocompleteActive = true;

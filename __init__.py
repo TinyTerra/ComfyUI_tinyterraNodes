@@ -1,5 +1,6 @@
 from pathlib import Path
 import configparser
+import folder_paths
 import subprocess
 import shutil
 import json
@@ -17,6 +18,22 @@ sys.path.append(str(script_path))
 
 config_path = cwd_path / "config.ini"
 
+default_pipe_color = "#3B3B3B"
+default_int_color = "#5F9EA0"
+
+optionValues = {
+        "auto_update": ('true', 'false'),
+        "install_rembg": ('true', 'false'),
+        "enable_embed_autocomplete": ('true', 'false'),
+        "apply_custom_styles": ('true', 'false'),
+        "enable_dynamic_widgets": ('true', 'false'),
+        "enable_dev_nodes": ('true', 'false'),
+        "link_type": ('spline', 'straight', 'direct'),
+        "default_node_bg_color": ('default', 'red', 'brown', 'green', 'blue', 'pale_blue', 'cyan', 'purple', 'yellow', 'black'),
+        "pipe_line": "HEX Color Code (pipe_line link color)",
+        "int": "HEX Color Code (int link color)",
+    }
+
 def get_config():
     """Return a configparser.ConfigParser object."""
     config = configparser.ConfigParser()
@@ -25,16 +42,6 @@ def get_config():
 
 def update_config():
     #section > option > value
-    optionValues = {
-        "auto_update": "True | False",
-        "install_rembg": "True | False",
-        "enable_embed_autocomplete": "True | False",
-        "apply_custom_styles": "True | False",
-        "link_type": "curve | straight | direct",
-        "pipe_line": "HEX Color Code (pipe_line link color)",
-        "int": "HEX Color Code (int link color)",
-    }
-
     for option, value in optionValues.items():
         config_write("Option Values", option, value)
 
@@ -42,14 +49,16 @@ def update_config():
         "ttNodes": {
             "auto_update": False,
             "install_rembg": True,
+            "apply_custom_styles": True,
             "enable_embed_autocomplete": True,
+            "enable_dynamic_widgets": True,
             "enable_dev_nodes": False,
         },
         "ttNstyles": {
-            "apply_custom_styles": False,
-            "link_type": "curve",
-            "pipe_line": "#121212",
-            "int": "#217777",
+            "default_node_bg_color": 'default',
+            "link_type": "spline",
+            "pipe_line": default_pipe_color,
+            "int": default_int_color,
         }
     }
 
@@ -57,6 +66,22 @@ def update_config():
         for option, value in data.items():
             if config_read(section, option) is None:
                 config_write(section, option, value)
+
+    # Load the configuration data into a dictionary.
+    config_data = config_load()
+
+    # Iterate through the configuration data.
+    for section, options in config_data.items():
+        for option in options:
+            # If the option is not in `optionValues` or in `section_data`, remove it.
+            if (option not in optionValues and
+                (section not in section_data or option not in section_data[section])):
+                config_remove(section, option)
+
+def config_load():
+    """Load the entire configuration into a dictionary."""
+    config = get_config()
+    return {section: dict(config.items(section)) for section in config.sections()}
 
 def config_read(section, option):
     """Read a configuration option."""
@@ -73,19 +98,37 @@ def config_write(section, option, value):
     with open(config_path, 'w') as f:
         config.write(f)
 
-def get_filenames_recursively(folder_path):
-    """Return a list of all files in a directory and its subdirectories."""
-    file_list = []
-    for root, directories, files in os.walk(folder_path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            filename = os.path.basename(file_path)
-            file_list.append(filename)
-    return file_list
+def config_remove(section, option):
+    """Remove an option from a section."""
+    config = get_config()
+    if config.has_section(section):
+        config.remove_option(section, option)
+        with open(config_path, 'w') as f:
+            config.write(f)
 
 def copy_to_web(file):
     """Copy a file to the web extension path."""
     shutil.copy(file, web_extension_path)
+
+def config_hex_code_validator(section, option, default):
+    hex_code = config_read(section, option)
+    try:
+        int(hex_code[1:], 16)  # Convert hex code without the '#' symbol
+        if len(hex_code) == 7 and hex_code.startswith('#'):
+            return hex_code
+    except ValueError:
+        print(f'\033[92m[{section} Config]\033[91m {option} - \'{hex_code}\' is not a valid hex code, reverting to default.\033[0m')
+        config_write(section, option, default)
+        return default
+
+def config_value_validator(section, option, default):
+    value = config_read(section, option).lower()
+    if value not in optionValues[option]:
+        print(f'\033[92m[{section} Config]\033[91m {option} - \'{value}\' not in {optionValues[option]}, reverting to default.\033[0m')
+        config_write(section, option, default)
+        return default
+    else:
+        return value
 
 # Create a config file if not exists
 if not os.path.isfile(config_path):
@@ -95,7 +138,7 @@ if not os.path.isfile(config_path):
 update_config()
 
 # Autoupdate if True
-if config_read("ttNodes", "auto_update") == 'True':
+if config_value_validator("ttNodes", "auto_update", 'false') == 'true':
     try:
         with subprocess.Popen(["git", "pull"], cwd=cwd_path, stdout=subprocess.PIPE) as p:
             p.wait()
@@ -125,13 +168,15 @@ except ImportError:
 # --------- WEB ---------- #
 web_extension_path = os.path.join(comfy_path, "web", "extensions", "tinyterraNodes")
 
-embeddings_path = os.path.join(comfy_path, 'models', 'embeddings')
 embedLISTfile = os.path.join(web_extension_path, "embeddingsList.json")
+ttNstyles_JS_file_web = os.path.join(web_extension_path, "ttNstyles.js")
 
-mainJSfile = os.path.join(cwd_path, "js", "ttN.js")
-embedJSfile = os.path.join(cwd_path, "js", "ttNembedAC.js")
-embedCSSfile = os.path.join(cwd_path, "js", "ttNembedAC.css")
-stylesJSfile = os.path.join(cwd_path, "js", "ttNstyles.js")
+ttN_JS_file = os.path.join(cwd_path, "js", "ttN.js")
+ttNstyles_JS_file = os.path.join(cwd_path, "js", "ttNstyles.js")
+ttNembedAC_JS_file = os.path.join(cwd_path, "js", "ttNembedAC.js")
+ttNembedAC_CSS_file = os.path.join(cwd_path, "js", "ttNembedAC.css")
+ttNdynamicWidgets_JS_file = os.path.join(cwd_path, "js", "ttNdynamicWidgets.js")
+
 
 if not os.path.exists(web_extension_path):
     os.makedirs(web_extension_path)
@@ -139,12 +184,11 @@ else:
     shutil.rmtree(web_extension_path)
     os.makedirs(web_extension_path)
 
-copy_to_web(mainJSfile)
+copy_to_web(ttN_JS_file)
 
 # Enable Custom Styles if True
-if config_read("ttNstyles", "apply_custom_styles") == 'True':
+if config_value_validator("ttNstyles", "apply_custom_styles", 'true') == 'true':
     link_type = config_read("ttNstyles", "link_type")
-    print("link_type:", link_type)
     if link_type == "straight":
         link_type = 0
     elif link_type == "direct":
@@ -152,36 +196,40 @@ if config_read("ttNstyles", "apply_custom_styles") == 'True':
     else:
         link_type = 2
 
-    pipe_line = config_read("ttNstyles", "pipe_line")
-    int_ = config_read("ttNstyles", "int")
-
-    with open(stylesJSfile, 'r') as file:
-        stylesJSlines = file.readlines()
-
-    stylesJSlines[1] = f'    "PIPE_LINE": "{pipe_line}",\n'
-    stylesJSlines[2] = f'    "INT": "{int_}",\n'
-    stylesJSlines[10] = f'		app.canvas.links_render_mode = {link_type}\n'
-
-    with open(stylesJSfile, 'w') as file:
-        file.writelines(stylesJSlines)
+    pipe_line_color = config_hex_code_validator("ttNstyles", "pipe_line", default_pipe_color)
+    int_color = config_hex_code_validator("ttNstyles", "int", default_int_color)
+    bg_override_color = config_value_validator("ttNstyles", "default_node_bg_color", 'default')
     
-    copy_to_web(stylesJSfile)
+    # Apply config values to styles JS
+    with open(ttNstyles_JS_file, 'r') as file:
+        stylesJSlines = file.readlines()
+    
+    for i in range(len(stylesJSlines)):
+        if "PIPE_LINE" in stylesJSlines[i]:
+            stylesJSlines[i] = f'    "PIPE_LINE": "{pipe_line_color}", "INT": "{int_color}",\n'
+        if "links_render_mode" in stylesJSlines[i]:
+            stylesJSlines[i] = f'        app.canvas.links_render_mode = {link_type}\n'
+
+    with open(ttNstyles_JS_file_web, 'w') as file:
+        file.writelines(stylesJSlines)
 
 # Enable Embed Autocomplete if True
-if config_read("ttNodes", "enable_embed_autocomplete") == 'True':
-    embeddings_list = get_filenames_recursively(embeddings_path)
+if config_value_validator("ttNodes", "enable_embed_autocomplete", "true") == 'true':
+    embeddings_list = folder_paths.get_filename_list("embeddings")
     with open(embedLISTfile, 'w') as file:
         json.dump(embeddings_list, file)
 
-    copy_to_web(embedCSSfile)
-    copy_to_web(embedJSfile)
+    copy_to_web(ttNembedAC_CSS_file)
+    copy_to_web(ttNembedAC_JS_file)
+
+# Enable Dynamic Widgets if True
+if config_value_validator("ttNodes", "enable_dynamic_widgets", "true") == 'true':
+    copy_to_web(ttNdynamicWidgets_JS_file)
 
 # Enable Dev Nodes if True
-if config_read("ttNodes", "enable_dev_nodes") == 'True':
-    ttNbusJSfile = os.path.join(cwd_path, "js", "ttNbus.js")
-    ttNdebugJSfile = os.path.join(cwd_path, "js", "ttNdebug.js")
-
-
+if config_value_validator("ttNodes", "enable_dev_nodes", 'true') == 'true':
+    ttNbusJSfile = os.path.join(cwd_path, "dev", "ttNbus.js")
+    ttNdebugJSfile = os.path.join(cwd_path, "dev", "ttNdebug.js")
 
     from .ttNdev import NODE_CLASS_MAPPINGS as ttNdev_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as ttNdev_DISPLAY_NAME_MAPPINGS
 else:

@@ -1471,13 +1471,13 @@ class ttN_modelScale:
                               "crop": (s.crop_methods,),
                               "image_output": (["Hide", "Preview", "Save", "Hide/Save"],),
                               "save_prefix": ("STRING", {"default": "ComfyUI"}),
-                              "output_latent": ([False, True],),
+                              "output_latent": ([False, True],{"default": True}),
                               "vae": ("VAE",),},
                 "hidden": {   "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
         }
         
-    RETURN_TYPES = ("IMAGE", "LATENT",)
-    RETURN_NAMES = ('image', "latent",)
+    RETURN_TYPES = ("LATENT", "IMAGE",)
+    RETURN_NAMES = ("latent", 'image',)
 
     FUNCTION = "upscale"
     CATEGORY = "ttN/image"
@@ -1539,10 +1539,10 @@ class ttN_modelScale:
         results = save_images(self, s, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
         
         if image_output in ("Hide", "Hide/Save"):
-            return (s, {"samples":t},)
+            return ({"samples":t}, s,)
 
         return {"ui": {"images": results}, 
-                "result": (s, {"samples":t},)}
+                "result": ({"samples":t}, s,)}
 
 #---------------------------------------------------------------ttN/image END-----------------------------------------------------------------------#
 

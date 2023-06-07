@@ -23,6 +23,14 @@ app.registerExtension({
 				this.onResize?.(this.size);
 			};
 		}
+		if (nodeData.name === "ttN pipeLoader") {
+			const onNodeCreated = nodeType.prototype.onNodeCreated;
+			nodeType.prototype.onNodeCreated = function () {
+					const r = onNodeCreated?.apply(this, arguments);
+                    this.widgets[22].value = "fixed"
+					return r;
+			};
+		}
 	},
 });
 
