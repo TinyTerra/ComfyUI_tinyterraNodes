@@ -1,6 +1,6 @@
 import { app } from "/scripts/app.js";
 const customLinkColors = {
-    "PIPE_LINE": "#3B3B3B", "INT": "#5F9EA0",
+    "PIPE_LINE": "#7737AA", "INT": "#29699C",
 }
 
 const overrideBGColor = 'default'

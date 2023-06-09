@@ -18,8 +18,8 @@ sys.path.append(str(script_path))
 
 config_path = cwd_path / "config.ini"
 
-default_pipe_color = "#3B3B3B"
-default_int_color = "#5F9EA0"
+default_pipe_color = "#7737AA"
+default_int_color = "#29699C"
 
 optionValues = {
         "auto_update": ('true', 'false'),
@@ -174,7 +174,6 @@ ttNstyles_JS_file_web = os.path.join(web_extension_path, "ttNstyles.js")
 ttN_JS_file = os.path.join(cwd_path, "js", "ttN.js")
 ttNstyles_JS_file = os.path.join(cwd_path, "js", "ttNstyles.js")
 ttNembedAC_JS_file = os.path.join(cwd_path, "js", "ttNembedAC.js")
-ttNembedAC_CSS_file = os.path.join(cwd_path, "js", "ttNembedAC.css")
 ttNdynamicWidgets_JS_file = os.path.join(cwd_path, "js", "ttNdynamicWidgets.js")
 
 
@@ -187,7 +186,7 @@ else:
 copy_to_web(ttN_JS_file)
 
 # Enable Custom Styles if True
-if config_value_validator("ttNstyles", "apply_custom_styles", 'true') == 'true':
+if config_value_validator("ttNodes", "apply_custom_styles", 'true') == 'true':
     link_type = config_read("ttNstyles", "link_type")
     if link_type == "straight":
         link_type = 0
@@ -219,7 +218,6 @@ if config_value_validator("ttNodes", "enable_embed_autocomplete", "true") == 'tr
     with open(embedLISTfile, 'w') as file:
         json.dump(embeddings_list, file)
 
-    copy_to_web(ttNembedAC_CSS_file)
     copy_to_web(ttNembedAC_JS_file)
 
 # Enable Dynamic Widgets if True

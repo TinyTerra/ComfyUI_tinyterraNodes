@@ -1,13 +1,36 @@
 import { app } from "/scripts/app.js";
 
-// Create a link element for the CSS file
-const cssFile = document.createElement('link');
-cssFile.rel = 'stylesheet';
-cssFile.type = "text/css";
-cssFile.href = 'extensions/tinyterraNodes/ttNembedAC.css';
-
-// Append the link element to the document's head
-document.head.appendChild(cssFile);
+var styleElement = document.createElement("style");
+const cssCode = `
+.autocomplete-dropdown {
+    position: absolute;
+    box-sizing: border-box;
+    background-color: #121212;
+    border-radius: 7px;
+    box-shadow: 0 2px 4px rgba(255, 255, 255, .25);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    z-index: 1000;
+    overflow: auto;
+    max-height: 200px;
+}
+  
+.autocomplete-dropdown li {
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: system-ui;
+    font-size: 0.7rem;
+}
+  
+.autocomplete-dropdown li:hover,
+.autocomplete-dropdown li.selected {
+    background-color: #e5e5e5;
+    border-radius: 7px;
+}
+`
+styleElement.innerHTML = cssCode
+document.head.appendChild(styleElement);
 
 let embeddingsList = [];
 
