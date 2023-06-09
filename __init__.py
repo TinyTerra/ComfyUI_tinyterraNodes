@@ -187,7 +187,7 @@ else:
 copy_to_web(ttN_JS_file)
 
 # Enable Custom Styles if True
-if config_value_validator("ttNstyles", "apply_custom_styles", 'true') == 'true':
+if config_value_validator("ttNodes", "apply_custom_styles", 'true') == 'true':
     link_type = config_read("ttNstyles", "link_type")
     if link_type == "straight":
         link_type = 0
