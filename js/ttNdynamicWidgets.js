@@ -18,11 +18,9 @@ function hideWidget(node, widget, suffix = "") {
 		origProps[widget.name] = {
 			origType: widget.type,
 			origComputeSize: widget.computeSize,
-			origSerializeValue: widget.serializeValue,
 		}
 	}
-
-	widget.type = "hidden" + suffix;
+	widget.type = "ttNhidden" + suffix;
 	widget.computeSize = () => [0, -4]; // -4 is due to the gap litegraph adds between widgets automatically
 
 	if (widget.linkedWidgets) {
@@ -40,7 +38,6 @@ function showWidget(node, widget, suffix = "") {
 	
 	widget.type = origProps[widget.name].origType;
 	widget.computeSize = origProps[widget.name].origComputeSize;
-	widget.serializeValue = origProps[widget.name].origSerializeValue;
 	
 	if (widget.linkedWidgets) {
 		for (const w of widget.linkedWidgets) {
@@ -173,19 +170,22 @@ app.registerExtension({
 		if (node.getTitle() == "pipeLoader") {
 			if (node.widgets)
 				for (const w of node.widgets) {
-					pipeLoaderLogic(node, w);
-					let widgetValue = w.value;
+					if (w.name !== 'positive' && w.name !== 'negative') {
+						console.log(w)
+						pipeLoaderLogic(node, w);
+						let widgetValue = w.value;
 
-					// Define getters and setters for widget values
-					Object.defineProperty(w, 'value', {
-						get() {
-							return widgetValue;
-						},
-						set(newVal) {
-							widgetValue = newVal;
-							pipeLoaderLogic(node, w);
-						}
-					});
+						// Define getters and setters for widget values
+						Object.defineProperty(w, 'value', {
+							get() {
+								return widgetValue;
+							},
+							set(newVal) {
+								widgetValue = newVal;
+								pipeLoaderLogic(node, w);
+							}
+						});
+					}
 				}
 		}
 		if (node.getTitle() == "pipeKSampler") {
