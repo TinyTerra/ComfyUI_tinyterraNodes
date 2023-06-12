@@ -204,10 +204,14 @@ if config_value_validator("ttNodes", "apply_custom_styles", 'true') == 'true':
         stylesJSlines = file.readlines()
     
     for i in range(len(stylesJSlines)):
-        if "PIPE_LINE" in stylesJSlines[i]:
-            stylesJSlines[i] = f'    "PIPE_LINE": "{pipe_line_color}", "INT": "{int_color}",\n'
-        if "links_render_mode" in stylesJSlines[i]:
-            stylesJSlines[i] = f'        app.canvas.links_render_mode = {link_type}\n'
+        if "const customPipeLineLink" in stylesJSlines[i]:
+            stylesJSlines[i] = f'const customPipeLineLink = "{pipe_line_color}"\n'
+        if "const customIntLink" in stylesJSlines[i]:
+            stylesJSlines[i] = f'const customIntLink = "{int_color}"\n'
+        if "const customLinkType" in stylesJSlines[i]:
+            stylesJSlines[i] = f'const customLinkType = {link_type}\n'
+        if "const overrideBGColor" in stylesJSlines[i]:
+            stylesJSlines[i] = f'const overrideBGColor = "{bg_override_color}"\n'
 
     with open(ttNstyles_JS_file_web, 'w') as file:
         file.writelines(stylesJSlines)
