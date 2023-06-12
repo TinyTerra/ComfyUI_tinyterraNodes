@@ -1446,7 +1446,7 @@ class ttN_imageOUPUT:
             
             # Define preview_prefix
             preview_prefix = "ttNimgOUT_{:02d}".format(int(my_unique_id))
-            results = save_images(self, image, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo, output_folder)
+            results = save_images(self, image, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
 
             if image_output in ("Hide", "Hide/Save"):
                 return (image,)
