@@ -1442,7 +1442,7 @@ class ttN_imageOUPUT:
         CATEGORY = "ttN/image"
         OUTPUT_NODE = True
 
-        def output(self, image, image_output, save_prefix, output_folder, prompt, extra_pnginfo, my_unique_id):
+        def output(self, image, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id):
             
             # Define preview_prefix
             preview_prefix = "ttNimgOUT_{:02d}".format(int(my_unique_id))
