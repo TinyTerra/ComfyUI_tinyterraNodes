@@ -1352,7 +1352,6 @@ class ttN_SEED:
 # ttN RemBG
 try:
     from rembg import remove
-    
     class ttN_imageREMBG:
         def __init__(self):
             pass
@@ -1361,7 +1360,7 @@ try:
         def INPUT_TYPES(s):
             return {"required": { 
                     "image": ("IMAGE",),
-                    "image_output": (["Disabled", "Preview", "Save"],),
+                    "image_output": (["Hide", "Preview", "Save", "Hide/Save"],{"default": "Preview"}),
                     "save_prefix": ("STRING", {"default": "ComfyUI"}),
                     },
                     "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
@@ -1396,6 +1395,9 @@ try:
                 preview_prefix = "ttNrembg_{:02d}".format(int(my_unique_id))
                 results = save_images(self, tensor, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo)
 
+            if image_output in ("Hide", "Hide/Save"):
+                return (tensor, mask)
+
             # Output image results to ui and node outputs
             return {"ui": {"images": results},
                     "result": (tensor, mask)}
@@ -1428,9 +1430,8 @@ class ttN_imageOUPUT:
         def INPUT_TYPES(s):
             return {"required": { 
                     "image": ("IMAGE",),
-                    "image_output": (["Preview", "Save", "Hide", "Hide/Save"],),
+                    "image_output": (["Hide", "Preview", "Save", "Hide/Save"],{"default": "Preview"}),
                     "save_prefix": ("STRING", {"default": "ComfyUI"}),
-                    "output_folder": ("STRING", {"default": "Default"})
                     },
                     "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
                 }
@@ -1462,6 +1463,7 @@ class ttN_modelScale:
     def INPUT_TYPES(s):
         return {"required": { "model_name": (folder_paths.get_filename_list("upscale_models"),),
                               "image": ("IMAGE",),
+                              "info": ("INFO", {"default": "Rescale based on model upscale image size ⬇", "multiline": True}),
                               "rescale_after_model": ([False, True],{"default": True}),
                               "rescale_method": (s.upscale_methods,),
                               "rescale": (["by percentage", "to Width/Height"],),
@@ -1492,7 +1494,7 @@ class ttN_modelScale:
             pixels = pixels[:, x_offset:x + x_offset, y_offset:y + y_offset, :]
         return pixels
 
-    def upscale(self, model_name, image, rescale_after_model, rescale_method, rescale, percent, width, height, crop, image_output, save_prefix, output_latent, vae, prompt=None, extra_pnginfo=None, my_unique_id=None):
+    def upscale(self, model_name, image, info, rescale_after_model, rescale_method, rescale, percent, width, height, crop, image_output, save_prefix, output_latent, vae, prompt=None, extra_pnginfo=None, my_unique_id=None):
         # Load Model
         model_path = folder_paths.get_full_path("upscale_models", model_name)
         sd = comfy.utils.load_torch_file(model_path, safe_load=True)
