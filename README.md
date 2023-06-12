@@ -1,6 +1,8 @@
 # tinyterraNodes
 A selection of custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI).
 
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/blob/main/workflows/tinyterra_trueHRFix.png?raw=true">
+
 ## Installation
 Navigate to the **_ComfyUI/custom_nodes_** directory, and run:
 
