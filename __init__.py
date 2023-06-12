@@ -174,6 +174,7 @@ ttNstyles_JS_file_web = os.path.join(web_extension_path, "ttNstyles.js")
 ttN_JS_file = os.path.join(cwd_path, "js", "ttN.js")
 ttNstyles_JS_file = os.path.join(cwd_path, "js", "ttNstyles.js")
 ttNembedAC_JS_file = os.path.join(cwd_path, "js", "ttNembedAC.js")
+ttNwidgets_JS_file = os.path.join(cwd_path, "js", "ttNwidgets.js")
 ttNdynamicWidgets_JS_file = os.path.join(cwd_path, "js", "ttNdynamicWidgets.js")
 
 
@@ -184,6 +185,7 @@ else:
     os.makedirs(web_extension_path)
 
 copy_to_web(ttN_JS_file)
+copy_to_web(ttNwidgets_JS_file)
 
 # Enable Custom Styles if True
 if config_value_validator("ttNodes", "apply_custom_styles", 'true') == 'true':
