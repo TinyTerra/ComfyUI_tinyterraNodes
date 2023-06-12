@@ -158,7 +158,7 @@ app.registerExtension({
 		if (node.getTitle() == "hiresfixScale") {
 			if (node.widgets)
 				for (const w of node.widgets) {
-					if (w.name in hrFixScaleWidgets) {
+					if (hrFixScaleWidgets.includes(w.name)) {
 						hrFixScaleLogic(node, w);
 						let widgetValue = w.value;
 
@@ -178,7 +178,7 @@ app.registerExtension({
 		if (node.getTitle() == "pipeLoader") {
 			if (node.widgets)
 				for (const w of node.widgets) {
-					if (w.name in pipeLoaderWidgets) {
+					if (pipeLoaderWidgets.includes(w.name)) {
 						pipeLoaderLogic(node, w);
 						let widgetValue = w.value;
 
@@ -198,7 +198,7 @@ app.registerExtension({
 		if (node.getTitle() == "pipeKSampler") {
 			if (node.widgets)
 				for (const w of node.widgets) {
-					if (w.name in pipeLoaderWidgets) {
+					if (pipeKSamplerWidgets.includes(w.name)) {
 						pipeKSamplerLogic(node, w);
 						let widgetValue = w.value;
 
