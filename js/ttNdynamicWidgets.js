@@ -171,7 +171,6 @@ app.registerExtension({
 			if (node.widgets)
 				for (const w of node.widgets) {
 					if (w.name !== 'positive' && w.name !== 'negative') {
-						console.log(w)
 						pipeLoaderLogic(node, w);
 						let widgetValue = w.value;
 
