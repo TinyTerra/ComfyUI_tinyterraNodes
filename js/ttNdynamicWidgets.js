@@ -152,6 +152,19 @@ function pipeKSamplerLogic(node, widget) {
 	}
 }
 
+const imageRemBGWidgets = ['image_output']
+
+function imageRemBGLogic(node, widget) {
+	if (widget.name === 'image_output') {
+		if (widget.value === 'Hide' || widget.value === 'Preview') {
+			hideWidget(node, getWidgetByName(node, 'save_prefix'))
+		} else if (widget.value === 'Save' || widget.value === 'Hide/Save') {
+			showWidget(node, getWidgetByName(node, 'save_prefix'))
+		}
+	}
+}
+
+
 app.registerExtension({
 	name: "comfy.ttN.dynamicWidgets",
 	nodeCreated(node) {
@@ -210,6 +223,46 @@ app.registerExtension({
 							set(newVal) {
 								widgetValue = newVal;
 								pipeKSamplerLogic(node, w);
+							}
+						});
+					}
+				}
+		}
+		if (node.getTitle() == "imageRemBG") {
+			if (node.widgets)
+				for (const w of node.widgets) {
+					if (imageRemBGWidgets.includes(w.name)) {
+						imageRemBGLogic(node, w);
+						let widgetValue = w.value;
+
+						// Define getters and setters for widget values
+						Object.defineProperty(w, 'value', {
+							get() {
+								return widgetValue;
+							},
+							set(newVal) {
+								widgetValue = newVal;
+								imageRemBGLogic(node, w);
+							}
+						});
+					}
+				}
+		}
+		if (node.getTitle() == "imageOutput") {
+			if (node.widgets)
+				for (const w of node.widgets) {
+					if (imageRemBGWidgets.includes(w.name)) {
+						imageRemBGLogic(node, w);
+						let widgetValue = w.value;
+
+						// Define getters and setters for widget values
+						Object.defineProperty(w, 'value', {
+							get() {
+								return widgetValue;
+							},
+							set(newVal) {
+								widgetValue = newVal;
+								imageRemBGLogic(node, w);
 							}
 						});
 					}
