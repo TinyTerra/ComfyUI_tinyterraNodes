@@ -21,10 +21,12 @@ If you want the node pack to auto update when you start Comfy set this to true.
 
 **ttNstyles**
 
-*Disabled by default - enable in the config.ini file ([ttNstyles] apply_custom_styles = True)*
-+ Change the default link line type ([ttNstyles] link_type = curve | straight | direct)
+*Enabled by default*
+
 + Sets the link color for PIPE_LINE and INT (customizable within config.ini [ttNstyles])
-+ Sets the default ttNode background color to black
++ Option to update all node background colors automatically when added ([ttNstyles] node_bg_override = default | red | brown | green | blue | pale_blue | cyan | purple | yellow | black)
+
++ Option to change the default link line type ([ttNstyles] link_type = curve | straight | direct)
 
 <br>
 <details open>
