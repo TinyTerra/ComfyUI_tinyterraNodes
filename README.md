@@ -8,63 +8,37 @@ Navigate to the **_ComfyUI/custom_nodes_** directory, and run:
 
 `git clone https://github.com/TinyTerra/ComfyUI_tinyterraNodes.git`
 
-### AutoUpdate
-On the first run, a config.ini file will be created with - "autoUpdate" = false.
-If you want the node pack to auto update when you start Comfy set this to true.
-
 ### Special Features
 **Embedding Auto Complete**
 
 *Enabled by default*
-+ displays a popup to autocomplete embedding filenames in text widgets
-+ to use start typing "embedding" and select an option from the list
++ displays a popup to autocomplete embedding filenames in text widgets - to use, start typing **embedding** and select an option from the list
++ Option to disable ([ttNodes] enable_embed_autocomplete = True | False)
+
+**Dynamic Widgets**
+
+*Enabled by default*
+
++ Automatically hides and shows widgets depending on their relevancy
++ Option to disable ([ttNodes] enable_dynamic_widgets = True | False)
 
 **ttNstyles**
 
 *Enabled by default*
 
 + Sets the link color for PIPE_LINE and INT (customizable within config.ini [ttNstyles])
-+ Option to update all node background colors automatically when added ([ttNstyles] node_bg_override = default | red | brown | green | blue | pale_blue | cyan | purple | yellow | black)
++ Option to update default node background color automatically when added ([ttNstyles] node_bg_override = default | red | brown | green | blue | pale_blue | cyan | purple | yellow | black)
++ Option to change the default link line type ([ttNstyles] link_type = spline | straight | direct)
 
-+ Option to change the default link line type ([ttNstyles] link_type = curve | straight | direct)
+**AutoUpdate**
+
+*Disabled by default*
+
++ Option to auto-update the node pack ([ttNodes] auto_update = False | True)
 
 <br>
 <details open>
 	<summary>$\Large\color{white}{Nodes}$</summary>
- 
-## ttN/image
-  
-<details>
-  <summary>imageOutput</summary>
-  
-Preview or Save an image with one node, with image throughput.
-+ _**Inputs -** image, image output[Preview, Save], save prefix_
-+ _**Outputs -** image_
-  
-</details>
-  
-<details>
-  <summary>imageRemBG</summary>
-  
-(Using [RemBG](https://github.com/danielgatis/rembg))
-
-Background Removal node with optional image preview & save.
-+ _**Inputs -** image, image output[Disabled, Preview, Save], save prefix_
-+ _**Outputs -** image, mask_
-
-Example of a photobashing workflow using pipeNodes, imageRemBG, imageOutput and nodes from [ADV_CLIP_emb](https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb) and [ImpactPack](https://github.com/ltdrdata/ComfyUI-Impact-Pack/tree/Main):
-![photobash](workflows/tinyterra_imagebash.png)
-
- </details>
-  
-<details>
-  <summary>hiresFix</summary>
-
-Upscale image by model, optional rescale of result image.
-+ _**Inputs -** image, vae, upscale_model, rescale_after_model[true, false], rescale[by_percentage, to Width/Height], rescale method[nearest-exact, bilinear, area], factor, width, height, crop, image_output[Hide, Preview, Save], save prefix, output_latent[true, false]_
-+ _**Outputs -** image, latent_
-   </details>
-
 
 ## ttN/pipe
 
@@ -136,6 +110,38 @@ Convert ttN pipe line to detailer pipe (to be compatible with [ImpactPack](https
 + _**Outputs -** detailer_pipe[model, vae, conditioning, conditioning, bbox_detector, sam_model_opt], pipe_
    </details>
 
+## ttN/image
+  
+<details>
+  <summary>imageOutput</summary>
+  
+Preview or Save an image with one node, with image throughput.
++ _**Inputs -** image, image output[Preview, Save], save prefix_
++ _**Outputs -** image_
+  
+</details>
+  
+<details>
+  <summary>imageRemBG</summary>
+  
+(Using [RemBG](https://github.com/danielgatis/rembg))
+
+Background Removal node with optional image preview & save.
++ _**Inputs -** image, image output[Disabled, Preview, Save], save prefix_
++ _**Outputs -** image, mask_
+
+Example of a photobashing workflow using pipeNodes, imageRemBG, imageOutput and nodes from [ADV_CLIP_emb](https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb) and [ImpactPack](https://github.com/ltdrdata/ComfyUI-Impact-Pack/tree/Main):
+![photobash](workflows/tinyterra_imagebash.png)
+
+ </details>
+  
+<details>
+  <summary>hiresFix</summary>
+
+Upscale image by model, optional rescale of result image.
++ _**Inputs -** image, vae, upscale_model, rescale_after_model[true, false], rescale[by_percentage, to Width/Height], rescale method[nearest-exact, bilinear, area], factor, width, height, crop, image_output[Hide, Preview, Save], save prefix, output_latent[true, false]_
++ _**Outputs -** image, latent_
+   </details>
 
 ## ttN/text
 <details>
