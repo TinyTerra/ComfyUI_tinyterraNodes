@@ -59,14 +59,41 @@ class ttN_busOUT:
         print("busOUT:--",bus_line)
         return (bus_line,)
 
+class ttN_XY_Plot:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "x_axis": (['None',], {"default": 'None'}),
+                "x_values": ("STRING",{"default": '', "multiline": True}),
+                "y_axis": (['None',], {"default": 'None'}),
+                "y_values": ("STRING",{"default": '', "multiline": True}),
+            },
+        }
+
+    RETURN_TYPES = ("XY_PLOT", )
+    RETURN_NAMES = ("xy_plot", )
+    FUNCTION = "plot"
+
+    CATEGORY = "ttN/pipe"
+
+    def plot(self, x_axis, x_values, y_axis, y_values):
+        xy_plot = [x_axis, x_values, y_axis, y_values]
+        return (xy_plot, )
+
 NODE_CLASS_MAPPINGS = {
     "ttN debugInput": ttN_debugInput,
     "ttN busIN": ttN_busIN,
-    "ttN busOUT": ttN_busOUT
+    "ttN busOUT": ttN_busOUT,
+    "ttN xyPlot": ttN_XY_Plot
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN debugInput": "debugInput",
     "ttN busIN": "busIN",
-    "ttN busOUT": "busOUT"
+    "ttN busOUT": "busOUT",
+    "ttN xyPlot": "xyPlot",
 }

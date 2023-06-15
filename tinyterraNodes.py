@@ -424,7 +424,7 @@ class ttN_TSC_pipeKSampler:
                  "optional_latent": ("LATENT",),
                  "optional_vae": ("VAE",),
                  "optional_clip": ("CLIP",),
-                 "script": ("SCRIPT",),
+                 "xy_plot": ("XY_PLOT",),
                 },
                 "hidden":
                 {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
@@ -965,8 +965,6 @@ class ttN_TSC_pipeKSampler:
             return process_script_state(self, script, samples, images, vae, my_unique_id, seed, model, positive, negative, clip, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo, scheduler, steps, cfg, sampler_name, denoise)
 
 
-
-
 #---------------------------------------------------------------ttN Pipe KSampler END---------------------------------------------------------------#
 #---------------------------------------------------------------ttN/pipe START----------------------------------------------------------------------#
 class ttN_pipe_IN:
@@ -1467,7 +1465,7 @@ class ttN_modelScale:
                               "rescale_after_model": ([False, True],{"default": True}),
                               "rescale_method": (s.upscale_methods,),
                               "rescale": (["by percentage", "to Width/Height"],),
-                              "percent": ("INT", {"default": 50, "min": 0, "max": 1000, "step": 25}),
+                              "percent": ("INT", {"default": 50, "min": 0, "max": 1000, "step": 1}),
                               "width": ("INT", {"default": 512, "min": 1, "max": MAX_RESOLUTION, "step": 1}),
                               "height": ("INT", {"default": 512, "min": 1, "max": MAX_RESOLUTION, "step": 1}),
                               "crop": (s.crop_methods,),
