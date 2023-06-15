@@ -1,50 +1,26 @@
 import { app } from "/scripts/app.js";
-import { ComfyWidgets } from "/scripts/widgets.js";
 
 let origProps = {};
 
-function getWidgetByName(node, name) {
-	return node.widgets.find((w) => w.name === name);
-}
+const findWidgetByName = (node, name) => node.widgets.find((w) => w.name === name);
 
-function inputWithNameExists(node, name) {
-	if (!node.inputs) return false
-    return node.inputs.some((input) => input.name === name);
-}
+const doesInputWithNameExist = (node, name) => node.inputs ? node.inputs.some((input) => input.name === name) : false;
 
-function hideWidget(node, widget, suffix = "") {
-	if (inputWithNameExists(node, widget.name)) return;
+function toggleWidget(node, widget, show = false, suffix = "") {
+	if (!widget || doesInputWithNameExist(node, widget.name)) return;
 	if (!origProps[widget.name]) {
-		origProps[widget.name] = {
-			origType: widget.type,
-			origComputeSize: widget.computeSize,
-		}
+		origProps[widget.name] = { origType: widget.type, origComputeSize: widget.computeSize };	
 	}
-	widget.type = "ttNhidden" + suffix;
-	widget.computeSize = () => [0, -4]; // -4 is due to the gap litegraph adds between widgets automatically
-
-	if (widget.linkedWidgets) {
-		for (const w of widget.linkedWidgets) {
-			hideWidget(node, w, ":" + widget.name);
-		}
-	}
-	node.setSize([node.size[0], node.size[1]]);
-}
-
-function showWidget(node, widget, suffix = "") {
-	if (!origProps[widget.name]) return;
-	if (inputWithNameExists(node, widget.name)) return;
 	const origSize = node.size;
+
+	widget.type = show ? origProps[widget.name].origType : "ttNhidden" + suffix;
+	widget.computeSize = show ? origProps[widget.name].origComputeSize : () => [0, -4];
+
+	widget.linkedWidgets?.forEach(w => toggleWidget(node, w, ":" + widget.name, show));	
+
+	const height = show ? Math.max(node.computeSize()[1], origSize[1]) : node.size[1];
+	node.setSize([node.size[0], height]);
 	
-	widget.type = origProps[widget.name].origType;
-	widget.computeSize = origProps[widget.name].origComputeSize;
-	
-	if (widget.linkedWidgets) {
-		for (const w of widget.linkedWidgets) {
-			showWidget(node, w, ":" + widget.name);
-		}
-	}
-	node.setSize([node.size[0], Math.max(node.computeSize()[1], origSize[1])]);
 }
 
 const hrFixScaleWidgets = ['rescale_after_model', 'rescale', 'image_output']
@@ -52,40 +28,40 @@ const hrFixScaleWidgets = ['rescale_after_model', 'rescale', 'image_output']
 function hrFixScaleLogic(node, widget) {
 	if (widget.name === 'rescale_after_model') {
 		if (widget.value === false) {
-			hideWidget(node, getWidgetByName(node, 'rescale_method'))
-			hideWidget(node, getWidgetByName(node, 'rescale'))
-			hideWidget(node, getWidgetByName(node, 'percent'))
-			hideWidget(node, getWidgetByName(node, 'width'))
-			hideWidget(node, getWidgetByName(node, 'height'))
-			hideWidget(node, getWidgetByName(node, 'crop'))
+			toggleWidget(node, findWidgetByName(node, 'rescale_method'))
+			toggleWidget(node, findWidgetByName(node, 'rescale'))
+			toggleWidget(node, findWidgetByName(node, 'percent'))
+			toggleWidget(node, findWidgetByName(node, 'width'))
+			toggleWidget(node, findWidgetByName(node, 'height'))
+			toggleWidget(node, findWidgetByName(node, 'crop'))
 		} else {
-			showWidget(node, getWidgetByName(node, 'rescale_method'))
-			showWidget(node, getWidgetByName(node, 'rescale'))
-			if (getWidgetByName(node, 'rescale').value === 'by percentage') {
-				showWidget(node, getWidgetByName(node, 'percent'))
+			toggleWidget(node, findWidgetByName(node, 'rescale_method'), true)
+			toggleWidget(node, findWidgetByName(node, 'rescale'), true)
+			if (findWidgetByName(node, 'rescale').value === 'by percentage') {
+				toggleWidget(node, findWidgetByName(node, 'percent'), true)
 			} else {
-				showWidget(node, getWidgetByName(node, 'width'))
-				showWidget(node, getWidgetByName(node, 'height'))
+				toggleWidget(node, findWidgetByName(node, 'width'), true)
+				toggleWidget(node, findWidgetByName(node, 'height'), true)
 			}
-			showWidget(node, getWidgetByName(node, 'crop'))
+			toggleWidget(node, findWidgetByName(node, 'crop'), true)
 		}
 	}
 	if (widget.name === 'rescale') {
-		if (widget.value === 'by percentage' && getWidgetByName(node, 'rescale_after_model').value === true) {
-			hideWidget(node, getWidgetByName(node, 'width'))
-			hideWidget(node, getWidgetByName(node, 'height'))
-			showWidget(node, getWidgetByName(node, 'percent'))
-		} else if (widget.value === 'to Width/Height' && getWidgetByName(node, 'rescale_after_model').value === true) {
-			showWidget(node, getWidgetByName(node, 'width'))
-			showWidget(node, getWidgetByName(node, 'height'))
-			hideWidget(node, getWidgetByName(node, 'percent'))
+		if (widget.value === 'by percentage' && findWidgetByName(node, 'rescale_after_model').value === true) {
+			toggleWidget(node, findWidgetByName(node, 'width'))
+			toggleWidget(node, findWidgetByName(node, 'height'))
+			toggleWidget(node, findWidgetByName(node, 'percent'), true)
+		} else if (widget.value === 'to Width/Height' && findWidgetByName(node, 'rescale_after_model').value === true) {
+			toggleWidget(node, findWidgetByName(node, 'width'), true)
+			toggleWidget(node, findWidgetByName(node, 'height'), true)
+			toggleWidget(node, findWidgetByName(node, 'percent'))
 		}
 	}
 	if (widget.name === 'image_output') {
 		if (widget.value === 'Hide' || widget.value === 'Preview') {
-			hideWidget(node, getWidgetByName(node, 'save_prefix'))
+			toggleWidget(node, findWidgetByName(node, 'save_prefix'))
 		} else if (widget.value === 'Save' || widget.value === 'Hide/Save') {
-			showWidget(node, getWidgetByName(node, 'save_prefix'))
+			toggleWidget(node, findWidgetByName(node, 'save_prefix'), true)
 		}
 	}
 }
@@ -95,29 +71,29 @@ const pipeLoaderWidgets = ['lora1_name', 'lora2_name', 'lora3_name']
 function pipeLoaderLogic(node, widget) {
 	if (widget.name === 'lora1_name') {
 		if (widget.value === "None") {
-			hideWidget(node, getWidgetByName(node, 'lora1_model_strength'))
-			hideWidget(node, getWidgetByName(node, 'lora1_clip_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora1_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora1_clip_strength'))
 		} else {
-			showWidget(node, getWidgetByName(node, 'lora1_model_strength'))
-			showWidget(node, getWidgetByName(node, 'lora1_clip_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora1_model_strength'), true)
+			toggleWidget(node, findWidgetByName(node, 'lora1_clip_strength'), true)
 		}
 	}
 	if (widget.name === 'lora2_name') {
 		if (widget.value === "None") {
-			hideWidget(node, getWidgetByName(node, 'lora2_model_strength'))
-			hideWidget(node, getWidgetByName(node, 'lora2_clip_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora2_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora2_clip_strength'))
 		} else {
-			showWidget(node, getWidgetByName(node, 'lora2_model_strength'))
-			showWidget(node, getWidgetByName(node, 'lora2_clip_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora2_model_strength'), true)
+			toggleWidget(node, findWidgetByName(node, 'lora2_clip_strength'), true)
 		}
 	}
 	if (widget.name === 'lora3_name') {
 		if (widget.value === "None") {
-			hideWidget(node, getWidgetByName(node, 'lora3_model_strength'))
-			hideWidget(node, getWidgetByName(node, 'lora3_clip_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora3_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora3_clip_strength'))
 		} else {
-			showWidget(node, getWidgetByName(node, 'lora3_model_strength'))
-			showWidget(node, getWidgetByName(node, 'lora3_clip_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora3_model_strength'), true)
+			toggleWidget(node, findWidgetByName(node, 'lora3_clip_strength'), true)
 		}
 	}
 }
@@ -127,27 +103,27 @@ const pipeKSamplerWidgets = ['lora_name', 'upscale_method', 'image_output']
 function pipeKSamplerLogic(node, widget) {
 	if (widget.name === 'lora_name') {
 		if (widget.value === "None") {
-			hideWidget(node, getWidgetByName(node, 'lora_model_strength'))
-			hideWidget(node, getWidgetByName(node, 'lora_clip_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora_clip_strength'))
 		} else {
-			showWidget(node, getWidgetByName(node, 'lora_model_strength'))
-			showWidget(node, getWidgetByName(node, 'lora_clip_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora_model_strength'), true)
+			toggleWidget(node, findWidgetByName(node, 'lora_clip_strength'), true)
 		}
 	}
 	if (widget.name === 'upscale_method') {
 		if (widget.value === "None") {
-			hideWidget(node, getWidgetByName(node, 'factor'))
-			hideWidget(node, getWidgetByName(node, 'crop'))
+			toggleWidget(node, findWidgetByName(node, 'factor'))
+			toggleWidget(node, findWidgetByName(node, 'crop'))
 		} else {
-			showWidget(node, getWidgetByName(node, 'factor'))
-			showWidget(node, getWidgetByName(node, 'crop'))
+			toggleWidget(node, findWidgetByName(node, 'factor'), true)
+			toggleWidget(node, findWidgetByName(node, 'crop'), true)
 		}
 	}
 	if (widget.name === 'image_output') {
 		if (widget.value === 'Hide' || widget.value === 'Preview') {
-			hideWidget(node, getWidgetByName(node, 'save_prefix'))
+			toggleWidget(node, findWidgetByName(node, 'save_prefix'))
 		} else if (widget.value === 'Save' || widget.value === 'Hide/Save') {
-			showWidget(node, getWidgetByName(node, 'save_prefix'))
+			toggleWidget(node, findWidgetByName(node, 'save_prefix'), true)
 		}
 	}
 }
@@ -157,9 +133,9 @@ const imageRemBGWidgets = ['image_output']
 function imageRemBGLogic(node, widget) {
 	if (widget.name === 'image_output') {
 		if (widget.value === 'Hide' || widget.value === 'Preview') {
-			hideWidget(node, getWidgetByName(node, 'save_prefix'))
+			toggleWidget(node, findWidgetByName(node, 'save_prefix'))
 		} else if (widget.value === 'Save' || widget.value === 'Hide/Save') {
-			showWidget(node, getWidgetByName(node, 'save_prefix'))
+			toggleWidget(node, findWidgetByName(node, 'save_prefix'), true)
 		}
 	}
 }
@@ -167,6 +143,7 @@ function imageRemBGLogic(node, widget) {
 
 app.registerExtension({
 	name: "comfy.ttN.dynamicWidgets",
+	
 	nodeCreated(node) {
 		if (node.getTitle() == "hiresfixScale") {
 			if (node.widgets)

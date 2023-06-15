@@ -424,7 +424,7 @@ class ttN_TSC_pipeKSampler:
                  "optional_latent": ("LATENT",),
                  "optional_vae": ("VAE",),
                  "optional_clip": ("CLIP",),
-                 "xy_plot": ("XY_PLOT",),
+                 "script": ("SCRIPT",),
                 },
                 "hidden":
                 {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",},
