@@ -4,9 +4,11 @@
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
 import os
+import re
 import sys
 import json
 import torch
+import datetime
 import comfy.sd
 import comfy.utils
 import numpy as np
@@ -343,6 +345,43 @@ def get_save_image_path(filename_prefix, output_dir, image_width=0, image_height
         counter = 1
     return full_output_folder, filename, counter, subfolder, filename_prefix
 
+def format_date(text, date):
+    parts = {
+        'd': lambda d: d.day,
+        'M': lambda d: d.month,
+        'h': lambda d: d.hour,
+        'm': lambda d: d.minute,
+        's': lambda d: d.second,
+    }
+
+    for key in parts.keys():
+        if key + key in text:
+            text = text.replace(key + key, '{:02d}'.format(parts[key](date)))
+        elif key in text:
+            text = text.replace(key, '{}'.format(parts[key](date)))
+
+    if 'yyyy' in text:
+        text = text.replace('yyyy', str(date.year))
+
+    if 'yyy' in text:
+        text = text.replace('yyy', str(date.year)[1:])
+
+    if 'yy' in text:
+        text = text.replace('yy', str(date.year)[2:])
+
+    return text
+
+def replace_date_placeholder(input_string):
+    date_pattern = re.compile(r'%date:(.*?)%')
+    matches = date_pattern.findall(input_string)
+    
+    for match in matches:
+        current_date_str = format_date(match, datetime.datetime.now())
+        input_string = input_string.replace(f'%date:{match}%', current_date_str)
+
+    return input_string
+        
+
 def save_images(self, images, preview_prefix, save_prefix, image_output, prompt=None, extra_pnginfo=None, output_folder="Default"):
     if image_output in ("Save", "Hide/Save"):
         output_dir = folder_paths.get_output_directory()
@@ -352,6 +391,8 @@ def save_images(self, images, preview_prefix, save_prefix, image_output, prompt=
         output_dir = folder_paths.get_temp_directory()
         filename_prefix = preview_prefix
         type = "temp"
+
+    filename_prefix = replace_date_placeholder(filename_prefix)
 
     full_output_folder, filename, counter, subfolder, filename_prefix = get_save_image_path(filename_prefix, output_dir, images[0].shape[1], images[0].shape[0], output_folder)
     results = list()
