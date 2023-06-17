@@ -23,9 +23,43 @@ function toggleWidget(node, widget, show = false, suffix = "") {
 	
 }
 
-const hrFixScaleWidgets = ['rescale_after_model', 'rescale', 'image_output']
-
-function hrFixScaleLogic(node, widget) {
+function widgetLogic(node, widget) {
+	if (widget.name === 'lora_name') {
+		if (widget.value === "None") {
+			toggleWidget(node, findWidgetByName(node, 'lora_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora_clip_strength'))
+		} else {
+			toggleWidget(node, findWidgetByName(node, 'lora_model_strength'), true)
+			toggleWidget(node, findWidgetByName(node, 'lora_clip_strength'), true)
+		}
+	}
+	if (widget.name === 'lora1_name') {
+		if (widget.value === "None") {
+			toggleWidget(node, findWidgetByName(node, 'lora1_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora1_clip_strength'))
+		} else {
+			toggleWidget(node, findWidgetByName(node, 'lora1_model_strength'), true)
+			toggleWidget(node, findWidgetByName(node, 'lora1_clip_strength'), true)
+		}
+	}
+	if (widget.name === 'lora2_name') {
+		if (widget.value === "None") {
+			toggleWidget(node, findWidgetByName(node, 'lora2_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora2_clip_strength'))
+		} else {
+			toggleWidget(node, findWidgetByName(node, 'lora2_model_strength'), true)
+			toggleWidget(node, findWidgetByName(node, 'lora2_clip_strength'), true)
+		}
+	}
+	if (widget.name === 'lora3_name') {
+		if (widget.value === "None") {
+			toggleWidget(node, findWidgetByName(node, 'lora3_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora3_clip_strength'))
+		} else {
+			toggleWidget(node, findWidgetByName(node, 'lora3_model_strength'), true)
+			toggleWidget(node, findWidgetByName(node, 'lora3_clip_strength'), true)
+		}
+	}
 	if (widget.name === 'rescale_after_model') {
 		if (widget.value === false) {
 			toggleWidget(node, findWidgetByName(node, 'rescale_method'))
@@ -57,59 +91,6 @@ function hrFixScaleLogic(node, widget) {
 			toggleWidget(node, findWidgetByName(node, 'percent'))
 		}
 	}
-	if (widget.name === 'image_output') {
-		if (widget.value === 'Hide' || widget.value === 'Preview') {
-			toggleWidget(node, findWidgetByName(node, 'save_prefix'))
-		} else if (widget.value === 'Save' || widget.value === 'Hide/Save') {
-			toggleWidget(node, findWidgetByName(node, 'save_prefix'), true)
-		}
-	}
-}
-
-const pipeLoaderWidgets = ['lora1_name', 'lora2_name', 'lora3_name']
-
-function pipeLoaderLogic(node, widget) {
-	if (widget.name === 'lora1_name') {
-		if (widget.value === "None") {
-			toggleWidget(node, findWidgetByName(node, 'lora1_model_strength'))
-			toggleWidget(node, findWidgetByName(node, 'lora1_clip_strength'))
-		} else {
-			toggleWidget(node, findWidgetByName(node, 'lora1_model_strength'), true)
-			toggleWidget(node, findWidgetByName(node, 'lora1_clip_strength'), true)
-		}
-	}
-	if (widget.name === 'lora2_name') {
-		if (widget.value === "None") {
-			toggleWidget(node, findWidgetByName(node, 'lora2_model_strength'))
-			toggleWidget(node, findWidgetByName(node, 'lora2_clip_strength'))
-		} else {
-			toggleWidget(node, findWidgetByName(node, 'lora2_model_strength'), true)
-			toggleWidget(node, findWidgetByName(node, 'lora2_clip_strength'), true)
-		}
-	}
-	if (widget.name === 'lora3_name') {
-		if (widget.value === "None") {
-			toggleWidget(node, findWidgetByName(node, 'lora3_model_strength'))
-			toggleWidget(node, findWidgetByName(node, 'lora3_clip_strength'))
-		} else {
-			toggleWidget(node, findWidgetByName(node, 'lora3_model_strength'), true)
-			toggleWidget(node, findWidgetByName(node, 'lora3_clip_strength'), true)
-		}
-	}
-}
-
-const pipeKSamplerWidgets = ['lora_name', 'upscale_method', 'image_output']
-
-function pipeKSamplerLogic(node, widget) {
-	if (widget.name === 'lora_name') {
-		if (widget.value === "None") {
-			toggleWidget(node, findWidgetByName(node, 'lora_model_strength'))
-			toggleWidget(node, findWidgetByName(node, 'lora_clip_strength'))
-		} else {
-			toggleWidget(node, findWidgetByName(node, 'lora_model_strength'), true)
-			toggleWidget(node, findWidgetByName(node, 'lora_clip_strength'), true)
-		}
-	}
 	if (widget.name === 'upscale_method') {
 		if (widget.value === "None") {
 			toggleWidget(node, findWidgetByName(node, 'factor'))
@@ -122,128 +103,49 @@ function pipeKSamplerLogic(node, widget) {
 	if (widget.name === 'image_output') {
 		if (widget.value === 'Hide' || widget.value === 'Preview') {
 			toggleWidget(node, findWidgetByName(node, 'save_prefix'))
+			toggleWidget(node, findWidgetByName(node, 'output_path'))
+			toggleWidget(node, findWidgetByName(node, 'embed_workflow'))
 		} else if (widget.value === 'Save' || widget.value === 'Hide/Save') {
 			toggleWidget(node, findWidgetByName(node, 'save_prefix'), true)
+			toggleWidget(node, findWidgetByName(node, 'output_path'), true)
+			toggleWidget(node, findWidgetByName(node, 'embed_workflow'), true)
 		}
 	}
 }
 
-const imageRemBGWidgets = ['image_output']
+const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 'upscale_method', 'image_output']
 
-function imageRemBGLogic(node, widget) {
-	if (widget.name === 'image_output') {
-		if (widget.value === 'Hide' || widget.value === 'Preview') {
-			toggleWidget(node, findWidgetByName(node, 'save_prefix'))
-		} else if (widget.value === 'Save' || widget.value === 'Hide/Save') {
-			toggleWidget(node, findWidgetByName(node, 'save_prefix'), true)
+function getSetters(node) {
+	if (node.widgets)
+		for (const w of node.widgets) {
+			if (getSetWidgets.includes(w.name)) {
+				widgetLogic(node, w);
+				let widgetValue = w.value;
+
+				// Define getters and setters for widget values
+				Object.defineProperty(w, 'value', {
+					get() {
+						return widgetValue;
+					},
+					set(newVal) {
+						widgetValue = newVal;
+						widgetLogic(node, w);
+					}
+				});
+			}
 		}
-	}
 }
-
 
 app.registerExtension({
 	name: "comfy.ttN.dynamicWidgets",
 	
 	nodeCreated(node) {
-		if (node.getTitle() == "hiresfixScale") {
-			if (node.widgets)
-				for (const w of node.widgets) {
-					if (hrFixScaleWidgets.includes(w.name)) {
-						hrFixScaleLogic(node, w);
-						let widgetValue = w.value;
-
-						// Define getters and setters for widget values
-						Object.defineProperty(w, 'value', {
-							get() {
-								return widgetValue;
-							},
-							set(newVal) {
-								widgetValue = newVal;
-								hrFixScaleLogic(node, w);
-							}
-						});
-					}
-				}
-		}
-		if (node.getTitle() == "pipeLoader") {
-			if (node.widgets)
-				for (const w of node.widgets) {
-					if (pipeLoaderWidgets.includes(w.name)) {
-						pipeLoaderLogic(node, w);
-						let widgetValue = w.value;
-
-						// Define getters and setters for widget values
-						Object.defineProperty(w, 'value', {
-							get() {
-								return widgetValue;
-							},
-							set(newVal) {
-								widgetValue = newVal;
-								pipeLoaderLogic(node, w);
-							}
-						});
-					}
-				}
-		}
-		if (node.getTitle() == "pipeKSampler") {
-			if (node.widgets)
-				for (const w of node.widgets) {
-					if (pipeKSamplerWidgets.includes(w.name)) {
-						pipeKSamplerLogic(node, w);
-						let widgetValue = w.value;
-
-						// Define getters and setters for widget values
-						Object.defineProperty(w, 'value', {
-							get() {
-								return widgetValue;
-							},
-							set(newVal) {
-								widgetValue = newVal;
-								pipeKSamplerLogic(node, w);
-							}
-						});
-					}
-				}
-		}
-		if (node.getTitle() == "imageRemBG") {
-			if (node.widgets)
-				for (const w of node.widgets) {
-					if (imageRemBGWidgets.includes(w.name)) {
-						imageRemBGLogic(node, w);
-						let widgetValue = w.value;
-
-						// Define getters and setters for widget values
-						Object.defineProperty(w, 'value', {
-							get() {
-								return widgetValue;
-							},
-							set(newVal) {
-								widgetValue = newVal;
-								imageRemBGLogic(node, w);
-							}
-						});
-					}
-				}
-		}
-		if (node.getTitle() == "imageOutput") {
-			if (node.widgets)
-				for (const w of node.widgets) {
-					if (imageRemBGWidgets.includes(w.name)) {
-						imageRemBGLogic(node, w);
-						let widgetValue = w.value;
-
-						// Define getters and setters for widget values
-						Object.defineProperty(w, 'value', {
-							get() {
-								return widgetValue;
-							},
-							set(newVal) {
-								widgetValue = newVal;
-								imageRemBGLogic(node, w);
-							}
-						});
-					}
-				}
+		if (node.getTitle() == "hiresfixScale" ||
+				node.getTitle() == "pipeLoader" ||
+				node.getTitle() == "pipeKSampler" ||
+				node.getTitle() == "imageRemBG" ||
+				node.getTitle() == "imageOutput") {
+			getSetters(node)
 		}
 	}
 });
