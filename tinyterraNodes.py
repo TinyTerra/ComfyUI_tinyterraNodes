@@ -1505,10 +1505,11 @@ class ttN_modelScale:
                               "info": ("INFO", {"default": "Rescale based on model upscale image size ⬇", "multiline": True}),
                               "rescale_after_model": ([False, True],{"default": True}),
                               "rescale_method": (s.upscale_methods,),
-                              "rescale": (["by percentage", "to Width/Height"],),
+                              "rescale": (["by percentage", "to Width/Height", 'to longer side - maintain aspect'],),
                               "percent": ("INT", {"default": 50, "min": 0, "max": 1000, "step": 1}),
-                              "width": ("INT", {"default": 512, "min": 1, "max": MAX_RESOLUTION, "step": 1}),
-                              "height": ("INT", {"default": 512, "min": 1, "max": MAX_RESOLUTION, "step": 1}),
+                              "width": ("INT", {"default": 1024, "min": 1, "max": MAX_RESOLUTION, "step": 1}),
+                              "height": ("INT", {"default": 1024, "min": 1, "max": MAX_RESOLUTION, "step": 1}),
+                              "longer_side": ("INT", {"default": 1024, "min": 1, "max": MAX_RESOLUTION, "step": 1}),
                               "crop": (s.crop_methods,),
                               "image_output": (["Hide", "Preview", "Save", "Hide/Save"],),
                               "save_prefix": ("STRING", {"default": "ComfyUI"}),
@@ -1533,7 +1534,7 @@ class ttN_modelScale:
             pixels = pixels[:, x_offset:x + x_offset, y_offset:y + y_offset, :]
         return pixels
 
-    def upscale(self, model_name, image, info, rescale_after_model, rescale_method, rescale, percent, width, height, crop, image_output, save_prefix, output_latent, vae, prompt=None, extra_pnginfo=None, my_unique_id=None):
+    def upscale(self, model_name, image, info, rescale_after_model, rescale_method, rescale, percent, width, height, longer_side, crop, image_output, save_prefix, output_latent, vae, prompt=None, extra_pnginfo=None, my_unique_id=None):
         # Load Model
         model_path = folder_paths.get_full_path("upscale_models", model_name)
         sd = comfy.utils.load_torch_file(model_path, safe_load=True)
@@ -1555,16 +1556,25 @@ class ttN_modelScale:
         # Post Model Rescale
         if rescale_after_model == True:
             samples = s.movedim(-1, 1)
+            orig_height = samples.shape[2]
+            orig_width = samples.shape[3]
             if rescale == "by percentage" and percent != 0:
-                height = percent / 100 * samples.shape[2]
-                width = percent / 100 * samples.shape[3]
+                height = percent / 100 * orig_height
+                width = percent / 100 * orig_width
                 if (width > MAX_RESOLUTION):
                     width = MAX_RESOLUTION
                 if (height > MAX_RESOLUTION):
                     height = MAX_RESOLUTION
 
-                width = int(enforce_mul_of_64(width))
-                height = int(enforce_mul_of_64(height))
+                width = enforce_mul_of_64(width)
+                height = enforce_mul_of_64(height)
+            elif rescale == "to longer side - maintain aspect":
+                longer_side = enforce_mul_of_64(longer_side)
+                if orig_width > orig_height:
+                    width, height = longer_side, enforce_mul_of_64(longer_side * orig_height / orig_width)
+                else:
+                    width, height = enforce_mul_of_64(longer_side * orig_width / orig_height), longer_side
+                    
 
             s = comfy.utils.common_upscale(samples, width, height, rescale_method, crop)
             s = s.movedim(1,-1)
