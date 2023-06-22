@@ -277,16 +277,17 @@ class ttN_TSC_pipeLoader:
 
 #Functions for upscaling
 def enforce_mul_of_64(d):
+    d = int(d)
     if d<=7:
         d = 8
     leftover = d % 8          # 8 is the number of pixels per byte
     if leftover != 0:         # if the number of pixels is not a multiple of 8
-        if (leftover < 4):       # if the number of pixels is less than 4
+        if (leftover < 4):    # if the number of pixels is less than 4
             d -= leftover     # remove the leftover pixels
         else:                 # if the number of pixels is more than 4
-            d += 8 - leftover  # add the leftover pixels
+            d += 8 - leftover # add the leftover pixels
 
-    return d
+    return int(d)
 
 def upscale(samples, upscale_method, factor, crop):
         
