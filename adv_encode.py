@@ -185,7 +185,7 @@ def advanced_encode_from_tokens(clip, tokenized, token_normalization, weight_int
         weights = scale_to_norm(weights, word_ids, w_max)
         weighted_emb = down_weight(unweighted_tokens, weights, word_ids, base_emb, clip)
 
-    return weighted_emb
+    return [[weighted_emb,{}]]
 
 def advanced_encode(clip, text, token_normalization, weight_interpretation, w_max=1.0):
     tokenized = clip.tokenize(text, return_word_ids=True)

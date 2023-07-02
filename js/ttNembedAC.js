@@ -1,21 +1,18 @@
 import { app } from "/scripts/app.js";
-import { createDropdown } from "./ttN.js";
-
-fetch('extensions/tinyterraNodes/embeddingsList.json')
-    .then(response => response.json())
-    .then(data => {
-        embeddingsList = data.map(embedding => "embedding:" + embedding);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
+import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttN.js";
 
 let embeddingsList = [];
 
 app.registerExtension({
     name: "comfy.ttN.embeddingAC",
+    async beforeRegisterNodeDef(nodeType, nodeData, app) {
+		if (nodeData.name === "ttN pipeKSampler") {
+			embeddingsList = nodeData.input.hidden.embeddingsList[0];
+            embeddingsList = embeddingsList.map(embedding => "embedding:" + embedding);
+        }
+    },
     nodeCreated(node) {
-        if (node.widgets) {
+        if (node.widgets && node.getTitle() !== "xyPlot") {
             const widgets = node.widgets.filter(
                 (n) => (n.type === "customtext" && n.dynamicPrompts !== false) || n.dynamicPrompts
             );
@@ -35,16 +32,20 @@ app.registerExtension({
                     if (suggestionkey.startsWith(currentSegmentLower) && currentSegmentLower.length > 2 || currentSegmentLower.startsWith(suggestionkey)) {
                         const filteredEmbeddingsList = embeddingsList.filter(s => s.toLowerCase().includes(currentSegmentLower));
                         if (filteredEmbeddingsList.length > 0) {
-                            createDropdown(w.inputEl, filteredEmbeddingsList, (selectedSuggestion) => {
+                            ttN_CreateDropdown(w.inputEl, filteredEmbeddingsList, (selectedSuggestion) => {
                                 const newText = replaceLastEmbeddingSegment(w.inputEl.value, selectedSuggestion);
                                 w.inputEl.value = newText;
                             });
-                        }
+                        } 
+                    } else {
+                        ttN_RemoveDropdown()
                     }
                 };
 
                 w.inputEl.removeEventListener('input', onInput);
                 w.inputEl.addEventListener('input', onInput);
+                w.inputEl.removeEventListener('mousedown', onInput);
+                w.inputEl.addEventListener('mousedown', onInput);
 
                 function replaceLastEmbeddingSegment(inputText, selectedSuggestion) {
                     const cursorPosition = w.inputEl.selectionStart;

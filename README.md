@@ -1,10 +1,11 @@
 # tinyterraNodes
 A selection of custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI).
 
-<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/blob/main/workflows/tinyterra_trueHRFix.png?raw=true">
+![tinyterra_trueHRFix](workflows/tinyterra_trueHRFix.png)
+![tinyterra_xyPlot](workflows/tinyterra_xyPlot.png)
 
 ## Installation
-Navigate to the **_ComfyUI/custom_nodes_** directory, and run:
+Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
 
 `git clone https://github.com/TinyTerra/ComfyUI_tinyterraNodes.git`
 
@@ -22,13 +23,31 @@ Navigate to the **_ComfyUI/custom_nodes_** directory, and run:
 + Automatically hides and shows widgets depending on their relevancy
 + Option to disable ([ttNodes] enable_dynamic_widgets = True | False)
 
-**ttNstyles**
+**ttNinterface**
 
 *Enabled by default*
 
-+ Sets the link color for PIPE_LINE and INT (customizable within config.ini [ttNstyles])
-+ Option to update default node background color automatically when added ([ttNstyles] node_bg_override = default | red | brown | green | blue | pale_blue | cyan | purple | yellow | black)
-+ Option to change the default link line type ([ttNstyles] link_type = spline | straight | direct)
++ <details><summary>Adds 'Node Dimensions (ttN)' to the node right-click context menu</summary> Allows setting specific node Width and Height values as long as they are above the minimum size for the given node.
++ <details><summary>Adds support for 'ctrl + arrow key' Node movement</summary> This aligns the node(s) to the set ComfyUI grid spacing size and move the node in the direction of the arrow key by the grid spacing value. Holding shift in addition will move the node by the grid spacing size * 10.
++ <details><summary>Adds 'Reload Node (ttN)' to the node right-click context menu</summary> Creates a new instance of the node with the same position, size, color and title (will disconnect any IO wires). It attempts to retain set widget values which is useful for replacing nodes when a node/widget update occurs </details>
++ <details><summary>Adds 'Slot Type Color (ttN)' to the Link right-click context menu</summary> Opens a color picker dialog menu to update the color of the selected link type. </details>
++ <details><summary>Adds 'Link Style (ttN)' to the Link right-click context menu</summary> Sets the default link line type. </details>
+
+**Save image prefix parsing**
+
++ Add date/time info to filenames by using: %date:yyyy-MM-dd-hh-mm-ss%
++ Parse any upstream setting into filenames by using %[widget_name]% (for the current node) <br>
+or %[input_name]>[input_name]>[widget_name]% (for inputting nodes) <br>
+  <details><summary>Example:
+  </summary>
+
+  ![tinyterra_prefixParsing](workflows/tinyterra_prefixParsing.png)
+  </details>
+
+**Node Versioning**
+
++ All tinyterraNodes now have a version property so that if any future changes are made to widgets that would break workflows the nodes will be highlighted on load
++ Will only work with workflows created/saved after the v1.0.0 release
 
 **AutoUpdate**
 
@@ -110,13 +129,21 @@ Convert ttN pipe line to detailer pipe (to be compatible with [ImpactPack](https
 + _**Outputs -** detailer_pipe[model, vae, conditioning, conditioning, bbox_detector, sam_model_opt], pipe_
    </details>
 
+<details>
+  <summary>pipe > xyPlot</summary>
+  
+pipeKSampler input to generate xy plots using sampler and loader values. (Any values not set by xyPlot will be taken from the corresponding pipeKSampler or pipeLoader)
++ _**Inputs -** grid_spacing, latent_id, flip_xy, x_axis, x_values, y_axis, y_values_
++ _**Outputs -** xyPlot_
+   </details>
+
 ## ttN/image
   
 <details>
   <summary>imageOutput</summary>
   
 Preview or Save an image with one node, with image throughput.
-+ _**Inputs -** image, image output[Preview, Save], save prefix_
++ _**Inputs -** image, image output[Hide, Preview, Save, Hide/Save], output path, save prefix, number padding[None, 2-9], overwrite existing[True, False], embed workflow[True, False]_
 + _**Outputs -** image_
   
 </details>

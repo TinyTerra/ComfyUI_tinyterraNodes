@@ -3,8 +3,103 @@ import { ComfyWidgets } from "/scripts/widgets.js";
 
 app.registerExtension({
 	name: "comfy.ttN",
-	async beforeRegisterNodeDef(nodeType, nodeData, app) {
-		if (nodeData.name === "ttN textDebug") {
+    init() {
+        const ttNreloadNode = function (node) {
+            const nodeType = node.constructor.type;
+            const nodeTitle = node.properties.origVals ? node.properties.origVals.title : node.title
+            const nodeColor = node.properties.origVals ? node.properties.origVals.color : node.color
+            const bgColor = node.properties.origVals ? node.properties.origVals.bgcolor : node.bgcolor
+            const oldNode = node
+            const options = {'size': [node.size[0], node.size[1]],
+            'color': nodeColor,
+            'bgcolor': bgColor,
+            'pos': [node.pos[0], node.pos[1]]}
+
+            let prevValObj = { 'val': undefined };
+
+            app.graph.remove(node)
+            const newNode = app.graph.add(LiteGraph.createNode(nodeType, nodeTitle, options));
+
+            if (newNode?.constructor?.hasOwnProperty('ttNnodeVersion')) {
+                newNode.properties.ttNnodeVersion = newNode.constructor.ttNnodeVersion;
+            }
+            
+
+            function evalWidgetValues(testValue, newWidg, prevValObj) {
+                let prevVal = prevValObj.val;
+                if (prevVal !== undefined && evalWidgetValues(prevVal, newWidg, {'val': undefined}) === prevVal) {
+                    const newVal = prevValObj.val
+                    prevValObj.val = testValue
+                    return newVal
+                }
+                else if ((newWidg.options?.values && newWidg.options.values.includes(testValue)) ||
+                         (newWidg.options?.min <= testValue && testValue <= newWidg.options.max) ||
+                         (newWidg.inputEl)) {
+                    return testValue
+                }
+                else {
+                    prevValObj.val = testValue
+                    return newWidg.value
+                }
+            }
+
+            for (const oldWidget of oldNode.widgets ? oldNode.widgets : []) {
+                for (const newWidget of newNode.widgets ? newNode.widgets : []) {
+                    if (newWidget.name === oldWidget.name) {
+                        newWidget.value = evalWidgetValues(oldWidget.value, newWidget, prevValObj);
+                    }
+                }
+            }
+        };
+
+        const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
+		LGraphCanvas.prototype.getNodeMenuOptions = function (node) {
+			const options = getNodeMenuOptions.apply(this, arguments);
+            node.setDirtyCanvas(true, true);
+            
+            options.splice(options.length - 1, 0,
+                {
+                    content: "Reload Node (ttN)",
+                    callback: () => {
+                        var graphcanvas = LGraphCanvas.active_canvas;
+                        if (!graphcanvas.selected_nodes || Object.keys(graphcanvas.selected_nodes).length <= 1){
+                            ttNreloadNode(node);
+                        }else{
+                            for (var i in graphcanvas.selected_nodes) {
+                                ttNreloadNode(graphcanvas.selected_nodes[i]);
+                            }
+                        }
+                    }
+                },
+            );
+			return options;
+		};
+    },
+	beforeRegisterNodeDef(nodeType, nodeData, app) {
+        if (nodeData.name.startsWith("ttN")) {
+            const origOnConfigure = nodeType.prototype.onConfigure;
+            nodeType.prototype.onConfigure = function () {
+                const r = origOnConfigure ? origOnConfigure.apply(this, arguments) : undefined;
+                let nodeVersion = nodeData.input.hidden?.ttNnodeVersion ? nodeData.input.hidden.ttNnodeVersion : null;
+                nodeType.ttNnodeVersion = nodeVersion;
+                this.properties['ttNnodeVersion'] = this.properties['ttNnodeVersion']?this.properties['ttNnodeVersion']:nodeVersion;
+                if (this.properties['ttNnodeVersion'] !== nodeVersion) {
+                    if (!this.properties['origVals']) {
+                        this.properties['origVals'] = {bgcolor: this.bgcolor, color: this.color, title: this.title}
+                    }
+                    this.bgcolor = "#d82129";
+                    this.color = "#bd000f";
+                    this.title = this.title.includes("Node Version Mismatch") ? this.title : this.title + " - Node Version Mismatch"
+                } else if (this.properties['origVals']) {
+                    this.bgcolor = this.properties.origVals.bgcolor;
+                    this.color = this.properties.origVals.color;
+                    this.title = this.properties.origVals.title;
+                    delete this.properties['origVals']
+                }
+                return r;
+            };
+        }
+        if (nodeData.name === "ttN textDebug") {
 			const onNodeCreated = nodeType.prototype.onNodeCreated;
 			nodeType.prototype.onNodeCreated = function () {
 				const r = onNodeCreated?.apply(this, arguments);
@@ -23,16 +118,18 @@ app.registerExtension({
 				this.onResize?.(this.size);
 			};
 		}
-		if (nodeData.name === "ttN pipeLoader") {
-			const onNodeCreated = nodeType.prototype.onNodeCreated;
-			nodeType.prototype.onNodeCreated = function () {
-					const r = onNodeCreated?.apply(this, arguments);
-                    this.widgets[22].value = "fixed"
-					return r;
-			};
-		}
 	},
+    nodeCreated(node) {
+        if (node.getTitle() === "pipeLoader") {
+            for (let widget of node.widgets) {
+                if (widget.name === "control_after_generate") {
+                    widget.value = "fixed"
+                }
+            }
+        }
+    },
 });
+
 
 // ttN Dropdown
 var styleElement = document.createElement("style");
@@ -69,100 +166,155 @@ document.head.appendChild(styleElement);
 
 let activeDropdown = null;
 
-function createDropdown(inputEl, suggestions, onSelect) {
+export function ttN_RemoveDropdown() {
     if (activeDropdown) {
-        activeDropdown.remove();
+        activeDropdown.removeEventListeners();
+        activeDropdown.dropdown.remove();
         activeDropdown = null;
     }
+}
 
-    const dropdown = document.createElement('ul');
-    dropdown.setAttribute('role', 'listbox');
-    dropdown.classList.add('ttN-dropdown');
+class Dropdown {
+    constructor(inputEl, suggestions, onSelect) {
+      this.dropdown = document.createElement('ul');
+      this.dropdown.setAttribute('role', 'listbox');
+      this.dropdown.classList.add('ttN-dropdown');
+      this.selectedIndex = -1;
+      this.inputEl = inputEl;
+      this.suggestions = suggestions;
+      this.onSelect = onSelect;
 
-    let selectedIndex = -1;
+      this.buildDropdown();
 
-    suggestions.forEach((suggestion, index) => {
+      this.onKeyDownBound = this.onKeyDown.bind(this);
+      this.onWheelBound = this.onWheel.bind(this);
+      this.onClickBound = this.onClick.bind(this);
+
+      this.addEventListeners();
+    }
+
+    buildDropdown() {
+      this.suggestions.forEach((suggestion, index) => {
         const listItem = document.createElement('li');
         listItem.setAttribute('role', 'option');
         listItem.textContent = suggestion;
-        listItem.addEventListener('mouseover', function () {
-            selectedIndex = index;
-            updateSelection();
-        });
-        listItem.addEventListener('mouseout', function () {
-            selectedIndex = -1;
-            updateSelection();
-        });
-        listItem.addEventListener('mousedown', function (event) {
-            event.preventDefault();
-            onSelect(suggestion);
-            dropdown.remove();
-        });
-        dropdown.appendChild(listItem);
-    });
+        listItem.addEventListener('mouseover', this.onMouseOver.bind(this, index));
+        listItem.addEventListener('mouseout', this.onMouseOut.bind(this));
+        listItem.addEventListener('mousedown', this.onMouseDown.bind(this, suggestion));
+        this.dropdown.appendChild(listItem);
+      });
 
-    const inputRect = inputEl.getBoundingClientRect();
-    dropdown.style.top = (inputRect.top + inputRect.height) + 'px';
-    dropdown.style.left = inputRect.left + 'px';
-    dropdown.style.width = inputRect.width + 'px';
+      const inputRect = this.inputEl.getBoundingClientRect();
+      this.dropdown.style.top = (inputRect.top + inputRect.height) + 'px';
+      this.dropdown.style.left = inputRect.left + 'px';
+      this.dropdown.style.width = inputRect.width + 'px';
 
-    document.body.appendChild(dropdown);
-    activeDropdown = dropdown;
-
-    function updateSelection() {
-        Array.from(dropdown.children).forEach((li, index) => {
-            if (index === selectedIndex) {
-                li.classList.add('selected');
-            } else {
-                li.classList.remove('selected');
-            }
-        });
+      document.body.appendChild(this.dropdown);
+      activeDropdown = this;
     }
 
-    inputEl.addEventListener('keydown', function (event) {
+    addEventListeners() {
+        document.addEventListener('keydown', this.onKeyDownBound);
+        this.dropdown.addEventListener('wheel', this.onWheelBound);
+        document.addEventListener('click', this.onClickBound);
+    }
+  
+    removeEventListeners() {
+        document.removeEventListener('keydown', this.onKeyDownBound);
+        this.dropdown.removeEventListener('wheel', this.onWheelBound);
+        document.removeEventListener('click', this.onClickBound);
+    }
+
+    onMouseOver(index) {
+      this.selectedIndex = index;
+      this.updateSelection();
+    }
+
+    onMouseOut() {
+      this.selectedIndex = -1;
+      this.updateSelection();
+    }
+
+    onMouseDown(suggestion, event) {
+      event.preventDefault();
+      this.onSelect(suggestion);
+      this.dropdown.remove();
+      this.removeEventListeners();
+    }
+
+    onKeyDown(event) {
         const enterKeyCode = 13;
         const escKeyCode = 27;
         const arrowUpKeyCode = 38;
         const arrowDownKeyCode = 40;
-        const arrowRightKeyCode = 39;
-        const arrowLeftKeyCode = 37;
+        const tabKeyCode = 9;
 
-        if (event.keyCode === arrowUpKeyCode) {
-            event.preventDefault();
-            selectedIndex = Math.max(0, selectedIndex - 1);
-            updateSelection();
-        } else if (event.keyCode === arrowDownKeyCode) {
-            event.preventDefault();
-            selectedIndex = Math.min(suggestions.length - 1, selectedIndex + 1);
-            updateSelection();
-        } else if (event.keyCode === arrowLeftKeyCode) {
-            event.preventDefault();
-            selectedIndex = 0;  // Go to the first item
-            updateSelection();
-        } else if (event.keyCode === arrowRightKeyCode) {
-            event.preventDefault();
-            selectedIndex = suggestions.length - 1;  // Go to the last item
-            updateSelection();
-        } else if (event.keyCode === enterKeyCode && selectedIndex >= 0) {
-            event.preventDefault();
-            onSelect(suggestions[selectedIndex]);
-            dropdown.remove();
-        } else if (event.keyCode === escKeyCode) {
-            dropdown.remove();
+        if (activeDropdown) {
+            if (event.keyCode === arrowUpKeyCode) {
+                event.preventDefault();
+                this.selectedIndex = Math.max(0, this.selectedIndex - 1);
+                this.updateSelection();
+            } else if (event.keyCode === arrowDownKeyCode) {
+                event.preventDefault();
+                this.selectedIndex = Math.min(this.suggestions.length - 1, this.selectedIndex + 1);
+                this.updateSelection();
+            } else if (event.keyCode === enterKeyCode) {
+                if (this.selectedIndex >= 0) {
+                    event.preventDefault();
+                    this.onSelect(this.suggestions[this.selectedIndex]);
+                    this.dropdown.remove();
+                    this.removeEventListeners();
+                } else {
+                    event.preventDefault();
+                }
+            } else if (event.keyCode === tabKeyCode) {
+                if (this.selectedIndex >= 0) {
+                    event.preventDefault();
+                    this.onSelect(this.suggestions[this.selectedIndex]);
+                    this.dropdown.remove();
+                    this.removeEventListeners();
+                } else {
+                    event.preventDefault();
+                }
+            } else if (event.keyCode === escKeyCode) {
+                this.dropdown.remove();
+                this.removeEventListeners();
+            }
+        } else {
+            if (event.keyCode === enterKeyCode) {
+                event.preventDefault();
+            }
         }
-    });
+    }
 
-    dropdown.addEventListener('wheel', function (event) {
-        // Update dropdown.style.top by +/- 10px based on scroll direction
-        const top = parseInt(dropdown.style.top);
-        dropdown.style.top = (top + (event.deltaY < 0 ? -10 : 10)) + "px";
-    });
-
-    document.addEventListener('click', function (event) {
-        if (!dropdown.contains(event.target)) {
-            dropdown.remove();
+    onWheel(event) {
+        const top = parseInt(this.dropdown.style.top);
+        if (localStorage.getItem("Comfy.Settings.Comfy.InvertMenuScrolling")) {
+            this.dropdown.style.top = (top + (event.deltaY < 0 ? 10 : -10)) + "px";
+        } else {
+            this.dropdown.style.top = (top + (event.deltaY < 0 ? -10 : 10)) + "px";
         }
-    });
+    }
+
+    onClick(event) {
+        if (!this.dropdown.contains(event.target) && event.target !== this.inputEl) {
+            this.dropdown.remove();
+            this.removeEventListeners();
+        }
+    }
+
+    updateSelection() {
+      Array.from(this.dropdown.children).forEach((li, index) => {
+        if (index === this.selectedIndex) {
+          li.classList.add('selected');
+        } else {
+          li.classList.remove('selected');
+        }
+      });
+    }
 }
 
-export {createDropdown};
+export function ttN_CreateDropdown(inputEl, suggestions, onSelect) {
+    ttN_RemoveDropdown();
+    new Dropdown(inputEl, suggestions, onSelect);
+}

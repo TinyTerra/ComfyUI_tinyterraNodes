@@ -1,3 +1,8 @@
+import folder_paths
+import comfy.samplers
+
+MAX_RESOLUTION=8192
+
 # in_dev - likely broken
 class ttN_debugInput:
         @classmethod
@@ -59,41 +64,37 @@ class ttN_busOUT:
         print("busOUT:--",bus_line)
         return (bus_line,)
 
-class ttN_XY_Plot:
-    def __init__(self):
-        pass
-
+class ttN_seedDebug:
     @classmethod
     def INPUT_TYPES(s):
-        return {
-            "required": {
-                "x_axis": (['None',], {"default": 'None'}),
-                "x_values": ("STRING",{"default": '', "multiline": True}),
-                "y_axis": (['None',], {"default": 'None'}),
-                "y_values": ("STRING",{"default": '', "multiline": True}),
-            },
-        }
+        return {"required": {
+            "ttNseed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+        }}
 
-    RETURN_TYPES = ("XY_PLOT", )
-    RETURN_NAMES = ("xy_plot", )
-    FUNCTION = "plot"
+    RETURN_TYPES = ("INT",)
+    RETURN_NAMES = ("seed",)
+    FUNCTION = "plant"
 
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN/dev"
 
-    def plot(self, x_axis, x_values, y_axis, y_values):
-        xy_plot = [x_axis, x_values, y_axis, y_values]
-        return (xy_plot, )
+    @staticmethod
+    def plant(ttNseed, *args, **kwargs):
+        print('Seed:', ttNseed)
+        print('args:', args)
+        print('kwargs:',kwargs)
+        return (ttNseed,)
 
 NODE_CLASS_MAPPINGS = {
     "ttN debugInput": ttN_debugInput,
     "ttN busIN": ttN_busIN,
     "ttN busOUT": ttN_busOUT,
-    "ttN xyPlot": ttN_XY_Plot
+    "ttN seedDebug": ttN_seedDebug,
+
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN debugInput": "debugInput",
     "ttN busIN": "busIN",
     "ttN busOUT": "busOUT",
-    "ttN xyPlot": "xyPlot",
+    "ttN seedDebug": "seedDebug",
 }

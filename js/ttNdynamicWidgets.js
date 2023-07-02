@@ -67,27 +67,41 @@ function widgetLogic(node, widget) {
 			toggleWidget(node, findWidgetByName(node, 'percent'))
 			toggleWidget(node, findWidgetByName(node, 'width'))
 			toggleWidget(node, findWidgetByName(node, 'height'))
+			toggleWidget(node, findWidgetByName(node, 'longer_side'))
 			toggleWidget(node, findWidgetByName(node, 'crop'))
 		} else {
 			toggleWidget(node, findWidgetByName(node, 'rescale_method'), true)
 			toggleWidget(node, findWidgetByName(node, 'rescale'), true)
-			if (findWidgetByName(node, 'rescale').value === 'by percentage') {
+			
+			let rescale_value = findWidgetByName(node, 'rescale').value
+
+			if (rescale_value === 'by percentage') {
 				toggleWidget(node, findWidgetByName(node, 'percent'), true)
-			} else {
+			} else if (rescale_value === 'to Width/Height') {
 				toggleWidget(node, findWidgetByName(node, 'width'), true)
 				toggleWidget(node, findWidgetByName(node, 'height'), true)
+			} else {
+				toggleWidget(node, findWidgetByName(node, 'longer_side'), true)
 			}
 			toggleWidget(node, findWidgetByName(node, 'crop'), true)
 		}
 	}
 	if (widget.name === 'rescale') {
-		if (widget.value === 'by percentage' && findWidgetByName(node, 'rescale_after_model').value === true) {
+		let rescale_after_model = findWidgetByName(node, 'rescale_after_model').value
+		if (widget.value === 'by percentage' && rescale_after_model) {
 			toggleWidget(node, findWidgetByName(node, 'width'))
 			toggleWidget(node, findWidgetByName(node, 'height'))
+			toggleWidget(node, findWidgetByName(node, 'longer_side'))
 			toggleWidget(node, findWidgetByName(node, 'percent'), true)
-		} else if (widget.value === 'to Width/Height' && findWidgetByName(node, 'rescale_after_model').value === true) {
+		} else if (widget.value === 'to Width/Height' && rescale_after_model) {
 			toggleWidget(node, findWidgetByName(node, 'width'), true)
 			toggleWidget(node, findWidgetByName(node, 'height'), true)
+			toggleWidget(node, findWidgetByName(node, 'percent'))
+			toggleWidget(node, findWidgetByName(node, 'longer_side'))
+		} else if (rescale_after_model) {
+			toggleWidget(node, findWidgetByName(node, 'longer_side'), true)
+			toggleWidget(node, findWidgetByName(node, 'width'))
+			toggleWidget(node, findWidgetByName(node, 'height'))
 			toggleWidget(node, findWidgetByName(node, 'percent'))
 		}
 	}
@@ -105,10 +119,14 @@ function widgetLogic(node, widget) {
 			toggleWidget(node, findWidgetByName(node, 'save_prefix'))
 			toggleWidget(node, findWidgetByName(node, 'output_path'))
 			toggleWidget(node, findWidgetByName(node, 'embed_workflow'))
+			toggleWidget(node, findWidgetByName(node, 'number_padding'))
+			toggleWidget(node, findWidgetByName(node, 'overwrite_existing'))
 		} else if (widget.value === 'Save' || widget.value === 'Hide/Save') {
 			toggleWidget(node, findWidgetByName(node, 'save_prefix'), true)
 			toggleWidget(node, findWidgetByName(node, 'output_path'), true)
 			toggleWidget(node, findWidgetByName(node, 'embed_workflow'), true)
+			toggleWidget(node, findWidgetByName(node, 'number_padding'), true)
+			toggleWidget(node, findWidgetByName(node, 'overwrite_existing'), true)
 		}
 	}
 }
@@ -128,8 +146,10 @@ function getSetters(node) {
 						return widgetValue;
 					},
 					set(newVal) {
-						widgetValue = newVal;
-						widgetLogic(node, w);
+						if (newVal !== widgetValue) {
+							widgetValue = newVal;
+							widgetLogic(node, w);
+						}
 					}
 				});
 			}
