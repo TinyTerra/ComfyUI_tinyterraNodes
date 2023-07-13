@@ -92,7 +92,7 @@ class ttNpaths:
     font_path = os.path.join(tinyterraNodes, 'arial.ttf')
 
 # Globals
-ttN_version = '1.0.1'
+ttN_version = '1.0.2'
 
 MAX_RESOLUTION=8192
 
@@ -628,7 +628,7 @@ class ttN_TSC_pipeLoader:
         return (pipe, model, positive_embeddings_final, negative_embeddings_final, samples, vae, clip, seed)
 
 class ttN_TSC_pipeKSampler:
-    version = '1.0.0'
+    version = '1.0.1'
     empty_image = pil2tensor(Image.new('RGBA', (1, 1), (0, 0, 0, 0)))
     upscale_methods = ["None", "nearest-exact", "bilinear", "area"]
     crop_methods = ["disabled", "center"]
@@ -680,7 +680,7 @@ class ttN_TSC_pipeKSampler:
     CATEGORY = "ttN/pipe"
 
     def sample(self, pipe, lora_name, lora_model_strength, lora_clip_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
-               optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, seed=None, xyPlot=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False):
+               optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, seed=None, xyPlot=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False, disable_noise=False):
 
         global last_helds
 
@@ -753,7 +753,7 @@ class ttN_TSC_pipeKSampler:
 
         def process_sample_state(self, pipe, lora_name, lora_model_strength, lora_clip_strength,
                                  steps, cfg, sampler_name, scheduler, denoise,
-                                 image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent):
+                                 image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, disable_noise=disable_noise):
             # Load Lora
             if lora_name not in (None, "None"):
                 pipe["vars"]["model"], pipe["vars"]["clip"] = load_lora(lora_name, pipe["vars"]["model"], pipe["vars"]["clip"], lora_model_strength, lora_clip_strength)
@@ -761,7 +761,7 @@ class ttN_TSC_pipeKSampler:
             # Upscale samples if enabled
             pipe["vars"]["samples"] = handle_upscale(pipe["vars"]["samples"], upscale_method, factor, crop)
 
-            pipe["vars"]["samples"] = common_ksampler(pipe["vars"]["model"], pipe["vars"]["seed"], steps, cfg, sampler_name, scheduler, pipe["vars"]["positive"], pipe["vars"]["negative"], pipe["vars"]["samples"], denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise)
+            pipe["vars"]["samples"] = common_ksampler(pipe["vars"]["model"], pipe["vars"]["seed"], steps, cfg, sampler_name, scheduler, pipe["vars"]["positive"], pipe["vars"]["negative"], pipe["vars"]["samples"], denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
 
             update_value_by_id("samples", my_unique_id, pipe["vars"]["samples"])
 
@@ -937,7 +937,7 @@ class ttN_TSC_pipeKSampler:
                     return [*label, value]
                 return label
 
-            def sample_plot_image(plot_image_vars, samples, preview_latent, max_width, max_height, latent_new, image_list):
+            def sample_plot_image(plot_image_vars, samples, preview_latent, max_width, max_height, latent_new, image_list, disable_noise=disable_noise):
                 model, clip, vae, positive, negative = None, None, None, None, None
 
                 if plot_image_vars["x_node_type"] == "loader" or plot_image_vars["y_node_type"] == "loader":
@@ -982,7 +982,7 @@ class ttN_TSC_pipeKSampler:
                     model, clip = load_lora(plot_image_vars["lora_name"], model, clip, plot_image_vars["lora_model_strength"], plot_image_vars["lora_clip_strength"])
 
                 # Sample
-                samples = common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, samples, denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise)
+                samples = common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, samples, denoise=denoise, disable_noise=disable_noise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise)
 
                 # Decode images and store
                 latent = samples["samples"]
@@ -1196,7 +1196,7 @@ class ttN_TSC_pipeKSampler:
             return process_hold_state(self, pipe, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id)
 
 class ttN_pipeKSamplerAdvanced:
-    version = '1.0.0'
+    version = '1.0.1'
     empty_image = pil2tensor(Image.new('RGBA', (1, 1), (0, 0, 0, 0)))
     upscale_methods = ["None", "nearest-exact", "bilinear", "area"]
     crop_methods = ["disabled", "center"]
@@ -1213,24 +1213,28 @@ class ttN_pipeKSamplerAdvanced:
                 "lora_model_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
                 "lora_clip_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
 
-                 "upscale_method": (cls.upscale_methods,),
-                 "factor": ("FLOAT", {"default": 2, "min": 0.0, "max": 10.0, "step": 0.25}),
-                 "crop": (cls.crop_methods,),
-                 "sampler_state": (["Sample", "Hold"], ),
-                 "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                 "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                 "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                 "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
-                 "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                 "start_at_step": ("INT", {"default": 0, "min": 0, "max": 10000}),
-                 "end_at_step": ("INT", {"default": 10000, "min": 0, "max": 10000}),
-                 "return_with_leftover_noise": (["disable", "enable"], ),
-                 "image_output": (["Hide", "Preview", "Save", "Hide/Save"],),
-                 "save_prefix": ("STRING", {"default": "ComfyUI"})
+                "upscale_method": (cls.upscale_methods,),
+                "factor": ("FLOAT", {"default": 2, "min": 0.0, "max": 10.0, "step": 0.25}),
+                "crop": (cls.crop_methods,),
+                "sampler_state": (["Sample", "Hold"], ),
+
+                "add_noise": (["enable", "disable"], ),
+                "noise_seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+
+                "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
+                "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
+                "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
+                "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
+
+                "start_at_step": ("INT", {"default": 0, "min": 0, "max": 10000}),
+                "end_at_step": ("INT", {"default": 10000, "min": 0, "max": 10000}),
+                "return_with_leftover_noise": (["disable", "enable"], ),
+
+                "image_output": (["Hide", "Preview", "Save", "Hide/Save"],),
+                "save_prefix": ("STRING", {"default": "ComfyUI"})
                 },
                 "optional": 
-                {"seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                 "optional_model": ("MODEL",),
+                {"optional_model": ("MODEL",),
                  "optional_positive": ("CONDITIONING",),
                  "optional_negative": ("CONDITIONING",),
                  "optional_latent": ("LATENT",),
@@ -1250,10 +1254,20 @@ class ttN_pipeKSamplerAdvanced:
     FUNCTION = "sample"
     CATEGORY = "ttN/pipe"
 
-    def sample(self, pipe, lora_name, lora_model_strength, lora_clip_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
-               optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, seed=None, xyPlot=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_at_step=None, end_at_step=None, return_with_leftover_noise=False):
+    def sample(self, pipe,
+               lora_name, lora_model_strength, lora_clip_strength,
+               sampler_state, add_noise, noise_seed, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
+               optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, xyPlot=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_at_step=None, end_at_step=None, return_with_leftover_noise=False):
+        
+        force_full_denoise = True
+        if return_with_leftover_noise == "enable":
+            force_full_denoise = False
+        disable_noise = False
+        if add_noise == "disable":
+            disable_noise = True
+
         return ttN_TSC_pipeKSampler.sample(self, pipe, lora_name, lora_model_strength, lora_clip_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise, 
-               optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, seed, xyPlot, upscale_method, factor, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, return_with_leftover_noise)
+               optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, noise_seed, xyPlot, upscale_method, factor, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, force_full_denoise, disable_noise)
 
 class ttN_pipe_IN:
     version = '1.0.0'

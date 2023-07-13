@@ -129,9 +129,18 @@ function widgetLogic(node, widget) {
 			toggleWidget(node, findWidgetByName(node, 'overwrite_existing'), true)
 		}
 	}
+	if (widget.name === 'add_noise') {
+		if (widget.value === "disable") {
+			toggleWidget(node, findWidgetByName(node, 'noise_seed'))
+			toggleWidget(node, findWidgetByName(node, 'control_after_generate'))
+		} else {
+			toggleWidget(node, findWidgetByName(node, 'noise_seed'), true)
+			toggleWidget(node, findWidgetByName(node, 'control_after_generate'), true)
+		}
+	}
 }
 
-const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 'upscale_method', 'image_output']
+const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 'upscale_method', 'image_output', 'add_noise']
 
 function getSetters(node) {
 	if (node.widgets)
@@ -163,6 +172,7 @@ app.registerExtension({
 		if (node.getTitle() == "hiresfixScale" ||
 				node.getTitle() == "pipeLoader" ||
 				node.getTitle() == "pipeKSampler" ||
+				node.getTitle() == "pipeKSamplerAdvanced" ||
 				node.getTitle() == "imageRemBG" ||
 				node.getTitle() == "imageOutput") {
 			getSetters(node)
