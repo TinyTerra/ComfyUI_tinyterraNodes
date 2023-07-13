@@ -92,7 +92,7 @@ class ttNpaths:
     font_path = os.path.join(tinyterraNodes, 'arial.ttf')
 
 # Globals
-ttN_version = '1.0.2'
+ttN_version = '1.0.3'
 
 MAX_RESOLUTION=8192
 
@@ -1196,7 +1196,7 @@ class ttN_TSC_pipeKSampler:
             return process_hold_state(self, pipe, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id)
 
 class ttN_pipeKSamplerAdvanced:
-    version = '1.0.1'
+    version = '1.0.2'
     empty_image = pil2tensor(Image.new('RGBA', (1, 1), (0, 0, 0, 0)))
     upscale_methods = ["None", "nearest-exact", "bilinear", "area"]
     crop_methods = ["disabled", "center"]
@@ -1219,7 +1219,6 @@ class ttN_pipeKSamplerAdvanced:
                 "sampler_state": (["Sample", "Hold"], ),
 
                 "add_noise": (["enable", "disable"], ),
-                "noise_seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
 
                 "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                 "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
@@ -1234,7 +1233,8 @@ class ttN_pipeKSamplerAdvanced:
                 "save_prefix": ("STRING", {"default": "ComfyUI"})
                 },
                 "optional": 
-                {"optional_model": ("MODEL",),
+                {"noise_seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                 "optional_model": ("MODEL",),
                  "optional_positive": ("CONDITIONING",),
                  "optional_negative": ("CONDITIONING",),
                  "optional_latent": ("LATENT",),
@@ -1256,12 +1256,13 @@ class ttN_pipeKSamplerAdvanced:
 
     def sample(self, pipe,
                lora_name, lora_model_strength, lora_clip_strength,
-               sampler_state, add_noise, noise_seed, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
-               optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, xyPlot=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_at_step=None, end_at_step=None, return_with_leftover_noise=False):
+               sampler_state, add_noise, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
+               noise_seed=None, optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, xyPlot=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_at_step=None, end_at_step=None, return_with_leftover_noise=False):
         
         force_full_denoise = True
         if return_with_leftover_noise == "enable":
             force_full_denoise = False
+
         disable_noise = False
         if add_noise == "disable":
             disable_noise = True
