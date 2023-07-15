@@ -1344,7 +1344,7 @@ class ttN_pipe_OUT:
         return model, pos, neg, latent, vae, clip, image, seed, pipe
     
 class ttN_pipe_EDIT:
-    version = '1.0.0'
+    version = '1.0.1'
     def __init__(self):
         pass
     
@@ -1383,7 +1383,7 @@ class ttN_pipe_EDIT:
             pipe['vars']['negative'] = neg
 
         if latent is not None:
-            pipe['vars']['latent'] = latent
+            pipe['vars']['samples'] = latent
 
         if vae is not None:
             pipe['vars']['vae'] = vae
