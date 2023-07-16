@@ -1245,7 +1245,7 @@ class ttN_pipeKSamplerAdvanced:
                 "hidden":
                 {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
                  "embeddingsList": (folder_paths.get_filename_list("embeddings"),),
-                 "ttNnodeVersion": ttN_TSC_pipeKSampler.version},
+                 "ttNnodeVersion": ttN_pipeKSamplerAdvanced.version},
         }
 
     RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
@@ -1344,7 +1344,7 @@ class ttN_pipe_OUT:
         return model, pos, neg, latent, vae, clip, image, seed, pipe
     
 class ttN_pipe_EDIT:
-    version = '1.0.1'
+    version = '1.0.2'
     def __init__(self):
         pass
     
@@ -1375,31 +1375,37 @@ class ttN_pipe_EDIT:
 
         if model is not None:
             pipe['vars']['model'] = model
+            pipe['orig']['model'] = model
         
         if pos is not None:
             pipe['vars']['positive'] = pos
+            pipe['orig']['positive'] = pos
 
         if neg is not None:
             pipe['vars']['negative'] = neg
+            pipe['orig']['negative'] = neg
 
         if latent is not None:
             pipe['vars']['samples'] = latent
+            pipe['orig']['samples'] = latent
 
         if vae is not None:
             pipe['vars']['vae'] = vae
+            pipe['orig']['vae'] = vae
 
         if clip is not None:
             pipe['vars']['clip'] = clip
+            pipe['orig']['clip'] = clip
 
         if image is not None:
             pipe['vars']['images'] = image
+            pipe['orig']['images'] = image
 
         if seed is not None:
-            pipe['vars']['seed'] = seed 
+            pipe['vars']['seed'] = seed
+            pipe['orig']['seed'] = seed
 
-        new_pipe = {**pipe, 'orig': pipe['vars']}
-
-        return (new_pipe, )
+        return (pipe, )
 
 class ttN_pipe_2BASIC:
     version = '1.0.0'
