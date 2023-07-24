@@ -92,7 +92,7 @@ class ttNpaths:
     font_path = os.path.join(tinyterraNodes, 'arial.ttf')
 
 # Globals
-ttN_version = '1.0.3'
+ttN_version = '1.0.4'
 
 MAX_RESOLUTION=8192
 
@@ -343,7 +343,6 @@ def enforce_mul_of_64(d):
     return int(d)
 
 def upscale(samples, upscale_method, factor, crop):
-        samples = samples[0]
         s = samples.copy()
         x = samples["samples"].shape[3]
         y = samples["samples"].shape[2]
@@ -578,8 +577,8 @@ class ttN_TSC_pipeLoader:
         clip = clip.clone()
         clip.clip_layer(clip_skip)
 
-        positive_embeddings_final = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0)
-        negative_embeddings_final = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0)
+        positive_embeddings_final, pooled = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0)
+        negative_embeddings_final, pooled = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0)
         image = pil2tensor(Image.new('RGB', (1, 1), (0, 0, 0)))
 
         pipe = {"vars": {"model": model,
@@ -962,8 +961,8 @@ class ttN_TSC_pipeKSampler:
                     clip = clip.clone()
                     clip.clip_layer(plot_image_vars['clip_skip'])
 
-                    positive = advanced_encode(clip, plot_image_vars['positive'], plot_image_vars['positive_token_normalization'], plot_image_vars['positive_weight_interpretation'], w_max=1.0)
-                    negative = advanced_encode(clip, plot_image_vars['negative'], plot_image_vars['negative_token_normalization'], plot_image_vars['negative_weight_interpretation'], w_max=1.0)
+                    positive, pooled = advanced_encode(clip, plot_image_vars['positive'], plot_image_vars['positive_token_normalization'], plot_image_vars['positive_weight_interpretation'], w_max=1.0)
+                    negative, pooled = advanced_encode(clip, plot_image_vars['negative'], plot_image_vars['negative_token_normalization'], plot_image_vars['negative_weight_interpretation'], w_max=1.0)
                 
                 model = model if model is not None else plot_image_vars["model"]
                 clip = clip if clip is not None else plot_image_vars["clip"]
