@@ -281,6 +281,44 @@ app.registerExtension({
 			return false;
 		};
 
+        LGraphCanvas.ttNlinkStyleBorder = function(value, options, e, menu, node) {
+			new LiteGraph.ContextMenu(
+				[false, true],
+				{ event: e, callback: inner_clicked, parentMenu: menu, node: node }
+			);
+
+			function inner_clicked(v) {
+				if (!node) {
+					return;
+				}
+
+				localStorage.setItem('Comfy.Settings.ttN.links_render_border', JSON.stringify(v));
+
+				app.canvas.render_connections_border = v;
+			}
+	
+			return false;
+		};
+
+        LGraphCanvas.ttNlinkStyleShadow = function(value, options, e, menu, node) {
+			new LiteGraph.ContextMenu(
+				[false, true],
+				{ event: e, callback: inner_clicked, parentMenu: menu, node: node }
+			);
+
+			function inner_clicked(v) {
+				if (!node) {
+					return;
+				}
+
+				localStorage.setItem('Comfy.Settings.ttN.links_render_shadow', JSON.stringify(v));
+
+				app.canvas.render_connections_shadows = v;
+			}
+	
+			return false;
+		};
+
         LGraphCanvas.ttNsetDefaultBGColor = function(value, options, e, menu, node) {
             if (!node) {
                 throw "no node for color";
@@ -353,6 +391,22 @@ app.registerExtension({
 			);
 			return options;
 		};  
+
+        LGraphCanvas.prototype.ttNupdateRenderSettings = function (app) {
+            console.log('i made it')
+            let customLinkType = Number(localStorage.getItem('Comfy.Settings.ttN.links_render_mode'));
+            if (customLinkType !== undefined) {app.canvas.links_render_mode = customLinkType}
+
+            let showLinkBorder = Number(localStorage.getItem('Comfy.Settings.ttN.links_render_border'));
+            if (showLinkBorder !== undefined) {app.canvas.render_connections_border = showLinkBorder}
+
+            let showLinkShadow = Number(localStorage.getItem('Comfy.Settings.ttN.links_render_shadow'));
+            if (showLinkShadow) {app.canvas.render_connections_shadows = showLinkShadow}
+
+            var customLinkColors = JSON.parse(localStorage.getItem('Comfy.Settings.ttN.customLinkColors')) || {};
+            Object.assign(app.canvas.default_connection_color_byType, customLinkColors);
+            Object.assign(LGraphCanvas.link_type_colors, customLinkColors);
+        }
     },
 
     beforeRegisterNodeDef(nodeType, nodeData, app) {
@@ -379,6 +433,8 @@ app.registerExtension({
             }
 
             menu_info.push({ content: "Slot Type Color (ttN)", slot: slot, callback: () => { LGraphCanvas.prototype.ttNsetSlotTypeColor(slot) } });
+            menu_info.push({ content: "Show Link Border (ttN)", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNlinkStyleBorder });
+            menu_info.push({ content: "Show Link Shadow (ttN)", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNlinkStyleShadow });
             menu_info.push({ content: "Link Style (ttN)", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNonShowLinkStyles });
 
             return menu_info;
@@ -386,19 +442,15 @@ app.registerExtension({
     },
 	
 	setup() {
-		let customLinkType = Number(localStorage.getItem('Comfy.Settings.ttN.links_render_mode'));
-		if (customLinkType) {app.canvas.links_render_mode = customLinkType}
-
-        var customLinkColors = JSON.parse(localStorage.getItem('Comfy.Settings.ttN.customLinkColors')) || {};
-        Object.assign(app.canvas.default_connection_color_byType, customLinkColors);
-        Object.assign(LGraphCanvas.link_type_colors, customLinkColors);
-        
+        LGraphCanvas.prototype.ttNupdateRenderSettings(app);       
 	},
 	nodeCreated(node) {
         let defaultBGColor = JSON.parse(localStorage.getItem('Comfy.Settings.ttN.defaultBGColor'));
         if (defaultBGColor) {LGraphCanvas.prototype.ttNdefaultBGcolor(node, defaultBGColor)};
 	},
     loadedGraphNode(node, app) {
+        LGraphCanvas.prototype.ttNupdateRenderSettings(app);
+
         let defaultBGColor = JSON.parse(localStorage.getItem('Comfy.Settings.ttN.defaultBGColor'));
         if (defaultBGColor) {LGraphCanvas.prototype.ttNdefaultBGcolor(node, defaultBGColor)};
 	},

@@ -212,7 +212,7 @@ def advanced_encode_from_tokens(tokenized, token_normalization, weight_interpret
             return weighted_emb, pooled
         else:
             return weighted_emb, pooled_base
-    return [[weighted_emb,{}]], None
+    return weighted_emb, None
 
 def encode_token_weights_g(model, token_weight_pairs):
     return model.clip_g.encode_token_weights(token_weight_pairs)

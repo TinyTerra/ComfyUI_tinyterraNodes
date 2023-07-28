@@ -19,11 +19,11 @@ from torch import Tensor
 from pathlib import Path
 import comfy.model_management
 from PIL.PngImagePlugin import PngInfo
-from .adv_encode import advanced_encode
 from PIL import Image, ImageDraw, ImageFont
 from comfy.sd import ModelPatcher, CLIP, VAE
 from typing import Dict, List, Optional, Tuple, Union
 from comfy_extras.chainner_models import model_loading
+from .adv_encode import advanced_encode, advanced_encode_XL
 
 class CC:
     CLEAN = '\33[0m'
@@ -342,24 +342,18 @@ def enforce_mul_of_64(d):
 
     return int(d)
 
-def upscale(samples, upscale_method, factor, crop):
-        s = samples.copy()
-        x = samples["samples"].shape[3]
-        y = samples["samples"].shape[2]
+def upscale(samples, upscale_method, scale_by, crop):
+    s = samples.copy()
+    width = enforce_mul_of_64(round(samples["samples"].shape[3] * scale_by))
+    height = enforce_mul_of_64(round(samples["samples"].shape[2] * scale_by))
 
-        new_x = int(x * factor)
-        new_y = int(y * factor)
-
-        if (new_x > MAX_RESOLUTION):
-            new_x = MAX_RESOLUTION
-        if (new_y > MAX_RESOLUTION):
-            new_y = MAX_RESOLUTION
-
-        s["samples"] = comfy.utils.common_upscale(
-            samples["samples"], enforce_mul_of_64(
-                new_x), enforce_mul_of_64(new_y), upscale_method, crop
-        )
-        return (s,)
+    if (width > MAX_RESOLUTION):
+        width = MAX_RESOLUTION
+    if (height > MAX_RESOLUTION):
+        height = MAX_RESOLUTION
+        
+    s["samples"] = comfy.utils.common_upscale(samples["samples"], width, height, upscale_method, crop)
+    return (s,)
 
 def tensor2pil(image: torch.Tensor) -> Image.Image:
     return Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
@@ -495,7 +489,7 @@ def save_images(self, images, preview_prefix, save_prefix, image_output, prompt=
 
 #---------------------------------------------------------------ttN/pipe START----------------------------------------------------------------------#
 class ttN_TSC_pipeLoader:
-    version = '1.0.0'
+    version = '1.0.1'
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": { 
@@ -517,11 +511,11 @@ class ttN_TSC_pipeLoader:
 
                         "positive": ("STRING", {"default": "Positive","multiline": True}),
                         "positive_token_normalization": (["none", "mean", "length", "length+mean"],),
-                        "positive_weight_interpretation": (["comfy", "A1111", "compel", "comfy++"],),
+                        "positive_weight_interpretation": (["comfy", "A1111", "compel", "comfy++", "down_weight"],),
 
                         "negative": ("STRING", {"default": "Negative", "multiline": True}),
                         "negative_token_normalization": (["none", "mean", "length", "length+mean"],),
-                        "negative_weight_interpretation": (["comfy", "A1111", "compel", "comfy++"],),
+                        "negative_weight_interpretation": (["comfy", "A1111", "compel", "comfy++", "down_weight"],),
 
                         "empty_latent_width": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                         "empty_latent_height": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
@@ -577,8 +571,11 @@ class ttN_TSC_pipeLoader:
         clip = clip.clone()
         clip.clip_layer(clip_skip)
 
-        positive_embeddings_final, pooled = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0)
-        negative_embeddings_final, pooled = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0)
+        positive_embeddings_final, positive_pooled = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
+        positive_embeddings_final = [[positive_embeddings_final, {"pooled_output": positive_pooled}]]
+
+        negative_embeddings_final, negative_pooled = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
+        negative_embeddings_final = [[negative_embeddings_final, {"pooled_output": negative_pooled}]]
         image = pil2tensor(Image.new('RGB', (1, 1), (0, 0, 0)))
 
         pipe = {"vars": {"model": model,
@@ -611,11 +608,17 @@ class ttN_TSC_pipeLoader:
                                     "lora3_model_strength": lora3_model_strength,
                                     "lora3_clip_strength": lora3_clip_strength,
                                     "positive": positive,
+                                    "positive_l": None,
+                                    "positive_g": None,
                                     "positive_token_normalization": positive_token_normalization,
                                     "positive_weight_interpretation": positive_weight_interpretation,
+                                    "positive_balance": None,
                                     "negative": negative,
+                                    "negative_l": None,
+                                    "negative_g": None,
                                     "negative_token_normalization": negative_token_normalization,
                                     "negative_weight_interpretation": negative_weight_interpretation,
+                                    "negative_balance": None,
                                     "empty_latent_width": empty_latent_width,
                                     "empty_latent_height": empty_latent_height,
                                     "batch_size": batch_size,
@@ -627,9 +630,9 @@ class ttN_TSC_pipeLoader:
         return (pipe, model, positive_embeddings_final, negative_embeddings_final, samples, vae, clip, seed)
 
 class ttN_TSC_pipeKSampler:
-    version = '1.0.1'
+    version = '1.0.2'
     empty_image = pil2tensor(Image.new('RGBA', (1, 1), (0, 0, 0, 0)))
-    upscale_methods = ["None", "nearest-exact", "bilinear", "area"]
+    upscale_methods = ["None", "nearest-exact", "bilinear", "area", "bicubic", "bislerp"]
     crop_methods = ["disabled", "center"]
 
     def __init__(self):
@@ -961,9 +964,12 @@ class ttN_TSC_pipeKSampler:
                     clip = clip.clone()
                     clip.clip_layer(plot_image_vars['clip_skip'])
 
-                    positive, pooled = advanced_encode(clip, plot_image_vars['positive'], plot_image_vars['positive_token_normalization'], plot_image_vars['positive_weight_interpretation'], w_max=1.0)
-                    negative, pooled = advanced_encode(clip, plot_image_vars['negative'], plot_image_vars['negative_token_normalization'], plot_image_vars['negative_weight_interpretation'], w_max=1.0)
-                
+                    positive, positive_pooled = advanced_encode(clip, plot_image_vars['positive'], plot_image_vars['positive_token_normalization'], plot_image_vars['positive_weight_interpretation'], w_max=1.0, apply_to_pooled="enable")
+                    positive = [[positive, {"pooled_output": positive_pooled}]]
+
+                    negative, negative_pooled = advanced_encode(clip, plot_image_vars['negative'], plot_image_vars['negative_token_normalization'], plot_image_vars['negative_weight_interpretation'], w_max=1.0, apply_to_pooled="enable")
+                    negative = [[negative, {"pooled_output": negative_pooled}]]
+
                 model = model if model is not None else plot_image_vars["model"]
                 clip = clip if clip is not None else plot_image_vars["clip"]
                 vae = vae if vae is not None else plot_image_vars["vae"]
@@ -1195,9 +1201,9 @@ class ttN_TSC_pipeKSampler:
             return process_hold_state(self, pipe, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id)
 
 class ttN_pipeKSamplerAdvanced:
-    version = '1.0.2'
+    version = '1.0.3'
     empty_image = pil2tensor(Image.new('RGBA', (1, 1), (0, 0, 0, 0)))
-    upscale_methods = ["None", "nearest-exact", "bilinear", "area"]
+    upscale_methods = ["None", "nearest-exact", "bilinear", "area", "bicubic", "bislerp"]
     crop_methods = ["disabled", "center"]
 
     def __init__(self):
@@ -1916,8 +1922,8 @@ class ttN_imageOUPUT:
                     "result": (image,)}
 
 class ttN_modelScale:
-    version = '1.0.0'
-    upscale_methods = ["nearest-exact", "bilinear", "area"]
+    version = '1.0.1'
+    upscale_methods = ["None", "nearest-exact", "bilinear", "area", "bicubic", "bislerp"]
     crop_methods = ["disabled", "center"]
 
     @classmethod
@@ -2021,8 +2027,9 @@ class ttN_modelScale:
 
 TTN_VERSIONS = {
     "tinyterraNodes": ttN_version,
-    "pipeLoader": ttN_TSC_pipeLoader.version,    
+    "pipeLoader": ttN_TSC_pipeLoader.version,
     "pipeKSampler": ttN_TSC_pipeKSampler.version,
+    "pipeKSamplerAdvanced": ttN_pipeKSamplerAdvanced.version,
     "pipeIN": ttN_pipe_IN.version,
     "pipeOUT": ttN_pipe_OUT.version,
     "pipeEDIT": ttN_pipe_EDIT.version,
@@ -2043,7 +2050,7 @@ TTN_VERSIONS = {
 }
 NODE_CLASS_MAPPINGS = {
     #ttN/pipe
-    "ttN pipeLoader": ttN_TSC_pipeLoader,    
+    "ttN pipeLoader": ttN_TSC_pipeLoader,
     "ttN pipeKSampler": ttN_TSC_pipeKSampler,
     "ttN pipeKSamplerAdvanced": ttN_pipeKSamplerAdvanced,
     "ttN xyPlot": ttN_XYPlot,
