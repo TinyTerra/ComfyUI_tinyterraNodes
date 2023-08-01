@@ -393,7 +393,6 @@ app.registerExtension({
 		};  
 
         LGraphCanvas.prototype.ttNupdateRenderSettings = function (app) {
-            console.log('i made it')
             let customLinkType = Number(localStorage.getItem('Comfy.Settings.ttN.links_render_mode'));
             if (customLinkType !== undefined) {app.canvas.links_render_mode = customLinkType}
 
