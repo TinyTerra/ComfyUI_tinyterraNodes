@@ -6,6 +6,7 @@
 import os
 import re
 import json
+import copy
 import torch
 import random
 import datetime
@@ -92,7 +93,7 @@ class ttNpaths:
     font_path = os.path.join(tinyterraNodes, 'arial.ttf')
 
 # Globals
-ttN_version = '1.0.4'
+ttN_version = '1.0.5'
 
 MAX_RESOLUTION=8192
 
@@ -106,9 +107,7 @@ loaded_objects = {
 
 last_helds: dict[str, list] = {
     "results": [],
-    "samples": [],
-    "images": [],
-    "vae_decode": []
+    "pipe_line": [],
 }
 
 def clean_values(values):
@@ -273,6 +272,7 @@ def load_lora(lora_name, model, clip, strength_model, strength_clip):
 
     # Assign UID to model/lora/strengths combo
     unique_id = f'{input_model_hash};{lora_name};{strength_model};{strength_clip}'
+
     # Check if Lora model already exists
     existing_lora_models = loaded_objects.get("lora", {}).get(lora_name, None)
     if existing_lora_models and unique_id in existing_lora_models:
@@ -495,7 +495,7 @@ class ttN_TSC_pipeLoader:
         return {"required": { 
                         "ckpt_name": (folder_paths.get_filename_list("checkpoints"), ),
                         "vae_name": (["Baked VAE"] + folder_paths.get_filename_list("vae"),),
-                        "clip_skip": ("INT", {"default": -1, "min": -24, "max": -1, "step": 1}),
+                        "clip_skip": ("INT", {"default": -1, "min": -24, "max": 0, "step": 1}),
 
                         "lora1_name": (["None"] + folder_paths.get_filename_list("loras"),),
                         "lora1_model_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
@@ -557,10 +557,10 @@ class ttN_TSC_pipeLoader:
 
         if lora2_name != "None":
             model, clip = load_lora(lora2_name, model, clip, lora2_model_strength, lora2_clip_strength)
-        
+
         if lora3_name != "None":
             model, clip = load_lora(lora3_name, model, clip, lora3_model_strength, lora3_clip_strength)
-        
+
         # Check for custom VAE
         if vae_name != "Baked VAE":
             vae = load_vae(vae_name)
@@ -568,8 +568,10 @@ class ttN_TSC_pipeLoader:
         # CLIP skip
         if not clip:
             raise Exception("No CLIP found")
+        
         clip = clip.clone()
-        clip.clip_layer(clip_skip)
+        if clip_skip != 0:
+            clip.clip_layer(clip_skip)
 
         positive_embeddings_final, positive_pooled = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
         positive_embeddings_final = [[positive_embeddings_final, {"pooled_output": positive_pooled}]]
@@ -630,7 +632,7 @@ class ttN_TSC_pipeLoader:
         return (pipe, model, positive_embeddings_final, negative_embeddings_final, samples, vae, clip, seed)
 
 class ttN_TSC_pipeKSampler:
-    version = '1.0.2'
+    version = '1.0.3'
     empty_image = pil2tensor(Image.new('RGBA', (1, 1), (0, 0, 0, 0)))
     upscale_methods = ["None", "nearest-exact", "bilinear", "area", "bicubic", "bislerp"]
     crop_methods = ["disabled", "center"]
@@ -692,6 +694,8 @@ class ttN_TSC_pipeKSampler:
         my_unique_id = int(my_unique_id)
         preview_prefix = f"KSpipe_{my_unique_id:02d}"
 
+        pipe = copy.deepcopy(pipe)
+
         pipe["vars"]["model"] = optional_model if optional_model is not None else pipe["orig"]["model"]
         pipe["vars"]["positive"] = optional_positive if optional_positive is not None else pipe["orig"]["positive"]
         pipe["vars"]["negative"] = optional_negative if optional_negative is not None else pipe["orig"]["negative"]
@@ -740,7 +744,7 @@ class ttN_TSC_pipeKSampler:
             while len(parts) < 2:
                 parts.append('None')
             return parts
-        
+
         def get_output(pipe):
             return (pipe,
                     pipe["vars"].get("model"),
@@ -751,7 +755,7 @@ class ttN_TSC_pipeKSampler:
                     pipe["vars"].get("clip"),
                     pipe["vars"].get("images"),
                     pipe["vars"].get("seed"))
-            
+
 
         def process_sample_state(self, pipe, lora_name, lora_model_strength, lora_clip_strength,
                                  steps, cfg, sampler_name, scheduler, denoise,
@@ -764,13 +768,10 @@ class ttN_TSC_pipeKSampler:
             pipe["vars"]["samples"] = handle_upscale(pipe["vars"]["samples"], upscale_method, factor, crop)
 
             pipe["vars"]["samples"] = common_ksampler(pipe["vars"]["model"], pipe["vars"]["seed"], steps, cfg, sampler_name, scheduler, pipe["vars"]["positive"], pipe["vars"]["negative"], pipe["vars"]["samples"], denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
-
-            update_value_by_id("samples", my_unique_id, pipe["vars"]["samples"])
+      
 
             latent = pipe["vars"]["samples"]["samples"]
             pipe["vars"]["images"] = pipe["vars"]["vae"].decode(latent).cpu()
-            update_value_by_id("images", my_unique_id, pipe["vars"]["images"])
-            update_value_by_id("vae_decode", my_unique_id, False)
 
             results = save_images(self, pipe["vars"]["images"], preview_prefix, save_prefix, image_output, prompt, extra_pnginfo, my_unique_id)
 
@@ -780,7 +781,9 @@ class ttN_TSC_pipeKSampler:
             update_loaded_objects(prompt)
 
             new_pipe = {**pipe, 'orig': pipe['vars']}
-
+            
+            update_value_by_id("pipe_line", my_unique_id, new_pipe)
+            
             if image_output in ("Hide", "Hide/Save"):
                 return get_output(new_pipe)
             
@@ -790,38 +793,14 @@ class ttN_TSC_pipeKSampler:
         def process_hold_state(self, pipe, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id):
             ttNl('Held').t(f'pipeKSampler[{my_unique_id}]').p()
 
-            # Load Lora
-            if lora_name not in (None, "None"):
-                pipe["vars"]["model"], pipe["vars"]["clip"] = load_lora(lora_name, pipe["vars"]["model"], pipe["vars"]["clip"], lora_model_strength, lora_clip_strength)
-
-            # Upscale samples if enabled
-            pipe["vars"]["samples"] = handle_upscale(pipe["vars"]["samples"], upscale_method, factor, crop)
-
-            last_samples = init_state(my_unique_id, "samples", pipe["vars"]["samples"])
-
-            last_images = init_state(my_unique_id, "images", pipe["vars"]["images"])
+            last_pipe = init_state(my_unique_id, "pipe_line", pipe)
 
             last_results = init_state(my_unique_id, "results", list())
 
-            latent = last_samples["samples"]
-            if get_value_by_id("vae_decode", my_unique_id) == True:
-                pipe["vars"]["images"] = pipe["vars"]["vae"].decode(latent).cpu()
-
-                update_value_by_id("images", my_unique_id, pipe["vars"]["images"])
-                update_value_by_id("vae_decode", my_unique_id, False)
-
-                results = save_images(self, pipe["vars"]["images"], preview_prefix, save_prefix, image_output, prompt, extra_pnginfo, my_unique_id)
-                update_value_by_id("results", my_unique_id, results)
-            else:
-                pipe["vars"]["images"] = last_images
-                results = last_results
-
-            new_pipe = {**pipe, 'orig': pipe['vars']}
-
             if image_output in ("Hide", "Hide/Save"):
-                return get_output(new_pipe)
+                return get_output(last_pipe)
 
-            return {"ui": {"images": results}, "result": get_output(new_pipe)} 
+            return {"ui": {"images": last_results}, "result": get_output(last_pipe)} 
 
         def process_xyPlot(self, pipe, lora_name, lora_model_strength, lora_clip_strength,
                            steps, cfg, sampler_name, scheduler, denoise,
@@ -1132,8 +1111,6 @@ class ttN_TSC_pipeKSampler:
             
             # Update pipe, Store latent_new as last latent, Disable vae decode on next Hold
             pipe['vars']['samples'] = {"samples": latent_new}
-            update_value_by_id("samples", my_unique_id, pipe['vars']['samples'])
-            update_value_by_id("vae_decode", my_unique_id, False)
 
             # Calculate the background dimensions
             bg_width, bg_height, x_offset_initial, y_offset = calculate_background_dimensions(x_type, y_type, num_rows, num_cols, max_height, max_width, grid_spacing)
@@ -1169,7 +1146,6 @@ class ttN_TSC_pipeKSampler:
                 y_offset += img.height + grid_spacing
 
             images = pil2tensor(background)
-            update_value_by_id("images", my_unique_id, images)
             pipe["vars"]["images"] = images
 
             results = save_images(self, images, preview_prefix, save_prefix, image_output, prompt, extra_pnginfo, my_unique_id)
@@ -1180,6 +1156,8 @@ class ttN_TSC_pipeKSampler:
             update_loaded_objects(prompt)
 
             new_pipe = {**pipe, 'orig': pipe['vars']}
+
+            update_value_by_id("pipe_line", my_unique_id, new_pipe)
 
             if image_output in ("Hide", "Hide/Save"):
                 return get_output(new_pipe)
@@ -1193,10 +1171,10 @@ class ttN_TSC_pipeKSampler:
 
         if sampler_state == "Sample" and xyPlot is None:
             return process_sample_state(self, pipe, lora_name, lora_model_strength, lora_clip_strength, steps, cfg, sampler_name, scheduler, denoise, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent)
-        
+
         elif sampler_state == "Sample" and xyPlot is not None:
             return process_xyPlot(self, pipe, lora_name, lora_model_strength, lora_clip_strength, steps, cfg, sampler_name, scheduler, denoise, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, xyPlot)
-       
+
         elif sampler_state == "Hold":
             return process_hold_state(self, pipe, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id)
 
@@ -1347,7 +1325,7 @@ class ttN_pipe_OUT:
     def flush(self, pipe):
         model, pos, neg, latent, vae, clip, image, seed = pipe['vars'].values()
         return model, pos, neg, latent, vae, clip, image, seed, pipe
-    
+
 class ttN_pipe_EDIT:
     version = '1.0.2'
     def __init__(self):
