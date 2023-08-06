@@ -270,12 +270,10 @@ app.registerExtension({
 				}
 				var kV = Object.values(LiteGraph.LINK_RENDER_MODES).indexOf(v);
 
-				localStorage.setItem('Comfy.Settings.ttN.links_render_mode', JSON.stringify(kV));
-				if (localStorage.getItem('Comfy.Settings.pysssss.LinkRenderMode')) {
-					localStorage.setItem('Comfy.Settings.pysssss.LinkRenderMode', JSON.stringify(kV));
-				}
+				localStorage.setItem('Comfy.Settings.Comfy.LinkRenderMode', JSON.stringify(String(kV)));
 
 				app.canvas.links_render_mode = kV;
+                app.graph.setDirtyCanvas(true);
 			}
 	
 			return false;
@@ -372,6 +370,40 @@ app.registerExtension({
             return false;
         };
 
+        LGraphCanvas.ttNshowExecutionOrder = function(value, options, e, menu, node) {
+            var values = [];
+            values.push({
+                value: true,
+                content:
+                    "<span style='display: block; padding-left: 4px;'>True</span>"
+            },
+            {
+                value: false,
+                content:
+                    "<span style='display: block; padding-left: 4px;'>False</span>"
+            }
+            );
+
+            new LiteGraph.ContextMenu(values, {
+                event: e,
+                callback: inner_clicked,
+                parentMenu: menu,
+                node: node
+            });
+
+            function inner_clicked(v) {
+                var showExecOrder = v.value ? v.value : false;
+
+                localStorage.setItem('Comfy.Settings.ttN.showExecutionOrder', JSON.stringify(showExecOrder));
+                
+                LGraphCanvas.active_canvas.render_execution_order = showExecOrder;
+
+                node.setDirtyCanvas(true, true);
+            }
+    
+            return false;
+        };
+
         const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
 		LGraphCanvas.prototype.getNodeMenuOptions = function (node) {
 			const options = getNodeMenuOptions.apply(this, arguments);
@@ -387,20 +419,26 @@ app.registerExtension({
                     has_submenu: true,
                     callback: LGraphCanvas.ttNsetDefaultBGColor
                 },
+                {
+                    content: "Show Execution Order (ttN)",
+                    has_submenu: true,
+                    callback: LGraphCanvas.ttNshowExecutionOrder
+                    
+                },
                 null
 			);
 			return options;
 		};  
 
         LGraphCanvas.prototype.ttNupdateRenderSettings = function (app) {
-            let customLinkType = Number(localStorage.getItem('Comfy.Settings.ttN.links_render_mode'));
-            if (customLinkType !== undefined) {app.canvas.links_render_mode = customLinkType}
-
             let showLinkBorder = Number(localStorage.getItem('Comfy.Settings.ttN.links_render_border'));
             if (showLinkBorder !== undefined) {app.canvas.render_connections_border = showLinkBorder}
 
             let showLinkShadow = Number(localStorage.getItem('Comfy.Settings.ttN.links_render_shadow'));
             if (showLinkShadow) {app.canvas.render_connections_shadows = showLinkShadow}
+
+            let showExecOrder = localStorage.getItem('Comfy.Settings.ttN.showExecutionOrder');
+            if (showExecOrder) {app.canvas.render_execution_order = showExecOrder}
 
             var customLinkColors = JSON.parse(localStorage.getItem('Comfy.Settings.ttN.customLinkColors')) || {};
             Object.assign(app.canvas.default_connection_color_byType, customLinkColors);
