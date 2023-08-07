@@ -1001,7 +1001,7 @@ class ttN_TSC_pipeKSampler:
                 return process_sample_state(self, pipe, lora_name, lora_model_strength, lora_clip_strength, steps, cfg, sampler_name, scheduler, denoise, image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent)
             
             # Extract the 'samples' tensor from the dictionary
-            latent_image_tensor = pipe['orig']['samples']['samples']
+            latent_image_tensor = pipe['samples']['samples']
 
             # Split the tensor into individual image tensors
             image_tensors = torch.split(latent_image_tensor, 1, dim=0)
@@ -1260,19 +1260,23 @@ class ttN_TSC_pipeKSampler:
             max_width, max_height = 0, 0
             latent_new = []
             image_list = []
+            total = len(x_values) * len(y_values)
+            num = 0
             
             for x_index, x_value in enumerate(x_values):
                 plot_image_vars, x_value_label = define_variable(plot_image_vars, x_type, x_value, x_index)
                 x_label = update_label(x_label, x_value_label, len(x_values))
                 if y_type != 'None':
                     for y_index, y_value in enumerate(y_values):
+                        num += 1
                         plot_image_vars, y_value_label = define_variable(plot_image_vars, y_type, y_value, y_index)
                         y_label = update_label(y_label, y_value_label, len(y_values))
 
-                        ttNl(f'{CC.GREY}X: {x_value_label}, Y: {y_value_label}').t('Plot Values ->').p()
+                        ttNl(f'{CC.GREY}X: {x_value_label}, Y: {y_value_label}').t(f'Plot Values {num}/{total} ->').p()
                         image_list, max_width, max_height, latent_new = sample_plot_image(plot_image_vars, latent_image, preview_latent, max_width, max_height, latent_new, image_list)
                 else:
-                    ttNl(f'{CC.GREY}X: {x_value_label}').t('Plot Values ->').p()
+                    num += 1
+                    ttNl(f'{CC.GREY}X: {x_value_label}').t(f'Plot Values {num}/{total} ->').p()
                     image_list, max_width, max_height, latent_new = sample_plot_image(plot_image_vars, latent_image, preview_latent, max_width, max_height, latent_new, image_list)
 
             # Extract plot dimensions
@@ -1286,7 +1290,7 @@ class ttN_TSC_pipeKSampler:
             latent_new = torch.cat(latent_new, dim=0)
             
             # Update pipe, Store latent_new as last latent, Disable vae decode on next Hold
-            pipe['vars']['samples'] = {"samples": latent_new}
+            pipe['samples'] = {"samples": latent_new}
 
             # Calculate the background dimensions
             bg_width, bg_height, x_offset_initial, y_offset = calculate_background_dimensions(x_type, y_type, num_rows, num_cols, max_height, max_width, grid_spacing)
