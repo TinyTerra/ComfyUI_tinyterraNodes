@@ -1434,7 +1434,7 @@ class ttN_pipeKSamplerAdvanced:
                optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, noise_seed, xyPlot, upscale_method, factor, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, force_full_denoise, disable_noise)
 
 class ttN_pipe_IN:
-    version = '1.0.0'
+    version = '1.1.0'
     def __init__(self):
         pass
 
@@ -1461,29 +1461,20 @@ class ttN_pipe_IN:
     CATEGORY = "ttN/pipe"
 
     def flush(self, model, pos=0, neg=0, latent=0, vae=0, clip=0, image=0, seed=0):
-        pipe = {"vars": {"model": model,
-                        "positive": pos,
-                        "negative": neg,
-                        "samples": latent,
-                        "vae": vae,
-                        "clip": clip,
-                        "images": image,
-                        "seed": seed},
-        "orig": {"model": model,
-                        "positive": pos,
-                        "negative": neg,
-                        "samples": latent,
-                        "vae": vae,
-                        "clip": clip,
-                        "images": image,
-                        "seed": seed},
-
-        "loader_settings": {}
+        pipe = {"model": model,
+                "positive": pos,
+                "negative": neg,
+                "samples": latent,
+                "vae": vae,
+                "clip": clip,
+                "images": image,
+                "seed": seed,
+                "loader_settings": {}
         }
         return (pipe, )
 
 class ttN_pipe_OUT:
-    version = '1.0.0'
+    version = '1.1.0'
     def __init__(self):
         pass
     
@@ -1503,11 +1494,11 @@ class ttN_pipe_OUT:
     CATEGORY = "ttN/pipe"
     
     def flush(self, pipe):
-        model, pos, neg, latent, vae, clip, image, seed = pipe['vars'].values()
+        model, pos, neg, latent, vae, clip, image, seed, _ = pipe.values()
         return model, pos, neg, latent, vae, clip, image, seed, pipe
 
 class ttN_pipe_EDIT:
-    version = '1.0.2'
+    version = '1.1.0'
     def __init__(self):
         pass
     
@@ -1534,44 +1525,37 @@ class ttN_pipe_EDIT:
     CATEGORY = "ttN/pipe"
 
     def flush(self, pipe, model=None, pos=None, neg=None, latent=None, vae=None, clip=None, image=None, seed=None):
-        new_model, new_pos, new_neg, new_latent, new_vae, new_clip, new_image, new_seed = pipe['orig'].values()
+
+        pipe = {**pipe}
 
         if model is not None:
-            pipe['vars']['model'] = model
-            pipe['orig']['model'] = model
+            pipe['model'] = model
         
         if pos is not None:
-            pipe['vars']['positive'] = pos
-            pipe['orig']['positive'] = pos
+            pipe['positive'] = pos
 
         if neg is not None:
-            pipe['vars']['negative'] = neg
-            pipe['orig']['negative'] = neg
+            pipe['negative'] = neg
 
         if latent is not None:
-            pipe['vars']['samples'] = latent
-            pipe['orig']['samples'] = latent
+            pipe['samples'] = latent
 
         if vae is not None:
-            pipe['vars']['vae'] = vae
-            pipe['orig']['vae'] = vae
+            pipe['vae'] = vae
 
         if clip is not None:
-            pipe['vars']['clip'] = clip
-            pipe['orig']['clip'] = clip
+            pipe['clip'] = clip
 
         if image is not None:
-            pipe['vars']['images'] = image
-            pipe['orig']['images'] = image
+            pipe['images'] = image
 
         if seed is not None:
-            pipe['vars']['seed'] = seed
-            pipe['orig']['seed'] = seed
+            pipe['seed'] = seed
 
         return (pipe, )
 
 class ttN_pipe_2BASIC:
-    version = '1.0.0'
+    version = '1.1.0'
     def __init__(self):
         pass
     
@@ -1591,11 +1575,11 @@ class ttN_pipe_2BASIC:
     CATEGORY = "ttN/pipe"
     
     def flush(self, pipe):
-        basic_pipe = (pipe['vars'].get('model'), pipe['vars'].get('clip'), pipe['vars'].get('vae'), pipe['vars'].get('positive'), pipe['vars'].get('negative'))
+        basic_pipe = (pipe.get('model'), pipe.get('clip'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'))
         return (basic_pipe, pipe, )
 
 class ttN_pipe_2DETAILER:
-    version = '1.0.0'
+    version = '1.1.0'
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {"pipe": ("PIPE_LINE",),
@@ -1611,7 +1595,7 @@ class ttN_pipe_2DETAILER:
     CATEGORY = "ttN/pipe"
 
     def flush(self, pipe, bbox_detector, sam_model_opt=None):
-        detailer_pipe = pipe['vars'].get('model'), pipe['vars'].get('vae'), pipe['vars'].get('positive'), pipe['vars'].get('negative'), bbox_detector, sam_model_opt
+        detailer_pipe = pipe.get('model'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'), bbox_detector, sam_model_opt
         return (detailer_pipe, pipe, )
 
 class ttN_XYPlot:
