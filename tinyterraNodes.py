@@ -386,18 +386,23 @@ def get_save_image_path(filename_prefix: str, output_dir: str, image_width: int 
 
 def format_date(text: str, date: datetime.datetime) -> str:
     date_formats = {
+        'dd': lambda d: d.day,
         'd': lambda d: d.day,
+        'MM': lambda d: d.month,
         'M': lambda d: d.month,
+        'hh': lambda d: d.hour,
         'h': lambda d: d.hour,
+        'mm': lambda d: d.minute,
         'm': lambda d: d.minute,
+        'ss': lambda d: d.second,
         's': lambda d: d.second,
         'yyyy': lambda d: d.year,
-        'yyy': lambda d: str(d.year)[1:],
-        'yy': lambda d: str(d.year)[2:]
+        'yyy': lambda d: int(str(d.year)[1:]),
+        'yy': lambda d: int(str(d.year)[2:])
     }
     for format_str, format_func in date_formats.items():
         if format_str in text:
-            text = text.replace(format_str, '{:02d}'.format(format_func(date)))
+            text = text.replace(format_str, f"{{:0{len(format_str)}d}}".format(format_func(date)))
 
     return text
 
@@ -420,15 +425,22 @@ def gather_all_inputs(prompt: Dict[str, dict], unique_id: str, linkInput: str = 
     return collected_inputs
 
 def filename_parser(filename_prefix: str, prompt: Dict[str, dict], my_unique_id: str) -> str:
-    filename_prefix = re.sub(r'%date:(.*?)%', lambda m: format_date(m.group(1), datetime.datetime.now()), filename_prefix)
-    all_inputs = gather_all_inputs(prompt, my_unique_id)
-
-    filename_prefix = re.sub(r'%(.*?)%', lambda m: str(all_inputs[m.group(1)]), filename_prefix)
+    filename_prefix = path_parser(filename_prefix, prompt, my_unique_id)
     filename_prefix = re.sub(r'[/\\]+', '-', filename_prefix)
 
     return filename_prefix
 
+def path_parser(path: str, prompt: Dict[str, dict], my_unique_id: str) -> str:
+    path = re.sub(r'%date:(.*?)%', lambda m: format_date(m.group(1), datetime.datetime.now()), path)
+    all_inputs = gather_all_inputs(prompt, my_unique_id)
+
+    path = re.sub(r'%(.*?)%', lambda m: str(all_inputs[m.group(1)]), path)
+
+    return path
+
 def save_images(self, images, preview_prefix, save_prefix, image_output, prompt=None, extra_pnginfo=None, my_unique_id=None, embed_workflow=True, output_folder="Default", number_padding=5, overwrite_existing="False"):
+    output_folder = path_parser(output_folder, prompt, my_unique_id)
+
     if output_folder != "Default" and not os.path.exists(output_folder):
         ttNl(f"Folder {output_folder} does not exist. Attempting to create...").warn().p()
         try:
@@ -580,14 +592,22 @@ class ttN_TSC_pipeLoader:
         negative_embeddings_final = [[negative_embeddings_final, {"pooled_output": negative_pooled}]]
         image = pil2tensor(Image.new('RGB', (1, 1), (0, 0, 0)))
 
-        pipe = {"model": model,
-                "positive": positive_embeddings_final,
-                "negative": negative_embeddings_final,
-                "samples": samples,
-                "vae": vae,
-                "clip": clip,
-                "images": image,
-                "seed": seed,
+        pipe = {"vars": {"model": model,
+                              "positive": positive_embeddings_final,
+                              "negative": negative_embeddings_final,
+                              "samples": samples,
+                              "vae": vae,
+                              "clip": clip,
+                              "images": image,
+                              "seed": seed},
+                "orig": {"model": model,
+                              "positive": positive_embeddings_final,
+                              "negative": negative_embeddings_final,
+                              "samples": samples,
+                              "vae": vae,
+                              "clip": clip,
+                              "images": image,
+                              "seed": seed},
 
                 "loader_settings": {"ckpt_name": ckpt_name,
                                     "vae_name": vae_name,
@@ -872,18 +892,17 @@ class ttN_TSC_pipeKSampler:
         my_unique_id = int(my_unique_id)
         preview_prefix = f"KSpipe_{my_unique_id:02d}"
 
-        pipe["model"] = optional_model if optional_model is not None else pipe["model"]
-        pipe["positive"] = optional_positive if optional_positive is not None else pipe["positive"]
-        pipe["negative"] = optional_negative if optional_negative is not None else pipe["negative"]
-        pipe["samples"] = optional_latent if optional_latent is not None else pipe["samples"]
-        pipe["vae"] = optional_vae if optional_vae is not None else pipe["vae"]
-        pipe["clip"] = optional_clip if optional_clip is not None else pipe["clip"]
-
+        pipe["vars"]["model"] = optional_model if optional_model is not None else pipe["orig"]["model"]
+        pipe["vars"]["positive"] = optional_positive if optional_positive is not None else pipe["orig"]["positive"]
+        pipe["vars"]["negative"] = optional_negative if optional_negative is not None else pipe["orig"]["negative"]
+        pipe["vars"]["samples"] = optional_latent if optional_latent is not None else pipe["orig"]["samples"]
+        pipe["vars"]["vae"] = optional_vae if optional_vae is not None else pipe["orig"]["vae"]
+        pipe["vars"]["clip"] = optional_clip if optional_clip is not None else pipe["orig"]["clip"]
 
         if seed in (None, 'undefined'):
-            seed = pipe["seed"]
+            seed = pipe["vars"]["seed"]
         else:
-            pipe["seed"] = seed
+            pipe["vars"]["seed"] = seed
                         
         def get_value_by_id(key: str, my_unique_id):
             for value, id_ in last_helds[key]:
@@ -923,40 +942,39 @@ class ttN_TSC_pipeKSampler:
 
         def get_output(pipe):
             return (pipe,
-                    pipe.get("model"),
-                    pipe.get("positive"),
-                    pipe.get("negative"),
-                    pipe.get("samples"),
-                    pipe.get("vae"),
-                    pipe.get("clip"),
-                    pipe.get("images"),
-                    pipe.get("seed"))
-
+                    pipe["vars"].get("model"),
+                    pipe["vars"].get("positive"),
+                    pipe["vars"].get("negative"),
+                    pipe["vars"].get("samples"),
+                    pipe["vars"].get("vae"),
+                    pipe["vars"].get("clip"),
+                    pipe["vars"].get("images"),
+                    pipe["vars"].get("seed"))
 
         def process_sample_state(self, pipe, lora_name, lora_model_strength, lora_clip_strength,
                                  steps, cfg, sampler_name, scheduler, denoise,
                                  image_output, preview_prefix, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, disable_noise=disable_noise):
             # Load Lora
             if lora_name not in (None, "None"):
-                pipe["model"], pipe["clip"] = load_lora(lora_name, pipe["model"], pipe["clip"], lora_model_strength, lora_clip_strength)
+                pipe["vars"]["model"], pipe["vars"]["clip"] = load_lora(lora_name, pipe["vars"]["model"], pipe["vars"]["clip"], lora_model_strength, lora_clip_strength)
 
             # Upscale samples if enabled
-            pipe["samples"] = handle_upscale(pipe["samples"], upscale_method, factor, crop)
+            pipe["vars"]["samples"] = handle_upscale(pipe["vars"]["samples"], upscale_method, factor, crop)
 
-            pipe["samples"] = common_ksampler(pipe["model"], pipe["seed"], steps, cfg, sampler_name, scheduler, pipe["positive"], pipe["negative"], pipe["samples"], denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
+            pipe["vars"]["samples"] = common_ksampler(pipe["vars"]["model"], pipe["vars"]["seed"], steps, cfg, sampler_name, scheduler, pipe["vars"]["positive"], pipe["vars"]["negative"], pipe["vars"]["samples"], denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
       
 
-            latent = pipe["samples"]["samples"]
-            pipe["images"] = pipe["vae"].decode(latent).cpu()
+            latent = pipe["vars"]["samples"]["samples"]
+            pipe["vars"]["images"] = pipe["vars"]["vae"].decode(latent).cpu()
 
-            results = save_images(self, pipe["images"], preview_prefix, save_prefix, image_output, prompt, extra_pnginfo, my_unique_id)
+            results = save_images(self, pipe["vars"]["images"], preview_prefix, save_prefix, image_output, prompt, extra_pnginfo, my_unique_id)
 
             update_value_by_id("results", my_unique_id, results)
 
             # Clean loaded_objects
             update_loaded_objects(prompt)
 
-            new_pipe = {**pipe}
+            new_pipe = {**pipe, 'orig': pipe["vars"]}
             
             update_value_by_id("pipe_line", my_unique_id, new_pipe)
             
@@ -1594,21 +1612,34 @@ class ttN_pipe_2DETAILER:
     version = '1.0.0'
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"pipe": ("PIPE_LINE",),
-                             "bbox_detector": ("BBOX_DETECTOR", ), },
-                "optional": {"sam_model_opt": ("SAM_MODEL", ), },
-                "hidden": {"ttNnodeVersion": ttN_pipe_2DETAILER.version},
-                }
+        return {
+            "required": {
+                "pipe": ("PIPE_LINE",),
+                "clip": ("CLIP",),
+                "bbox_detector": ("BBOX_DETECTOR", ),
+                "wildcard": ("STRING", {"multiline": True}),
+            },
+            "optional": {
+                "segm_detector_opt": ("SEGM_DETECTOR", {}),
+                "sam_model_opt": ("SAM_MODEL", ),
+                "guide_size_for": ("BOOLEAN", {"default": True, "label_on": "bbox", "label_off": "crop_region"}),
+                "noise_mask": ("BOOLEAN", {"default": True, "label_on": "enabled", "label_off": "disabled"}),
+                "force_inpaint": ("BOOLEAN", {"default": False, "label_on": "enabled", "label_off": "disabled"}),
+            },
+            "hidden": {
+                "ttNnodeVersion": ttN_pipe_2DETAILER.version
+            },
+        }
 
-    RETURN_TYPES = ("DETAILER_PIPE", "PIPE_LINE" )
-    RETURN_NAMES = ("detailer_pipe", "pipe")
+    RETURN_TYPES = ("DETAILER_PIPE", "PIPE_LINE", "BOOLEAN", "BOOLEAN", "BOOLEAN")
+    RETURN_NAMES = ("detailer_pipe", "pipe", "guide_size_for", "noise_mask", "force_inpaint")
     FUNCTION = "flush"
 
     CATEGORY = "ttN/pipe"
 
-    def flush(self, pipe, bbox_detector, sam_model_opt=None):
-        detailer_pipe = pipe['vars'].get('model'), pipe['vars'].get('vae'), pipe['vars'].get('positive'), pipe['vars'].get('negative'), bbox_detector, sam_model_opt
-        return (detailer_pipe, pipe, )
+    def flush(self, pipe, clip, bbox_detector, wildcard, sam_model_opt=None, segm_detector_opt=None, guide_size_for=True, noise_mask=True, force_inpaint=False):
+        detailer_pipe = pipe['vars'].get('model'), clip, pipe['vars'].get('vae'), pipe['vars'].get('positive'), pipe['vars'].get('negative'), wildcard, bbox_detector, sam_model_opt, segm_detector_opt
+        return (detailer_pipe, pipe, guide_size_for, noise_mask, force_inpaint)
 
 class ttN_XYPlot:
     version = '1.0.0'
