@@ -435,10 +435,11 @@ app.registerExtension({
             if (showLinkBorder !== undefined) {app.canvas.render_connections_border = showLinkBorder}
 
             let showLinkShadow = Number(localStorage.getItem('Comfy.Settings.ttN.links_render_shadow'));
-            if (showLinkShadow) {app.canvas.render_connections_shadows = showLinkShadow}
+            if (showLinkShadow !== undefined) {app.canvas.render_connections_shadows = showLinkShadow}
 
             let showExecOrder = localStorage.getItem('Comfy.Settings.ttN.showExecutionOrder');
-            if (showExecOrder) {app.canvas.render_execution_order = showExecOrder}
+            if (showExecOrder === 'true') {app.canvas.render_execution_order = true}
+            else {app.canvas.render_execution_order = false}
 
             var customLinkColors = JSON.parse(localStorage.getItem('Comfy.Settings.ttN.customLinkColors')) || {};
             Object.assign(app.canvas.default_connection_color_byType, customLinkColors);
