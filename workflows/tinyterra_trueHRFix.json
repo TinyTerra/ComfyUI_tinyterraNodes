@@ -132,7 +132,7 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeKSampler",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.0.3"
       },
       "widgets_values": [
         "add_detail.safetensors",
@@ -224,7 +224,7 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeLoader",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.0.1"
       },
       "widgets_values": [
         "dreamshaper_6NoVae.safetensors",
@@ -302,7 +302,7 @@
       "properties": {
         "infoWidgetHidden": false,
         "Node name for S&R": "ttN hiresfixScale",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.0.2"
       },
       "widgets_values": [
         "DF2K_JPEG.pth",
@@ -459,7 +459,7 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeKSampler",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.0.3"
       },
       "widgets_values": [
         "None",

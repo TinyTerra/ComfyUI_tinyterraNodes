@@ -90,7 +90,7 @@
       "properties": {
         "Node name for S&R": "ttN pipeOUT",
         "ttNbgOverride": "",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.1.0"
       },
       "color": "#222",
       "bgcolor": "#000"
@@ -183,7 +183,7 @@
       "properties": {
         "Node name for S&R": "ttN pipeOUT",
         "ttNbgOverride": "",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.1.0"
       },
       "color": "#222",
       "bgcolor": "#000"
@@ -272,7 +272,7 @@
       "properties": {
         "Node name for S&R": "ttN pipeOUT",
         "ttNbgOverride": "",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.1.0"
       },
       "color": "#222",
       "bgcolor": "#000"
@@ -364,7 +364,7 @@
       "properties": {
         "Node name for S&R": "ttN pipeOUT",
         "ttNbgOverride": "",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.1.0"
       },
       "color": "#222",
       "bgcolor": "#000"
@@ -502,7 +502,7 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeKSampler",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.0.3"
       },
       "widgets_values": [
         "None",
@@ -696,7 +696,7 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeKSampler",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.0.3"
       },
       "widgets_values": [
         "None",
@@ -907,7 +907,7 @@
       "properties": {
         "infoWidgetHidden": false,
         "Node name for S&R": "ttN hiresfixScale",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.0.2"
       },
       "widgets_values": [
         "DF2K_JPEG.pth",
@@ -1001,7 +1001,7 @@
       "properties": {
         "Node name for S&R": "ttN pipeLoader",
         "ttNbgOverride": "",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.0.1"
       },
       "widgets_values": [
         "Good\\deliberate_v2.safetensors",
@@ -1335,7 +1335,7 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeKSampler",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.0.3"
       },
       "widgets_values": [
         "add_detail.safetensors",
