@@ -1791,7 +1791,7 @@ class ttN_concat:
 
         concat = delimiter.join([text1, text2, text3])
        
-        return concat
+        return (concat,)
 
 class ttN_text3BOX_3WAYconcat:
     version = '1.0.0'
