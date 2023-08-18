@@ -1579,12 +1579,15 @@ class ttN_pipe_2BASIC:
         return (basic_pipe, pipe, )
 
 class ttN_pipe_2DETAILER:
-    version = '1.1.0'
+    version = '1.2.0'
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {"pipe": ("PIPE_LINE",),
                              "bbox_detector": ("BBOX_DETECTOR", ), },
-                "optional": {"sam_model_opt": ("SAM_MODEL", ), },
+                             "wildcard": ("STRING", {"multiline": True}),
+                "optional": {"sam_model_opt": ("SAM_MODEL", ), 
+                             "segm_detector_opt": ("SEGM_DETECTOR",),
+                             "detailer_hook": ("DETAILER_HOOK",),},
                 "hidden": {"ttNnodeVersion": ttN_pipe_2DETAILER.version},
                 }
 
@@ -1594,8 +1597,8 @@ class ttN_pipe_2DETAILER:
 
     CATEGORY = "ttN/pipe"
 
-    def flush(self, pipe, bbox_detector, sam_model_opt=None):
-        detailer_pipe = pipe.get('model'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'), bbox_detector, sam_model_opt
+    def flush(self, pipe, bbox_detector, wildcard, sam_model_opt=None, segm_detector_opt=None, detailer_hook=None):
+        detailer_pipe = (pipe.get('model'), pipe.get('clip'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'), wildcard, bbox_detector, segm_detector_opt, sam_model_opt, detailer_hook)
         return (detailer_pipe, pipe, )
 
 class ttN_XYPlot:
