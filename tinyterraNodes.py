@@ -1583,11 +1583,13 @@ class ttN_pipe_2DETAILER:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {"pipe": ("PIPE_LINE",),
-                             "bbox_detector": ("BBOX_DETECTOR", ), },
+                             "bbox_detector": ("BBOX_DETECTOR", ), 
                              "wildcard": ("STRING", {"multiline": True}),
+                            },
                 "optional": {"sam_model_opt": ("SAM_MODEL", ), 
                              "segm_detector_opt": ("SEGM_DETECTOR",),
-                             "detailer_hook": ("DETAILER_HOOK",),},
+                             "detailer_hook": ("DETAILER_HOOK",),
+                            },
                 "hidden": {"ttNnodeVersion": ttN_pipe_2DETAILER.version},
                 }
 
