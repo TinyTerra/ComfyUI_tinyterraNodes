@@ -25,6 +25,32 @@ class ttN_debugInput:
                     print(f"{key}: {value}")
             return tuple()
 
+class ttN_compareInput:
+        @classmethod
+        def INPUT_TYPES(s):
+            return {"required": {"console_title": ("STRING", {"default": "ttN INPUT COMPARE"}),},
+                    "optional": {"debug": ("", {"default": None}),
+                                 "debug2": ("", {"default": None}),}
+            }
+
+        RETURN_TYPES = tuple()
+        RETURN_NAMES = tuple()
+        FUNCTION = "debug"
+        CATEGORY = "ttN/dev"
+        OUTPUT_NODE = True
+
+        def debug(_, **kwargs):
+          
+            values = []
+            for key, value in kwargs.items():
+                if key == "console_title":
+                    print(value)
+                else:
+                    print(f"{key}: {value}")
+                    values.append(value)
+
+            return tuple()
+
 class ttN_busIN:
     @classmethod
     def INPUT_TYPES(s):
@@ -86,6 +112,7 @@ class ttN_seedDebug:
 
 NODE_CLASS_MAPPINGS = {
     "ttN debugInput": ttN_debugInput,
+    "ttN compareInput": ttN_compareInput,
     "ttN busIN": ttN_busIN,
     "ttN busOUT": ttN_busOUT,
     "ttN seedDebug": ttN_seedDebug,
@@ -94,6 +121,7 @@ NODE_CLASS_MAPPINGS = {
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN debugInput": "debugInput",
+    "ttN compareInput": "compareInput",
     "ttN busIN": "busIN",
     "ttN busOUT": "busOUT",
     "ttN seedDebug": "seedDebug",

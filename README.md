@@ -1,8 +1,10 @@
 # tinyterraNodes
 A selection of custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI).
 
-![tinyterra_trueHRFix](workflows/tinyterra_trueHRFix.png)
-![tinyterra_xyPlot](workflows/tinyterra_xyPlot.png)
+![tinyterra_pipeSDXL](workflows/tinyterra_pipeSDXL.png)
+![tinyterra_trueHRFix](workflows/tinyterra_trueHRFix.png) 
+![tinyterra_trueHRFix](workflows/tinyterra_trueHRFix.png) 
+
 
 ## Installation
 Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
@@ -28,10 +30,15 @@ Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
 *Enabled by default*
 
 + <details><summary>Adds 'Node Dimensions (ttN)' to the node right-click context menu</summary> Allows setting specific node Width and Height values as long as they are above the minimum size for the given node.
++ <details><summary>Adds 'Default BG Color (ttN)' to the node right-click context menu</summary> Allows setting specific default background color for every node added.
++ <details><summary>Adds 'Show Execution Order (ttN)' to the node right-click context menu</summary> Toggles execution order flags on node corners.
 + <details><summary>Adds support for 'ctrl + arrow key' Node movement</summary> This aligns the node(s) to the set ComfyUI grid spacing size and move the node in the direction of the arrow key by the grid spacing value. Holding shift in addition will move the node by the grid spacing size * 10.
 + <details><summary>Adds 'Reload Node (ttN)' to the node right-click context menu</summary> Creates a new instance of the node with the same position, size, color and title (will disconnect any IO wires). It attempts to retain set widget values which is useful for replacing nodes when a node/widget update occurs </details>
 + <details><summary>Adds 'Slot Type Color (ttN)' to the Link right-click context menu</summary> Opens a color picker dialog menu to update the color of the selected link type. </details>
++ <details><summary>Adds 'Link Border (ttN)' to the Link right-click context menu</summary> Toggles link line border. </details>
++ <details><summary>Adds 'Link Shadow (ttN)' to the Link right-click context menu</summary> Toggles link line shadow. </details>
 + <details><summary>Adds 'Link Style (ttN)' to the Link right-click context menu</summary> Sets the default link line type. </details>
+
 
 **Save image prefix parsing**
 
@@ -77,7 +84,7 @@ Combination of Efficiency Loader and Advanced CLIP Text Encode with an additiona
 (Modified from [Efficiency Nodes](https://github.com/LucianoCirino/efficiency-nodes-comfyui) and [QOLS_Omar92](https://github.com/omar92/ComfyUI-QualityOfLifeSuit_Omar92))
 
 Combination of Efficiency Loader and Advanced CLIP Text Encode with an additional pipe output
-+ _**Inputs -** pipe, (optional pipe overrides), script, (Lora, model strength, clip strength), (upscale method, factor, crop), sampler state, steps, cfg, sampler name, scheduler, denoise, (image output [None, Preview, Save]), Save_Prefix_
++ _**Inputs -** pipe, (optional pipe overrides), xyplot, (Lora, model strength, clip strength), (upscale method, factor, crop), sampler state, steps, cfg, sampler name, scheduler, denoise, (image output [None, Preview, Save]), Save_Prefix, seed_
 + _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
 
 Old node layout:
@@ -87,6 +94,32 @@ Old node layout:
 With pipeLoader and pipeKSampler:
 
 <img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/c806c2e3-2efb-44cb-bdf0-3fbc20251456"  width="50%">
+  </details>
+
+<details>
+  <summary>pipeKSamplerAdvanced</summary>
+
+Combination of Efficiency Loader and Advanced CLIP Text Encode with an additional pipe output
++ _**Inputs -** pipe, (optional pipe overrides), xyplot, (Lora, model strength, clip strength), (upscale method, factor, crop), sampler state, steps, cfg, sampler name, scheduler, starts_at_step, return_with_leftover_noise, (image output [None, Preview, Save]), Save_Prefix_
++ _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
+
+  </details>
+
+  <details>
+  <summary>pipeLoaderSDXL</summary>
+
+SDXL Loader and Advanced CLIP Text Encode with an additional pipe output
++ _**Inputs -** model, vae, clip skip, (lora1, modelstrength clipstrength), (Lora2, modelstrength clipstrength), model, vae, clip skip, (lora1, modelstrength clipstrength), (Lora2, modelstrength clipstrength), (positive prompt, token normalization, weight interpretation), (negative prompt, token normalization, weight interpretation), (latent width, height), batch size, seed_
++ _**Outputs -** sdxlpipe, model, conditioning, conditioning, vae, model, conditioning, conditioning, vae, samples, clip, seed_
+   </details>
+
+<details>
+  <summary>pipeKSamplerSDXL</summary>
+
+SDXL Sampler (base and refiner in one) and Advanced CLIP Text Encode with an additional pipe output
++ _**Inputs -** sdxlpipe, (optional pipe overrides), (upscale method, factor, crop), sampler state, base_steps, refiner_steps cfg, sampler name, scheduler, (image output [None, Preview, Save]), Save_Prefix, seed_
++ _**Outputs -** pipe, model, conditioning, conditioning, vae, model, conditioning, conditioning, vae, samples, clip, image, seed_
+
   </details>
   
 <details>

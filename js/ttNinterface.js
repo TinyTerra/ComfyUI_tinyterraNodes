@@ -1,11 +1,13 @@
 import { app } from "/scripts/app.js";
 
 const customPipeLineLink = "#7737AA"
+const customPipeLineSDXLLink = "#0DC52B"
 const customIntLink = "#29699C"
 const customXYPlotLink = "#74DA5D"
 
 var customLinkColors = JSON.parse(localStorage.getItem('Comfy.Settings.ttN.customLinkColors')) || {};
 if (!customLinkColors["PIPE_LINE"] || !LGraphCanvas.link_type_colors["PIPE_LINE"]) {customLinkColors["PIPE_LINE"] = customPipeLineLink;}
+if (!customLinkColors["PIPE_LINE_SDXL"] || !LGraphCanvas.link_type_colors["PIPE_LINE_SDXL"]) {customLinkColors["PIPE_LINE_SDXL"] = customPipeLineSDXLLink;}
 if (!customLinkColors["INT"] || !LGraphCanvas.link_type_colors["INT"]) {customLinkColors["INT"] = customIntLink;}
 if (!customLinkColors["XYPLOT"] || !LGraphCanvas.link_type_colors["XYPLOT"]) {customLinkColors["XYPLOT"] = customXYPlotLink;}
 

@@ -19,10 +19,6 @@ optionValues = {
         "enable_interface": ('true', 'false'),
         "enable_dynamic_widgets": ('true', 'false'),
         "enable_dev_nodes": ('true', 'false'),
-        "default_node_bg_color": ('default', 'red', 'brown', 'green', 'blue', 'pale_blue', 'cyan', 'purple', 'yellow', 'black'),
-        "pipe_line": "HEX Color Code (pipe_line link color)",
-        "int": "HEX Color Code (int link color)",
-        "xyplot": "HEX Color Code (xyplot link color)",
     }
 
 def get_config():
@@ -137,12 +133,19 @@ except ImportError:
             print("\033[92m[ttNodes] \033[0;31mREMBG is not installed. Attempting to install...\033[0m")
             p = subprocess.Popen([sys.executable, "-m", "pip", "install", "rembg[gpu]"])
             p.wait()
-            print("\033[92m[ttNodes] REMBG Installed!\033[0m")
+            print("\033[92m[ttNodes] REMBG[GPU] Installed!\033[0m")
 
             config_write("ttNodes", "install_rembg", 'Installed successfully')
         except:
-            config_write("ttNodes", "install_rembg", 'Failed to install')
-            print("\033[92m[ttNodes] \033[0;31mFailed to install REMBG.\033[0m")
+            try:
+                print("\033[92m[ttNodes] \033[0;31mREMBG[GPU] failed to install. Attempting to install REMBG...\033[0m")
+                p = subprocess.Popen([sys.executable, "-m", "pip", "install", "rembg"])
+                p.wait()
+                print("\033[92m[ttNodes] REMBG Installed!\033[0m")
+                config_write("ttNodes", "install_rembg", 'Installed successfully')
+            except:
+                config_write("ttNodes", "install_rembg", 'Failed to install')
+                print("\033[92m[ttNodes] \033[0;31mFailed to install REMBG.\033[0m")
 
 # --------- WEB ---------- #
 web_extension_path = os.path.join(comfy_path, "web", "extensions", "tinyterraNodes")

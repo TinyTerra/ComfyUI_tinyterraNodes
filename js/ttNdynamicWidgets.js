@@ -60,6 +60,24 @@ function widgetLogic(node, widget) {
 			toggleWidget(node, findWidgetByName(node, 'lora3_clip_strength'), true)
 		}
 	}
+	if (widget.name === 'refiner_lora1_name') {
+		if (widget.value === "None") {
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora1_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora1_clip_strength'))
+		} else {
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora1_model_strength'), true)
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora1_clip_strength'), true)
+		}
+	}
+	if (widget.name === 'refiner_lora2_name') {
+		if (widget.value === "None") {
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora2_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora2_clip_strength'))
+		} else {
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora2_model_strength'), true)
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora2_clip_strength'), true)
+		}
+	}
 	if (widget.name === 'rescale_after_model') {
 		if (widget.value === false) {
 			toggleWidget(node, findWidgetByName(node, 'rescale_method'))
@@ -140,7 +158,7 @@ function widgetLogic(node, widget) {
 	}
 }
 
-const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 'upscale_method', 'image_output', 'add_noise']
+const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 'refiner_lora1_name', 'refiner_lora2_name', 'upscale_method', 'image_output', 'add_noise']
 
 function getSetters(node) {
 	if (node.widgets)
@@ -171,8 +189,10 @@ app.registerExtension({
 	nodeCreated(node) {
 		if (node.getTitle() == "hiresfixScale" ||
 				node.getTitle() == "pipeLoader" ||
+				node.getTitle() == "pipeLoaderSDXL" ||
 				node.getTitle() == "pipeKSampler" ||
 				node.getTitle() == "pipeKSamplerAdvanced" ||
+				node.getTitle() == "pipeKSamplerSDXL" ||
 				node.getTitle() == "imageRemBG" ||
 				node.getTitle() == "imageOutput") {
 			getSetters(node)
