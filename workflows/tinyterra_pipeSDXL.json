@@ -1,26 +1,26 @@
 {
-  "last_node_id": 25,
-  "last_link_id": 17,
+  "last_node_id": 193,
+  "last_link_id": 477,
   "nodes": [
     {
-      "id": 23,
-      "type": "ttN pipeKSampler",
+      "id": 193,
+      "type": "ttN pipeKSamplerSDXL",
       "pos": [
-        1000,
-        70
+        520,
+        40
       ],
-      "size": {
-        "0": 720,
-        "1": 1080
-      },
+      "size": [
+        400,
+        850
+      ],
       "flags": {},
-      "order": 2,
+      "order": 1,
       "mode": 0,
       "inputs": [
         {
-          "name": "pipe",
-          "type": "PIPE_LINE",
-          "link": 17
+          "name": "sdxl_pipe",
+          "type": "PIPE_LINE_SDXL",
+          "link": 477
         },
         {
           "name": "optional_model",
@@ -38,24 +38,39 @@
           "link": null
         },
         {
-          "name": "optional_latent",
-          "type": "LATENT",
+          "name": "optional_vae",
+          "type": "VAE",
           "link": null
         },
         {
-          "name": "optional_vae",
+          "name": "optional_refiner_model",
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "optional_refiner_positive",
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "optional_refiner_negative",
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "optional_refiner_vae",
           "type": "VAE",
+          "link": null
+        },
+        {
+          "name": "optional_latent",
+          "type": "LATENT",
           "link": null
         },
         {
           "name": "optional_clip",
           "type": "CLIP",
           "link": null
-        },
-        {
-          "name": "xyPlot",
-          "type": "XYPLOT",
-          "link": 16
         },
         {
           "name": "seed",
@@ -76,8 +91,8 @@
       ],
       "outputs": [
         {
-          "name": "pipe",
-          "type": "PIPE_LINE",
+          "name": "sdxl_pipe",
+          "type": "PIPE_LINE_SDXL",
           "links": null,
           "shape": 3
         },
@@ -100,14 +115,38 @@
           "shape": 3
         },
         {
-          "name": "latent",
-          "type": "LATENT",
+          "name": "vae",
+          "type": "VAE",
           "links": null,
           "shape": 3
         },
         {
-          "name": "vae",
+          "name": "refiner_model",
+          "type": "MODEL",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "refiner_positive",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "refiner_negative",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "refiner_vae",
           "type": "VAE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
           "links": null,
           "shape": 3
         },
@@ -131,92 +170,47 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "ttN pipeKSampler",
-        "ttNnodeVersion": "1.0.3"
+        "Node name for S&R": "ttN pipeKSamplerSDXL",
+        "ttNnodeVersion": "1.0.0"
       },
       "widgets_values": [
-        "None",
-        1,
-        1,
         "None",
         2,
         "disabled",
         "Sample",
-        24,
-        "7.000",
-        "dpmpp_2m",
-        "karras",
-        1,
-        "Save",
-        "Comfy",
-        861410848433374,
+        20,
+        5,
+        8,
+        "euler",
+        "normal",
+        "Preview",
+        "ComfyUI",
+        774522948921345,
         "randomize"
       ],
       "color": "#323",
       "bgcolor": "#535"
     },
     {
-      "id": 24,
-      "type": "ttN xyPlot",
+      "id": 192,
+      "type": "ttN pipeLoaderSDXL",
       "pos": [
-        650,
-        210
+        10,
+        40
       ],
       "size": [
-        300,
-        300
+        480,
+        850
       ],
       "flags": {},
       "order": 0,
       "mode": 0,
       "outputs": [
         {
-          "name": "xyPlot",
-          "type": "XYPLOT",
+          "name": "sdxl_pipe",
+          "type": "PIPE_LINE_SDXL",
           "links": [
-            16
-          ],
-          "shape": 3,
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "ttN xyPlot",
-        "ttNnodeVersion": "1.2.0"
-      },
-      "widgets_values": [
-        0,
-        0,
-        "False",
-        "False",
-        "loader: ckpt_name",
-        "Good\\deliberate_v2.safetensors; dreamshaper_6NoVae.safetensors; landscapePhotoreal_v1.safetensors; ",
-        "sampler: seed",
-        "increment; increment; increment; increment; "
-      ],
-      "color": "#233",
-      "bgcolor": "#355"
-    },
-    {
-      "id": 25,
-      "type": "ttN pipeLoader",
-      "pos": [
-        200,
-        70
-      ],
-      "size": [
-        400,
-        740
-      ],
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "pipe",
-          "type": "PIPE_LINE",
-          "links": [
-            17
+            477
           ],
           "shape": 3,
           "slot_index": 0
@@ -240,14 +234,38 @@
           "shape": 3
         },
         {
-          "name": "latent",
-          "type": "LATENT",
+          "name": "vae",
+          "type": "VAE",
           "links": null,
           "shape": 3
         },
         {
-          "name": "vae",
+          "name": "refiner_model",
+          "type": "MODEL",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "refiner_positive",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "refiner_negative",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "refiner_vae",
           "type": "VAE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
           "links": null,
           "shape": 3
         },
@@ -265,32 +283,37 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "ttN pipeLoader",
-        "ttNnodeVersion": "1.0.2"
+        "Node name for S&R": "ttN pipeLoaderSDXL",
+        "ttNnodeVersion": "1.0.0"
       },
       "widgets_values": [
-        "dreamshaper_6NoVae.safetensors",
-        "vae-ft-mse-840000-ema-pruned.safetensors",
-        -1,
-        "None",
-        0.2,
-        0.2,
+        "sd_xl_base_1.0.safetensors",
+        "Baked VAE",
         "None",
         1,
         1,
         "None",
         1,
         1,
-        "warm sunrays, mountains in the background, lush green plants, hobbit city (RAW photo:1.2), perfect composition, (masterpiece, 8k, absurdres, best quality, intricate), realistic, raytracing, sharp,",
+        "sd_xl_refiner_1.0.safetensors",
+        "Baked VAE",
+        "None",
+        1,
+        1,
+        "None",
+        1,
+        1,
+        -2,
+        "evening sunset scenery blue sky nature, glass bottle with a galaxy in it",
         "none",
-        "comfy++",
-        "disconnected, merged, weird, ugly, text, signature, watermark, blurry, blurred",
+        "comfy",
+        "text, watermark",
         "none",
-        "comfy++",
-        768,
-        512,
+        "comfy",
+        1024,
+        1024,
         1,
-        278267302676039,
+        721897303308196,
         "fixed"
       ],
       "color": "#222",
@@ -299,20 +322,12 @@
   ],
   "links": [
     [
-      16,
-      24,
+      477,
+      192,
       0,
-      23,
-      7,
-      "XYPLOT"
-    ],
-    [
-      17,
-      25,
+      193,
       0,
-      23,
-      0,
-      "PIPE_LINE"
+      "PIPE_LINE_SDXL"
     ]
   ],
   "groups": [],

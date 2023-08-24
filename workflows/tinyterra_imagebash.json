@@ -1,6 +1,6 @@
 {
-  "last_node_id": 42,
-  "last_link_id": 60,
+  "last_node_id": 44,
+  "last_link_id": 64,
   "nodes": [
     {
       "id": 22,
@@ -202,13 +202,13 @@
       "flags": {
         "collapsed": true
       },
-      "order": 2,
+      "order": 3,
       "mode": 0,
       "inputs": [
         {
           "name": "pipe",
           "type": "PIPE_LINE",
-          "link": 33
+          "link": 63
         }
       ],
       "outputs": [
@@ -376,18 +376,18 @@
         410,
         270
       ],
-      "size": [
-        340,
-        650
-      ],
+      "size": {
+        "0": 340,
+        "1": 650
+      },
       "flags": {},
-      "order": 3,
+      "order": 4,
       "mode": 0,
       "inputs": [
         {
           "name": "pipe",
           "type": "PIPE_LINE",
-          "link": 35
+          "link": 64
         },
         {
           "name": "optional_model",
@@ -570,10 +570,10 @@
         780,
         270
       ],
-      "size": [
-        234,
-        660
-      ],
+      "size": {
+        "0": 234,
+        "1": 660
+      },
       "flags": {},
       "order": 8,
       "mode": 0,
@@ -720,110 +720,6 @@
       "bgcolor": "#535"
     },
     {
-      "id": 29,
-      "type": "Image Overlay",
-      "pos": [
-        1270,
-        410
-      ],
-      "size": [
-        315,
-        290
-      ],
-      "flags": {},
-      "order": 13,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "base_image",
-          "type": "IMAGE",
-          "link": 45
-        },
-        {
-          "name": "overlay_image",
-          "type": "IMAGE",
-          "link": 46
-        },
-        {
-          "name": "optional_mask",
-          "type": "MASK",
-          "link": 47
-        }
-      ],
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": [
-            51
-          ],
-          "shape": 3,
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "Image Overlay"
-      },
-      "widgets_values": [
-        "Resize by rescale_factor",
-        "nearest-exact",
-        0.7,
-        512,
-        512,
-        270,
-        140,
-        0,
-        0
-      ],
-      "color": "#232",
-      "bgcolor": "#353"
-    },
-    {
-      "id": 30,
-      "type": "ttN imageOutput",
-      "pos": [
-        1600,
-        410
-      ],
-      "size": [
-        300,
-        290
-      ],
-      "flags": {},
-      "order": 14,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "image",
-          "type": "IMAGE",
-          "link": 51
-        }
-      ],
-      "outputs": [
-        {
-          "name": "image",
-          "type": "IMAGE",
-          "links": [
-            50
-          ],
-          "shape": 3,
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "ttN imageOutput",
-        "ttNnodeVersion": "1.0.0"
-      },
-      "widgets_values": [
-        "Preview",
-        "Comfy",
-        "True",
-        "T:\\AI\\ComfyNew\\ComfyUI\\output"
-      ],
-      "color": "#232",
-      "bgcolor": "#353"
-    },
-    {
       "id": 27,
       "type": "Reroute",
       "pos": [
@@ -868,10 +764,10 @@
         1920,
         360
       ],
-      "size": [
-        315,
-        340
-      ],
+      "size": {
+        "0": 315,
+        "1": 340
+      },
       "flags": {},
       "order": 15,
       "mode": 0,
@@ -879,7 +775,7 @@
         {
           "name": "image",
           "type": "IMAGE",
-          "link": 50
+          "link": 62
         },
         {
           "name": "vae",
@@ -928,120 +824,16 @@
       "bgcolor": "#355"
     },
     {
-      "id": 19,
-      "type": "ttN pipeLoader",
-      "pos": [
-        20,
-        30
-      ],
-      "size": [
-        370,
-        815
-      ],
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "pipe",
-          "type": "PIPE_LINE",
-          "links": [
-            33,
-            35
-          ],
-          "shape": 3,
-          "slot_index": 0
-        },
-        {
-          "name": "model",
-          "type": "MODEL",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "positive",
-          "type": "CONDITIONING",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "negative",
-          "type": "CONDITIONING",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "latent",
-          "type": "LATENT",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "vae",
-          "type": "VAE",
-          "links": null,
-          "shape": 3
-        },
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "links": [
-            34
-          ],
-          "shape": 3,
-          "slot_index": 6
-        },
-        {
-          "name": "seed",
-          "type": "INT",
-          "links": null,
-          "shape": 3
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "ttN pipeLoader",
-        "ttNbgOverride": "",
-        "ttNnodeVersion": "1.0.1"
-      },
-      "widgets_values": [
-        "Good\\deliberate_v2.safetensors",
-        "vae-ft-mse-840000-ema-pruned.safetensors",
-        -1,
-        "None",
-        1,
-        1,
-        "None",
-        1,
-        1,
-        "None",
-        1,
-        1,
-        "(RAW photo:1.2), perfect composition, (masterpiece, 8k, absurdres, best quality, intricate), realistic, raytracing, dark forest, mystical, pathway",
-        "none",
-        "comfy++",
-        "(semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, digital art, anime, manga:1.3), out of frame, cropped, cut off, poorly made, username, signature, watermark, unattractive, blurry, boring, sketch, lacklustre, repetitive, worst quality, low quality, jpeg artefacts, poorly lit, overexposed, underexposed, glitch, error, out of focus, amateur, (poorly drawn hands, poorly drawn face:1.2), deformed iris, deformed pupils, morbid, duplicate, mutilated, extra fingers, mutated hands, poorly drawn eyes, mutation, deformed, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck, incoherent, cloned face, cloned body, blur, blurry,(nsfw),(naked),(nude)",
-        "none",
-        "comfy++",
-        768,
-        512,
-        1,
-        302086422941626,
-        "fixed"
-      ],
-      "color": "#222",
-      "bgcolor": "#000"
-    },
-    {
       "id": 28,
       "type": "ttN imageREMBG",
       "pos": [
         1040,
         410
       ],
-      "size": [
-        210,
-        290
-      ],
+      "size": {
+        "0": 210,
+        "1": 290
+      },
       "flags": {},
       "order": 12,
       "mode": 0,
@@ -1090,10 +882,10 @@
         1330,
         70
       ],
-      "size": [
-        280,
-        150
-      ],
+      "size": {
+        "0": 280,
+        "1": 150
+      },
       "flags": {},
       "order": 10,
       "mode": 0,
@@ -1133,18 +925,18 @@
         440,
         70
       ],
-      "size": [
-        280,
-        150
-      ],
+      "size": {
+        "0": 280,
+        "1": 150
+      },
       "flags": {},
-      "order": 4,
+      "order": 0,
       "mode": 0,
       "inputs": [
         {
           "name": "clip",
           "type": "CLIP",
-          "link": 34
+          "link": null
         }
       ],
       "outputs": [
@@ -1176,10 +968,10 @@
         780,
         110
       ],
-      "size": [
-        210,
-        106
-      ],
+      "size": {
+        "0": 210,
+        "1": 106
+      },
       "flags": {},
       "order": 1,
       "mode": 0,
@@ -1212,10 +1004,10 @@
         2250,
         0
       ],
-      "size": [
-        680,
-        930
-      ],
+      "size": {
+        "0": 680,
+        "1": 930
+      },
       "flags": {},
       "order": 16,
       "mode": 0,
@@ -1357,33 +1149,216 @@
       ],
       "color": "#323",
       "bgcolor": "#535"
+    },
+    {
+      "id": 29,
+      "type": "Image Overlay",
+      "pos": [
+        1270,
+        410
+      ],
+      "size": {
+        "0": 315,
+        "1": 290
+      },
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "base_image",
+          "type": "IMAGE",
+          "link": 45
+        },
+        {
+          "name": "overlay_image",
+          "type": "IMAGE",
+          "link": 46
+        },
+        {
+          "name": "optional_mask",
+          "type": "MASK",
+          "link": 47
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            61
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Image Overlay"
+      },
+      "widgets_values": [
+        "Resize by rescale_factor",
+        "nearest-exact",
+        0.7,
+        512,
+        512,
+        270,
+        140,
+        0,
+        0
+      ],
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 43,
+      "type": "ttN imageOutput",
+      "pos": [
+        1600,
+        410
+      ],
+      "size": [
+        300,
+        290
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 61
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            62
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ttN imageOutput",
+        "ttNnodeVersion": "1.1.0"
+      },
+      "widgets_values": [
+        "Preview",
+        "T:\\AI\\ComfyNew\\ComfyUI\\output",
+        "Comfy",
+        5,
+        "PNG",
+        "False",
+        "True"
+      ],
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 44,
+      "type": "ttN pipeLoader",
+      "pos": [
+        20,
+        30
+      ],
+      "size": [
+        370,
+        815
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "links": [
+            63,
+            64
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ttN pipeLoader",
+        "ttNnodeVersion": "1.0.2"
+      },
+      "widgets_values": [
+        "Good\\deliberate_v2.safetensors",
+        "vae-ft-mse-840000-ema-pruned.safetensors",
+        -1,
+        "None",
+        1,
+        1,
+        "None",
+        1,
+        1,
+        "None",
+        1,
+        1,
+        "(RAW photo:1.2), perfect composition, (masterpiece, 8k, absurdres, best quality, intricate), realistic, raytracing, dark forest, mystical, pathway",
+        "none",
+        "comfy++",
+        "(semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, digital art, anime, manga:1.3), out of frame, cropped, cut off, poorly made, username, signature, watermark, unattractive, blurry, boring, sketch, lacklustre, repetitive, worst quality, low quality, jpeg artefacts, poorly lit, overexposed, underexposed, glitch, error, out of focus, amateur, (poorly drawn hands, poorly drawn face:1.2), deformed iris, deformed pupils, morbid, duplicate, mutilated, extra fingers, mutated hands, poorly drawn eyes, mutation, deformed, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck, incoherent, cloned face, cloned body, blur, blurry,(nsfw),(naked),(nude)",
+        "none",
+        "comfy++",
+        768,
+        512,
+        1,
+        302086422941626,
+        "fixed"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
     }
   ],
   "links": [
-    [
-      33,
-      19,
-      0,
-      20,
-      0,
-      "PIPE_LINE"
-    ],
-    [
-      34,
-      19,
-      6,
-      23,
-      0,
-      "CLIP"
-    ],
-    [
-      35,
-      19,
-      0,
-      24,
-      0,
-      "PIPE_LINE"
-    ],
     [
       36,
       24,
@@ -1497,22 +1472,6 @@
       "PIPE_LINE"
     ],
     [
-      50,
-      30,
-      0,
-      35,
-      0,
-      "IMAGE"
-    ],
-    [
-      51,
-      29,
-      0,
-      30,
-      0,
-      "IMAGE"
-    ],
-    [
       52,
       32,
       4,
@@ -1535,6 +1494,38 @@
       33,
       4,
       "LATENT"
+    ],
+    [
+      61,
+      29,
+      0,
+      43,
+      0,
+      "IMAGE"
+    ],
+    [
+      62,
+      43,
+      0,
+      35,
+      0,
+      "IMAGE"
+    ],
+    [
+      63,
+      44,
+      0,
+      20,
+      0,
+      "PIPE_LINE"
+    ],
+    [
+      64,
+      44,
+      0,
+      24,
+      0,
+      "PIPE_LINE"
     ]
   ],
   "groups": [],

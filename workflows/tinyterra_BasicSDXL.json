@@ -1,0 +1,724 @@
+{
+  "last_node_id": 191,
+  "last_link_id": 482,
+  "nodes": [
+    {
+      "id": 191,
+      "type": "ttN pipeLoader",
+      "pos": [
+        10,
+        620
+      ],
+      "size": [
+        380,
+        614
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "positive",
+          "type": "STRING",
+          "link": 478,
+          "widget": {
+            "name": "positive",
+            "config": [
+              "STRING",
+              {
+                "default": "Positive",
+                "multiline": true
+              }
+            ]
+          }
+        },
+        {
+          "name": "negative",
+          "type": "STRING",
+          "link": 479,
+          "widget": {
+            "name": "negative",
+            "config": [
+              "STRING",
+              {
+                "default": "Negative",
+                "multiline": true
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "links": [
+            482
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "title": "pipeLoader - Base",
+      "properties": {
+        "Node name for S&R": "ttN pipeLoader",
+        "ttNnodeVersion": "1.0.2"
+      },
+      "widgets_values": [
+        "sd_xl_base_1.0.safetensors",
+        "sdxl_vae.safetensors",
+        -2,
+        "sd_xl_offset_example-lora_1.0.safetensors",
+        0.5,
+        1,
+        "None",
+        1,
+        1,
+        "None",
+        1,
+        1,
+        "big tree",
+        "none",
+        "comfy",
+        "Negative",
+        "none",
+        "comfy",
+        1024,
+        1024,
+        1,
+        7,
+        "fixed"
+      ],
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 190,
+      "type": "ttN pipeLoader",
+      "pos": [
+        10,
+        -30
+      ],
+      "size": [
+        380,
+        600
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "positive",
+          "type": "STRING",
+          "link": 476,
+          "widget": {
+            "name": "positive",
+            "config": [
+              "STRING",
+              {
+                "default": "Positive",
+                "multiline": true
+              }
+            ]
+          }
+        },
+        {
+          "name": "negative",
+          "type": "STRING",
+          "link": 480,
+          "widget": {
+            "name": "negative",
+            "config": [
+              "STRING",
+              {
+                "default": "Negative",
+                "multiline": true
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "links": [
+            481
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "title": "pipeLoader - Refiner",
+      "properties": {
+        "Node name for S&R": "ttN pipeLoader",
+        "ttNnodeVersion": "1.0.2"
+      },
+      "widgets_values": [
+        "sd_xl_refiner_1.0.safetensors",
+        "Baked VAE",
+        -2,
+        "None",
+        0.5,
+        1,
+        "None",
+        1,
+        1,
+        "None",
+        1,
+        1,
+        "emb",
+        "none",
+        "comfy",
+        "Negative",
+        "none",
+        "comfy",
+        1024,
+        1024,
+        1,
+        7,
+        "fixed"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 187,
+      "type": "ttN text",
+      "pos": [
+        -450,
+        340
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            476,
+            478
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ttN text",
+        "ttNnodeVersion": "1.0.0"
+      },
+      "widgets_values": [
+        " shallow depth of field, vignette, highly detailed, high budget, bokeh, cinemascope, moody, epic, gorgeous, film grain, grainy\n\nembedding:"
+      ],
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 188,
+      "type": "ttN text",
+      "pos": [
+        -450,
+        590
+      ],
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            479,
+            480
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ttN text",
+        "ttNnodeVersion": "1.0.0"
+      },
+      "widgets_values": [
+        " shallow depth of field, vignette, highly detailed, high budget, bokeh, cinemascope, moody, epic, gorgeous, film grain, grainy"
+      ],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 178,
+      "type": "ttN pipeKSamplerAdvanced",
+      "pos": [
+        750,
+        10
+      ],
+      "size": [
+        450,
+        850
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "link": 481
+        },
+        {
+          "name": "optional_model",
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "optional_positive",
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "optional_negative",
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "optional_latent",
+          "type": "LATENT",
+          "link": 437
+        },
+        {
+          "name": "optional_vae",
+          "type": "VAE",
+          "link": null
+        },
+        {
+          "name": "optional_clip",
+          "type": "CLIP",
+          "link": null
+        },
+        {
+          "name": "xyPlot",
+          "type": "XYPLOT",
+          "link": null
+        },
+        {
+          "name": "noise_seed",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "noise_seed",
+            "config": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709552000
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [],
+          "shape": 3,
+          "slot_index": 4
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [],
+          "shape": 3,
+          "slot_index": 7
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": [],
+          "shape": 3,
+          "slot_index": 8
+        }
+      ],
+      "title": "pipeKSamplerAdvanced - Refiner",
+      "properties": {
+        "Node name for S&R": "ttN pipeKSamplerAdvanced",
+        "ttNnodeVersion": "1.0.3"
+      },
+      "widgets_values": [
+        "None",
+        1,
+        1,
+        "None",
+        2,
+        "disabled",
+        "Sample",
+        "disable",
+        20,
+        9.5,
+        "uni_pc_bh2",
+        "normal",
+        14,
+        60,
+        "disable",
+        "Save",
+        "Comfy",
+        425870239082281,
+        "randomize"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 176,
+      "type": "ttN pipeKSamplerAdvanced",
+      "pos": [
+        420,
+        620
+      ],
+      "size": [
+        280,
+        482
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "link": 482
+        },
+        {
+          "name": "optional_model",
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "optional_positive",
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "optional_negative",
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "optional_latent",
+          "type": "LATENT",
+          "link": null
+        },
+        {
+          "name": "optional_vae",
+          "type": "VAE",
+          "link": null
+        },
+        {
+          "name": "optional_clip",
+          "type": "CLIP",
+          "link": null
+        },
+        {
+          "name": "xyPlot",
+          "type": "XYPLOT",
+          "link": null
+        },
+        {
+          "name": "noise_seed",
+          "type": "INT",
+          "link": null,
+          "widget": {
+            "name": "noise_seed",
+            "config": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709552000
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            437
+          ],
+          "shape": 3,
+          "slot_index": 4
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "title": "pipeKSamplerAdvanced - Base",
+      "properties": {
+        "Node name for S&R": "ttN pipeKSamplerAdvanced",
+        "ttNnodeVersion": "1.0.3"
+      },
+      "widgets_values": [
+        "None",
+        1,
+        1,
+        "None",
+        2,
+        "disabled",
+        "Sample",
+        "enable",
+        20,
+        9.5,
+        "uni_pc_bh2",
+        "normal",
+        0,
+        14,
+        "enable",
+        "Hide",
+        "ComfyUI",
+        319330427537704,
+        "randomize"
+      ],
+      "color": "#232",
+      "bgcolor": "#353"
+    }
+  ],
+  "links": [
+    [
+      437,
+      176,
+      4,
+      178,
+      4,
+      "LATENT"
+    ],
+    [
+      476,
+      187,
+      0,
+      190,
+      0,
+      "STRING"
+    ],
+    [
+      478,
+      187,
+      0,
+      191,
+      0,
+      "STRING"
+    ],
+    [
+      479,
+      188,
+      0,
+      191,
+      1,
+      "STRING"
+    ],
+    [
+      480,
+      188,
+      0,
+      190,
+      1,
+      "STRING"
+    ],
+    [
+      481,
+      190,
+      0,
+      178,
+      0,
+      "PIPE_LINE"
+    ],
+    [
+      482,
+      191,
+      0,
+      176,
+      0,
+      "PIPE_LINE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}
