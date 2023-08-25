@@ -3,7 +3,7 @@ A selection of custom nodes for [ComfyUI](https://github.com/comfyanonymous/Comf
 
 ![tinyterra_pipeSDXL](workflows/tinyterra_pipeSDXL.png)
 ![tinyterra_trueHRFix](workflows/tinyterra_trueHRFix.png) 
-![tinyterra_trueHRFix](workflows/tinyterra_trueHRFix.png) 
+![tinyterra_trueHRFix](workflows/tinyterra_xyPlot.png) 
 
 
 ## Installation
@@ -120,6 +120,13 @@ SDXL Sampler (base and refiner in one) and Advanced CLIP Text Encode with an add
 + _**Inputs -** sdxlpipe, (optional pipe overrides), (upscale method, factor, crop), sampler state, base_steps, refiner_steps cfg, sampler name, scheduler, (image output [None, Preview, Save]), Save_Prefix, seed_
 + _**Outputs -** pipe, model, conditioning, conditioning, vae, model, conditioning, conditioning, vae, samples, clip, image, seed_
 
+Old node layout:
+
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/6fe28463-6ca4-4d45-818a-bbe91d84f3c4"  width="50%">
+
+With pipeLoaderSDXL and pipeKSamplerSDXL:
+
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/faa5c807-c96c-4734-99cd-34e6024c32fb"  width="50%">
   </details>
   
 <details>
