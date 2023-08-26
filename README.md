@@ -42,8 +42,8 @@ Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
 
 **Save image prefix parsing**
 
-+ Add date/time info to filenames by using: %date:yyyy-MM-dd-hh-mm-ss%
-+ Parse any upstream setting into filenames by using %[widget_name]% (for the current node) <br>
++ Add date/time info to filenames or output folder by using: %date:yyyy-MM-dd-hh-mm-ss%
++ Parse any upstream setting into filenames or output folder by using %[widget_name]% (for the current node) <br>
 or %[input_name]>[input_name]>[widget_name]% (for inputting nodes) <br>
   <details><summary>Example:
   </summary>
@@ -183,7 +183,7 @@ pipeKSampler input to generate xy plots using sampler and loader values. (Any va
   <summary>imageOutput</summary>
   
 Preview or Save an image with one node, with image throughput.
-+ _**Inputs -** image, image output[Hide, Preview, Save, Hide/Save], output path, save prefix, number padding[None, 2-9], overwrite existing[True, False], embed workflow[True, False]_
++ _**Inputs -** image, image output[Hide, Preview, Save, Hide/Save], output path, save prefix, number padding[None, 2-9], file type[PNG, JPG, JPEG, BMP, TIFF, TIF] overwrite existing[True, False], embed workflow[True, False]_
 + _**Outputs -** image_
   
 </details>
