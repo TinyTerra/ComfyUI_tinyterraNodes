@@ -2,7 +2,7 @@
 # tinyterraNodes developed in 2023 by tinyterra             https://github.com/TinyTerra                                                            #
 # for ComfyUI                                               https://github.com/comfyanonymous/ComfyUI                                               #
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
-ttN_version = '1.0.7'
+ttN_version = '1.0.8'
 
 MAX_RESOLUTION=8192
 
@@ -685,16 +685,17 @@ class ttNxyPlot:
 
 class ttNsave:
     def __init__(self, my_unique_id=0, prompt=None, extra_pnginfo=None, number_padding=5, overwrite_existing=False, output_dir=folder_paths.get_temp_directory()):
-        self.output_dir = output_dir
-        if self.output_dir != folder_paths.get_temp_directory() and not os.path.exists(self.output_dir):
-            self._create_directory(self.output_dir)
-
         self.number_padding = int(number_padding) if number_padding not in [None, "None", 0] else None
         self.overwrite_existing = overwrite_existing
         self.my_unique_id = my_unique_id
         self.prompt = prompt
         self.extra_pnginfo = extra_pnginfo
         self.type = 'temp'
+        self.output_dir = output_dir
+        if self.output_dir != folder_paths.get_temp_directory():
+            self.output_dir = self.folder_parser(self.output_dir, self.prompt, self.my_unique_id)
+            if not os.path.exists(self.output_dir):
+                self._create_directory(self.output_dir)
 
     @staticmethod
     def _create_directory(folder: str):
@@ -729,17 +730,25 @@ class ttNsave:
         """Format the date according to specific patterns."""
         date_formats = {
             'd': lambda d: d.day,
+            'dd': lambda d: '{:02d}'.format(d.day),
             'M': lambda d: d.month,
+            'MM': lambda d: '{:02d}'.format(d.month),
             'h': lambda d: d.hour,
+            'hh': lambda d: '{:02d}'.format(d.hour),
             'm': lambda d: d.minute,
+            'mm': lambda d: '{:02d}'.format(d.minute),
             's': lambda d: d.second,
-            'yyyy': lambda d: d.year,
+            'ss': lambda d: '{:02d}'.format(d.second),
+            'y': lambda d: d.year,
+            'yy': lambda d: str(d.year)[2:],
             'yyy': lambda d: str(d.year)[1:],
-            'yy': lambda d: str(d.year)[2:]
+            'yyyy': lambda d: d.year,
         }
-        for format_str, format_func in date_formats.items():
+
+        # We need to sort the keys in reverse order to ensure we match the longest formats first
+        for format_str in sorted(date_formats.keys(), key=len, reverse=True):
             if format_str in text:
-                text = text.replace(format_str, '{:02d}'.format(format_func(date)))
+                text = text.replace(format_str, str(date_formats[format_str](date)))
         return text
 
     @staticmethod
@@ -801,6 +810,13 @@ class ttNsave:
         filename = ttNsave._get_filename_with_padding(output_dir, filename, number_padding, group_id, ext)
 
         return filename, subfolder
+
+    @staticmethod
+    def folder_parser(output_dir: str, prompt: Dict[str, dict], my_unique_id: str):
+        output_dir = re.sub(r'%date:(.*?)%', lambda m: ttNsave._format_date(m.group(1), datetime.datetime.now()), output_dir)
+        all_inputs = ttNsave._gather_all_inputs(prompt, my_unique_id)
+
+        return re.sub(r'%(.*?)%', lambda m: str(all_inputs.get(m.group(1), '')), output_dir)
 
     def images(self, images, filename_prefix, output_type, embed_workflow=True, ext="png", group_id=0):
         FORMAT_MAP = {
