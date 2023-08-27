@@ -2,7 +2,7 @@
 # tinyterraNodes developed in 2023 by tinyterra             https://github.com/TinyTerra                                                            #
 # for ComfyUI                                               https://github.com/comfyanonymous/ComfyUI                                               #
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
-ttN_version = '1.0.8'
+ttN_version = '1.0.9'
 
 MAX_RESOLUTION=8192
 
@@ -133,33 +133,48 @@ class ttNloader:
                 del self.loaded_objects[object_type][key]
 
     def update_loaded_objects(self, prompt):
+        def get_input_value(entry, key):
+            val = entry["inputs"][key]
+            return val if isinstance(val, str) else val[0]
+        
+        def process_pipe_loader(entry, num_loras=3, suffix=""):
+            for idx in range(1, (num_loras+1)):
+                lora_name_key = f"{suffix}lora{idx}_name"
+                desired_lora_names.add(get_input_value(entry, lora_name_key))
+                setting = f'{get_input_value(entry, lora_name_key)};{entry["inputs"][f"{suffix}lora{idx}_model_strength"]};{entry["inputs"][f"{suffix}lora{idx}_clip_strength"]}'
+                desired_lora_settings.add(setting)
+
+            desired_ckpt_names.add(get_input_value(entry, f"{suffix}ckpt_name"))
+            desired_vae_names.add(get_input_value(entry, f"{suffix}vae_name"))
+            
         desired_ckpt_names = set()
         desired_vae_names = set()
         desired_lora_names = set()
         desired_lora_settings = set()
 
-        # Extract desired model, vae, and lora names from prompt
         for entry in prompt.values():
             class_type = entry["class_type"]
-            if class_type == "ttN pipeLoader":
-                for idx in range(1, 4):
-                    desired_lora_names.add(entry["inputs"][f"lora{idx}_name"] if isinstance(entry["inputs"][f"lora{idx}_name"], str) else entry["inputs"][f"lora{idx}_name"][0])
-                    setting = f'{entry["inputs"][f"lora{idx}_name"]};{entry["inputs"][f"lora{idx}_model_strength"]};{entry["inputs"][f"lora{idx}_clip_strength"]}'
-                    desired_lora_settings.add(setting)
 
-                desired_ckpt_names.add(entry["inputs"]["ckpt_name"] if isinstance(entry["inputs"]["ckpt_name"], str) else entry["inputs"]["ckpt_name"][0])
-                desired_vae_names.add(entry["inputs"]["vae_name"] if isinstance(entry["inputs"]["vae_name"], str) else entry["inputs"]["vae_name"][0])
+            if class_type == "ttN pipeLoader":
+                process_pipe_loader(entry)
+
+            elif class_type == "ttN pipeLoaderSDXL":
+                process_pipe_loader(entry, 2)
+                process_pipe_loader(entry, 2, "refiner_")
 
             elif class_type == "ttN pipeKSampler":
-                desired_lora_names.add(entry["inputs"]["lora_name"] if isinstance(entry["inputs"]["lora_name"], str) else entry["inputs"]["lora_name"][0])
-                setting = f'{entry["inputs"]["lora_name"]};{entry["inputs"]["lora_model_strength"]};{entry["inputs"]["lora_clip_strength"]}'
+                lora_name = get_input_value(entry, "lora_name")
+                desired_lora_names.add(lora_name)
+                setting = f'{lora_name};{entry["inputs"]["lora_model_strength"]};{entry["inputs"]["lora_clip_strength"]}'
                 desired_lora_settings.add(setting)
 
             elif class_type == "ttN xyPlot":
                 for axis in ["x", "y"]:
-                    if entry["inputs"][f"{axis}_axis"] != "None":
-                        axis_entry = entry["inputs"][f"{axis}_axis"].split(": ")[1]
+                    axis_key = f"{axis}_axis"
+                    if entry["inputs"][axis_key] != "None":
+                        axis_entry = entry["inputs"][axis_key].split(": ")[1]
                         vals = self.clean_values(entry["inputs"][f"{axis}_values"])
+                        
                         if axis_entry == "vae_name":
                             desired_vae_names.update(vals)
                         elif axis_entry == "ckpt_name":
