@@ -434,9 +434,9 @@ class ttNxyPlot:
             plot_image_vars[value_type] = value
 
         if value_type in ["steps", "cfg", "denoise", "clip_skip", 
-                            "lora1_model_strength", "lora1_clip_strength", "lora1_model&clip_strength",
-                            "lora2_model_strength", "lora2_clip_strength", "lora2_model&clip_strength",
-                            "lora3_model_strength", "lora3_clip_strength", "lora3_model&clip_strength"]:
+                            "lora1_model_strength", "lora1_clip_strength",
+                            "lora2_model_strength", "lora2_clip_strength",
+                            "lora3_model_strength", "lora3_clip_strength"]:
             value_label = f"{value_type}: {value}"
         
         if value_type in ["lora_model&clip_strength", "lora1_model&clip_strength", "lora2_model&clip_strength", "lora3_model&clip_strength"]:
