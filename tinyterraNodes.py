@@ -20,10 +20,11 @@ import comfy.samplers
 import latent_preview
 from pathlib import Path
 import comfy.model_management
+from comfy.sd import CLIP, VAE
 from collections import defaultdict
 from PIL.PngImagePlugin import PngInfo
 from PIL import Image, ImageDraw, ImageFont
-from comfy.sd import ModelPatcher, CLIP, VAE
+from comfy.model_patcher import ModelPatcher
 from comfy_extras.chainner_models import model_loading
 from typing import Dict, List, Optional, Tuple, Union, Any
 from .adv_encode import advanced_encode, advanced_encode_XL
