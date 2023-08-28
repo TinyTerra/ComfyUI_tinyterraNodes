@@ -18,7 +18,6 @@ import numpy as np
 import folder_paths
 import comfy.samplers
 import latent_preview
-from torch import Tensor
 from pathlib import Path
 import comfy.model_management
 from collections import defaultdict
@@ -183,6 +182,8 @@ class ttNloader:
                             desired_lora_names.update(vals)
 
         self.clear_unused_objects(desired_ckpt_names, "ckpt")
+        self.clear_unused_objects(desired_ckpt_names, "clip")
+        self.clear_unused_objects(desired_ckpt_names, "bvae")
         self.clear_unused_objects(desired_vae_names, "vae")
         self.clear_unused_objects(desired_lora_names, "lora")
 
