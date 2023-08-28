@@ -434,10 +434,18 @@ class ttNxyPlot:
             plot_image_vars[value_type] = value
 
         if value_type in ["steps", "cfg", "denoise", "clip_skip", 
-                            "lora1_model_strength", "lora1_clip_strength",
-                            "lora2_model_strength", "lora2_clip_strength",
-                            "lora3_model_strength", "lora3_clip_strength"]:
+                            "lora1_model_strength", "lora1_clip_strength", "lora1_model&clip_strength",
+                            "lora2_model_strength", "lora2_clip_strength", "lora2_model&clip_strength",
+                            "lora3_model_strength", "lora3_clip_strength", "lora3_model&clip_strength"]:
             value_label = f"{value_type}: {value}"
+        
+        if value_type in ["lora_model&clip_strength", "lora1_model&clip_strength", "lora2_model&clip_strength", "lora3_model&clip_strength"]:
+            loraNum = value_type.split("_")[0]
+            plot_image_vars[loraNum + "_model_strength"] = value
+            plot_image_vars[loraNum + "_clip_strength"] = value
+
+            type_label = value_type.replace("_model&clip", "")
+            value_label = f"{type_label}: {value}"
         
         elif value_type == "positive_token_normalization":
             value_label = f'(+) token norm.: {value}'
@@ -1859,12 +1867,15 @@ class ttN_XYPlot:
         "lora1_name": lora_list,
         "lora1_model_strength": lora_strengths,
         "lora1_clip_strength": lora_strengths,
+        "lora1_model&clip_strength": lora_strengths,
         "lora2_name": lora_list,
         "lora2_model_strength": lora_strengths,
         "lora2_clip_strength": lora_strengths,
+        "lora2_model&clip_strength": lora_strengths,
         "lora3_name": lora_list,
         "lora3_model_strength": lora_strengths,
         "lora3_clip_strength": lora_strengths,
+        "lora3_model&clip_strength": lora_strengths,
         "positive": [],
         "positive_token_normalization": token_normalization,
         "positive_weight_interpretation": weight_interpretation,
@@ -1877,6 +1888,7 @@ class ttN_XYPlot:
         "lora_name": lora_list,
         "lora_model_strength": lora_strengths,
         "lora_clip_strength": lora_strengths,
+        "lora_model&clip_strength": lora_strengths,
         "steps": {"min": 1, "max": 100, "step": 1},
         "cfg": {"min": 0.0, "max": 100.0, "step": 1.0},
         "sampler_name": comfy.samplers.KSampler.SAMPLERS,
