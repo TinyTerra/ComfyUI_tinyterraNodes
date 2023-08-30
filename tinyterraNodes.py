@@ -1349,7 +1349,7 @@ class ttN_pipeKSamplerAdvanced:
                optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, noise_seed, xyPlot, upscale_method, factor, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, force_full_denoise, disable_noise)
 
 class ttN_pipeLoaderSDXL:
-    version = '1.1.0'
+    version = '1.1.1'
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": { 
