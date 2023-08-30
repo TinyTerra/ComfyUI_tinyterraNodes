@@ -2,7 +2,7 @@
 # tinyterraNodes developed in 2023 by tinyterra             https://github.com/TinyTerra                                                            #
 # for ComfyUI                                               https://github.com/comfyanonymous/ComfyUI                                               #
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
-ttN_version = '1.0.9'
+ttN_version = '1.0.10'
 
 MAX_RESOLUTION=8192
 
@@ -1349,7 +1349,7 @@ class ttN_pipeKSamplerAdvanced:
                optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, noise_seed, xyPlot, upscale_method, factor, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, force_full_denoise, disable_noise)
 
 class ttN_pipeLoaderSDXL:
-    version = '1.0.0'
+    version = '1.1.0'
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": { 
@@ -1392,8 +1392,8 @@ class ttN_pipeLoaderSDXL:
                         },
                 "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoaderSDXL.version}}
 
-    RETURN_TYPES = ("PIPE_LINE_SDXL" ,"MODEL", "CONDITIONING", "CONDITIONING", "VAE", "MODEL", "CONDITIONING", "CONDITIONING", "VAE", "LATENT", "CLIP", "INT",)
-    RETURN_NAMES = ("sdxl_pipe","model", "positive", "negative", "vae", "refiner_model", "refiner_positive", "refiner_negative", "refiner_vae", "latent", "clip", "seed",)
+    RETURN_TYPES = ("PIPE_LINE_SDXL" ,"MODEL", "CONDITIONING", "CONDITIONING", "VAE", "CLIP" "MODEL", "CONDITIONING", "CONDITIONING", "VAE", "CLIP", "LATENT", "INT",)
+    RETURN_NAMES = ("sdxl_pipe","model", "positive", "negative", "vae", "clip", "refiner_model", "refiner_positive", "refiner_negative", "refiner_vae", "refiner_clip", "latent", "seed",)
 
     FUNCTION = "adv_pipeloader"
     CATEGORY = "ttN/pipe"
@@ -1409,19 +1409,16 @@ class ttN_pipeLoaderSDXL:
                        negative, negative_token_normalization, negative_weight_interpretation, 
                        empty_latent_width, empty_latent_height, batch_size, seed, prompt=None):
 
-        model: ModelPatcher | None = None
-        clip: CLIP | None = None
-        vae: VAE | None = None
-
-        refiner_model: ModelPatcher | None = None
-        refiner_clip: CLIP | None = None
-        refiner_vae: VAE | None = None
-
         def SDXL_loader(ckpt_name, vae_name,
                             lora1_name, lora1_model_strength, lora1_clip_strength,
                             lora2_name, lora2_model_strength, lora2_clip_strength,
                             positive, positive_token_normalization, positive_weight_interpretation, 
                             negative, negative_token_normalization, negative_weight_interpretation,):
+            
+            model: ModelPatcher | None = None
+            clip: CLIP | None = None
+            vae: VAE | None = None
+
             # Load models
             model, clip, vae = ttNcache.load_checkpoint(ckpt_name)
 
@@ -1531,7 +1528,7 @@ class ttN_pipeLoaderSDXL:
                                     "empty_image": image,}
         }
 
-        return (pipe, model, positive_embeddings, negative_embeddings, vae, refiner_model, refiner_positive_embeddings, refiner_negative_embeddings, refiner_vae, refiner_clip, samples, seed)
+        return (pipe, model, positive_embeddings, negative_embeddings, vae, clip, refiner_model, refiner_positive_embeddings, refiner_negative_embeddings, refiner_vae, refiner_clip, samples, seed)
 
 class ttN_pipeKSamplerSDXL:
     version = '1.0.0'
