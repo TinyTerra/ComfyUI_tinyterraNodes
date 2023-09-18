@@ -2031,7 +2031,7 @@ class ttN_text:
         return text,
 
 class ttN_textDebug:
-    version = '1.0.1'
+    version = '1.0.'
     def __init__(self):
         self.num = 0
 
@@ -2039,7 +2039,8 @@ class ttN_textDebug:
     def INPUT_TYPES(s):
         return {"required": {
                     "print_to_console": ([False, True],),
-                    "execute": (["On Change", "Always"],),
+                    "console_title": ("STRING", {"default": ""}),
+                    "execute": (["Always", "On Change"],),
                     "text": ("STRING", {"default": '', "multiline": True, "forceInput": True}),
                     },
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
@@ -2053,25 +2054,30 @@ class ttN_textDebug:
 
     CATEGORY = "ttN/text"
 
-    def write(self, print_to_console, execute, text, prompt, extra_pnginfo, my_unique_id):
+    def write(self, print_to_console, console_title, execute, text, prompt, extra_pnginfo, my_unique_id):
         if execute == "Always":
-            def IS_CHANGED(self, execute):
+            def IS_CHANGED(self):
                 self.num += 1 if self.num == 0 else -1
                 return self.num
             setattr(self.__class__, 'IS_CHANGED', IS_CHANGED)
+
         if execute == "On Change":
             if hasattr(self.__class__, 'IS_CHANGED'):
                 delattr(self.__class__, 'IS_CHANGED')
 
         if print_to_console == True:
+            if console_title != "":
+                ttNl(text).t(f'textDebug[{my_unique_id}] - {CC.VIOLET}{console_title}').p()
+            else:
+                input_node = prompt[my_unique_id]["inputs"]["text"]
 
-            input_node = prompt[my_unique_id]["inputs"]["text"]
+                input_from = None
+                for node in extra_pnginfo["workflow"]["nodes"]:
+                    if node['id'] == int(input_node[0]):
+                        input_from = node['outputs'][input_node[1]]['label']
 
-            input_from = None
-            for node in extra_pnginfo["workflow"]["nodes"]:
-                if node['id'] == int(input_node[0]):
-                    input_from = node['outputs'][input_node[1]]['name']   
-            ttNl(text).t(f'textDebug[{my_unique_id}] - {CC.VIOLET}{input_from}').p()
+                ttNl(text).t(f'textDebug[{my_unique_id}] - {CC.VIOLET}{input_from}').p()
+
         return {"ui": {"text": text},
                 "result": (text,)}
 

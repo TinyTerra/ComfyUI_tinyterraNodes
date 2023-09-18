@@ -115,8 +115,12 @@ app.registerExtension({
             nodeType.prototype.onExecuted = function (message) {
                 onExecuted?.apply(this, arguments);
 
-                this.widgets[2].value = message.text.join('');
-
+                for (const widget of this.widgets) {
+                    if (widget.type === "customtext"){
+                        widget.value = message.text.join('');
+                    }
+                }
+                
                 this.onResize?.(this.size);
             };
         }
