@@ -115,7 +115,7 @@ app.registerExtension({
             nodeType.prototype.onExecuted = function (message) {
                 onExecuted?.apply(this, arguments);
 
-                this.widgets[1].value = message.text.join('');
+                this.widgets[2].value = message.text.join('');
 
                 this.onResize?.(this.size);
             };

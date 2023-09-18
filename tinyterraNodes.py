@@ -2029,16 +2029,17 @@ class ttN_text:
     @staticmethod
     def conmeow(text):
         return text,
-    
+
 class ttN_textDebug:
-    version = '1.0.0'
+    version = '1.0.1'
     def __init__(self):
-        pass
+        self.num = 0
 
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
                     "print_to_console": ([False, True],),
+                    "execute": (["On Change", "Always"],),
                     "text": ("STRING", {"default": '', "multiline": True, "forceInput": True}),
                     },
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
@@ -2052,8 +2053,16 @@ class ttN_textDebug:
 
     CATEGORY = "ttN/text"
 
-    @staticmethod
-    def write(print_to_console, text, prompt, extra_pnginfo, my_unique_id):
+    def write(self, print_to_console, execute, text, prompt, extra_pnginfo, my_unique_id):
+        if execute == "Always":
+            def IS_CHANGED(self, execute):
+                self.num += 1 if self.num == 0 else -1
+                return self.num
+            setattr(self.__class__, 'IS_CHANGED', IS_CHANGED)
+        if execute == "On Change":
+            if hasattr(self.__class__, 'IS_CHANGED'):
+                delattr(self.__class__, 'IS_CHANGED')
+
         if print_to_console == True:
 
             input_node = prompt[my_unique_id]["inputs"]["text"]
