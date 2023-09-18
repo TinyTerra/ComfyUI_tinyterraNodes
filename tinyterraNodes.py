@@ -2074,7 +2074,10 @@ class ttN_textDebug:
                 input_from = None
                 for node in extra_pnginfo["workflow"]["nodes"]:
                     if node['id'] == int(input_node[0]):
-                        input_from = node['outputs'][input_node[1]]['label']
+                        input_from = node['outputs'][input_node[1]].get('label')
+                    
+                    if input_from == None:
+                        input_from = node['outputs'][input_node[1]].get('name')
 
                 ttNl(text).t(f'textDebug[{my_unique_id}] - {CC.VIOLET}{input_from}').p()
 
