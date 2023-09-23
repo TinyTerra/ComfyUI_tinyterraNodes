@@ -2,7 +2,7 @@
 # tinyterraNodes developed in 2023 by tinyterra             https://github.com/TinyTerra                                                            #
 # for ComfyUI                                               https://github.com/comfyanonymous/ComfyUI                                               #
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
-ttN_version = '1.0.10'
+ttN_version = '1.1.0'
 
 MAX_RESOLUTION=8192
 
@@ -1078,8 +1078,8 @@ class ttN_TSC_pipeLoader:
         return (pipe, model, positive_embeddings_final, negative_embeddings_final, samples, vae, clip, seed)
 
 class ttN_TSC_pipeKSampler:
-    version = '1.0.4'
-    upscale_methods = ["None", "nearest-exact", "bilinear", "area", "bicubic", "bislerp"]
+    version = '1.0.5'
+    upscale_methods = ["None", "nearest-exact", "bilinear", "area", "bicubic", "lanczos", "bislerp"]
     crop_methods = ["disabled", "center"]
 
     def __init__(self):
@@ -1276,8 +1276,8 @@ class ttN_TSC_pipeKSampler:
             return process_hold_state(pipe, image_output, my_unique_id)
 
 class ttN_pipeKSamplerAdvanced:
-    version = '1.0.4'
-    upscale_methods = ["None", "nearest-exact", "bilinear", "area", "bicubic", "bislerp"]
+    version = '1.0.5'
+    upscale_methods = ["None", "nearest-exact", "bilinear", "area", "bicubic", "lanczos", "bislerp"]
     crop_methods = ["disabled", "center"]
 
     def __init__(self):
@@ -1531,8 +1531,8 @@ class ttN_pipeLoaderSDXL:
         return (pipe, model, positive_embeddings, negative_embeddings, vae, clip, refiner_model, refiner_positive_embeddings, refiner_negative_embeddings, refiner_vae, refiner_clip, samples, seed)
 
 class ttN_pipeKSamplerSDXL:
-    version = '1.0.1'
-    upscale_methods = ["None", "nearest-exact", "bilinear", "area", "bicubic", "bislerp"]
+    version = '1.0.2'
+    upscale_methods = ["None", "nearest-exact", "bilinear", "area", "bicubic", "lanczos", "bislerp"]
     crop_methods = ["disabled", "center"]
 
     def __init__(self):
@@ -2386,8 +2386,8 @@ class ttN_imageOUPUT:
                     "result": (image,)}
 
 class ttN_modelScale:
-    version = '1.0.2'
-    upscale_methods = ["nearest-exact", "bilinear", "area", "bicubic", "bislerp"]
+    version = '1.0.3'
+    upscale_methods = ["nearest-exact", "bilinear", "area", "bicubic", "lanczos", "bislerp"]
     crop_methods = ["disabled", "center"]
 
     @classmethod
