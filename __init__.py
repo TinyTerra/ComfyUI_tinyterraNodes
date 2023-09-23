@@ -17,6 +17,7 @@ optionValues = {
         "install_rembg": ('true', 'false'),
         "enable_embed_autocomplete": ('true', 'false'),
         "enable_interface": ('true', 'false'),
+        "enable_Fullscreen": ('true', 'false'),
         "enable_dynamic_widgets": ('true', 'false'),
         "enable_dev_nodes": ('true', 'false'),
     }
@@ -40,6 +41,7 @@ def update_config():
             "auto_update": False,
             "install_rembg": True,
             "enable_interface": True,
+            "enable_Fullscreen": True,
             "enable_embed_autocomplete": True,
             "enable_dynamic_widgets": True,
             "enable_dev_nodes": False,
@@ -158,6 +160,7 @@ ttNembedAC_JS_file = os.path.join(cwd_path, "js", "ttNembedAC.js")
 ttNwidgets_JS_file = os.path.join(cwd_path, "js", "ttNwidgets.js")
 ttNinterface_JS_file = os.path.join(cwd_path, "js", "ttNinterface.js")
 ttNdynamicWidgets_JS_file = os.path.join(cwd_path, "js", "ttNdynamicWidgets.js")
+ttNfullscreen_JS_file = os.path.join(cwd_path, "js", "ttNfullscreen.js")
 
 if not os.path.exists(web_extension_path):
     os.makedirs(web_extension_path)
@@ -172,6 +175,9 @@ copy_to_web(ttNxyPlot_JS_file)
 # Enable Custom Styles if True
 if config_value_validator("ttNodes", "enable_interface", 'true') == 'true':
     copy_to_web(ttNinterface_JS_file)
+
+if config_value_validator("ttNodes", "enable_Fullscreen", 'true') == 'true':
+    copy_to_web(ttNfullscreen_JS_file)
 
 # Enable Embed Autocomplete if True
 if config_value_validator("ttNodes", "enable_embed_autocomplete", "true") == 'true':

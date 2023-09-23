@@ -57,7 +57,6 @@ app.registerExtension({
             const inputField = e.composedPath()[0];
             if (inputField.tagName === "TEXTAREA") return;
             if (e.ctrlKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
-                e.stopPropagation();
                 let graphcanvas = LGraphCanvas.active_canvas;
                 for (let node in graphcanvas.selected_nodes) {
                     keyMoveNode(e, graphcanvas.selected_nodes[node]);
@@ -263,56 +262,6 @@ app.registerExtension({
             }, 0);
         };
 
-        LGraphCanvas.prototype.ttNfullscreen = function(imgElement, node) {
-            ttNcurrentNode = node;
-            const newImg = new Image();
-            newImg.src = imgElement.src;
-
-            // Append to body to ensure it's in the DOM when requesting fullscreen
-            document.body.appendChild(newImg);    
-
-            // Request fullscreen directly without waiting for image to load
-            if (newImg.requestFullscreen) {
-                newImg.requestFullscreen().catch(err => {
-                    console.error("Error attempting to enable full-screen mode:", err.message, err.name);
-                });
-            } else if (newImg.mozRequestFullScreen) { /* Firefox */
-                newImg.mozRequestFullScreen();
-            } else if (newImg.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-                newImg.webkitRequestFullscreen();
-            } else if (newImg.msRequestFullscreen) { /* IE/Edge */
-                newImg.msRequestFullscreen();
-            }
-
-            // Update global variables
-            ttNisFullscreen = true;
-            ttNcurrentFullscreenImage = newImg;
-        
-            // Optional: Remove the image from DOM after exiting fullscreen
-            newImg.onfullscreenchange = function(event) {
-                if (!document.fullscreenElement) {
-                    document.body.removeChild(newImg);
-                    ttNisFullscreen = false;
-                    ttNcurrentFullscreenImage = null;
-                }
-            };
-        }
-
-        setInterval(function() {
-            if (ttNisFullscreen && ttNcurrentFullscreenImage && ttNcurrentNode) {
-                let latestImageSrc;
-                if (ttNcurrentNode.imageIndex != null) {
-                    latestImageSrc = ttNcurrentNode.imgs[ttNcurrentNode.imageIndex].src;  // Get the src attribute
-                } else if (ttNcurrentNode.overIndex != null) {
-                    latestImageSrc = ttNcurrentNode.imgs[ttNcurrentNode.overIndex].src;  // Get the src attribute
-                }
-                
-                if (latestImageSrc && ttNcurrentFullscreenImage.src !== latestImageSrc) {
-                    ttNcurrentFullscreenImage.src = latestImageSrc;
-                }
-            }
-        }, 1000);
-
 		LGraphCanvas.ttNonShowLinkStyles = function(value, options, e, menu, node) {
 			new LiteGraph.ContextMenu(
 				LiteGraph.LINK_RENDER_MODES,
@@ -479,32 +428,9 @@ app.registerExtension({
                     has_submenu: true,
                     callback: LGraphCanvas.ttNshowExecutionOrder
                     
-                }
-            )
-
-            if (node.imgs) {
-				// If this node has images then we add an open in new tab item
-				let img;
-				if (node.imageIndex != null) {
-					// An image is selected so select that
-					img = node.imgs[node.imageIndex];
-				} else if (node.overIndex != null) {
-					// No image is selected but one is hovered
-					img = node.imgs[node.overIndex];
-				}
-				if (img) {
-                    options.splice(options.length -1, 0,
-                        {
-                            content: "Fullscreen (ttN)",
-                            callback: () => { LGraphCanvas.prototype.ttNfullscreen(img, node) }
-                        }
-                    )
-                }
-            }
-
-            options.splice(options.length - 1, 0, 
+                },
                 null
-			);
+            )
 
 			return options;
 		};  
@@ -656,7 +582,6 @@ const cssCode = `
     background-color: white;
     color: black;
 }
-
 `
 styleElement.innerHTML = cssCode
 document.head.appendChild(styleElement);
