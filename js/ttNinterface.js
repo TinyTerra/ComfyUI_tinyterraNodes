@@ -1,4 +1,4 @@
-import { app } from "/scripts/app.js";
+import { app } from "../../scripts/app.js";
 
 const customPipeLineLink = "#7737AA"
 const customPipeLineSDXLLink = "#0DC52B"
