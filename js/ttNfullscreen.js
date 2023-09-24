@@ -228,7 +228,6 @@ function ttNfullscreenEventListener(e) {
 function _removeLatentPreviewImageSRC(node, imgSrc) {
      let latentPreviewSrc = _findLatentPreviewImageSRC(node);
         if (imgSrc && latentPreviewSrc) {
-            console.log(node.imgs)
             for (let i in node.imgs) {
                 if(!node.imgs[i].src.includes("filename")) {
                     node.imgs.splice(i, 1);
