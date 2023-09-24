@@ -1,5 +1,5 @@
-import { app } from "/scripts/app.js";
-import { api } from "/scripts/api.js";
+import { app } from "../../scripts/app.js";
+import { api } from "../../scripts/api.js";
 
 const FULLSCREEN_WRAPPER_ID = "ttN-FullscreenWrapper";
 const FULLSCREEN_IMAGE_ID = "ttN-FullscreenImage";

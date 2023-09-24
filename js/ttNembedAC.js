@@ -1,5 +1,5 @@
 // Imports specific objects from other modules.
-import { app } from "/scripts/app.js";
+import { app } from "../../scripts/app.js";
 import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttN.js";
 
 // Initialize some global lists and objects.
