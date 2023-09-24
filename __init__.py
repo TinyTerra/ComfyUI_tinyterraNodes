@@ -17,7 +17,7 @@ optionValues = {
         "install_rembg": ('true', 'false'),
         "enable_embed_autocomplete": ('true', 'false'),
         "enable_interface": ('true', 'false'),
-        "enable_Fullscreen": ('true', 'false'),
+        "enable_fullscreen": ('true', 'false'),
         "enable_dynamic_widgets": ('true', 'false'),
         "enable_dev_nodes": ('true', 'false'),
     }
@@ -41,7 +41,7 @@ def update_config():
             "auto_update": False,
             "install_rembg": True,
             "enable_interface": True,
-            "enable_Fullscreen": True,
+            "enable_fullscreen": True,
             "enable_embed_autocomplete": True,
             "enable_dynamic_widgets": True,
             "enable_dev_nodes": False,
@@ -176,7 +176,7 @@ copy_to_web(ttNxyPlot_JS_file)
 if config_value_validator("ttNodes", "enable_interface", 'true') == 'true':
     copy_to_web(ttNinterface_JS_file)
 
-if config_value_validator("ttNodes", "enable_Fullscreen", 'true') == 'true':
+if config_value_validator("ttNodes", "enable_fullscreen", 'true') == 'true':
     copy_to_web(ttNfullscreen_JS_file)
 
 # Enable Embed Autocomplete if True
