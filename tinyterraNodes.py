@@ -2,7 +2,7 @@
 # tinyterraNodes developed in 2023 by tinyterra             https://github.com/TinyTerra                                                            #
 # for ComfyUI                                               https://github.com/comfyanonymous/ComfyUI                                               #
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
-ttN_version = '1.1.0'
+ttN_version = '1.1.4'
 
 MAX_RESOLUTION=8192
 
@@ -21,10 +21,12 @@ import latent_preview
 from pathlib import Path
 import comfy.model_management
 from comfy.sd import CLIP, VAE
+from urllib.request import urlopen
 from collections import defaultdict
 from PIL.PngImagePlugin import PngInfo
 from PIL import Image, ImageDraw, ImageFont
 from comfy.model_patcher import ModelPatcher
+import comfy_extras.nodes_model_merging as Nmm
 from comfy_extras.chainner_models import model_loading
 from typing import Dict, List, Optional, Tuple, Union, Any
 from .adv_encode import advanced_encode, advanced_encode_XL
@@ -189,7 +191,7 @@ class ttNloader:
         self.clear_unused_objects(desired_lora_names, "lora")
 
     def load_checkpoint(self, ckpt_name, config_name=None):
-        if config_name is not None:
+        if config_name not in [None, "Default"]:
             ckpt_name = ckpt_name + "_" + config_name
 
         if ckpt_name in self.loaded_objects["ckpt"]:
@@ -197,10 +199,9 @@ class ttNloader:
 
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
 
-        if config_name is not None:
+        if config_name not in [None, "Default"]:
             config_path = folder_paths.get_full_path("configs", config_name)
             loaded_ckpt = comfy.sd.load_checkpoint(config_path, ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
-
         else:
             loaded_ckpt = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
 
@@ -925,9 +926,56 @@ class ttNsave:
                 f.write(text)
         else:
             ttNl(f"File {file_path} already exists... Skipping").error().p()   
-    
+
 ttNcache = ttNloader()
 sampler = ttNsampler()
+
+def nsp_parse(text, seed=0, noodle_key='__', nspterminology=None, pantry_path=None, title=None, my_unique_id=None):
+    if "__" not in text:
+        return text
+    
+    if nspterminology is None:
+        # Fetch the NSP Pantry
+        if pantry_path is None:
+            pantry_path = os.path.join(ttNpaths.tinyterraNodes, 'nsp_pantry.json')
+        if not os.path.exists(pantry_path):
+            response = urlopen('https://raw.githubusercontent.com/WASasquatch/noodle-soup-prompts/main/nsp_pantry.json')
+            tmp_pantry = json.loads(response.read())
+            # Dump JSON locally
+            pantry_serialized = json.dumps(tmp_pantry, indent=4)
+            with open(pantry_path, "w") as f:
+                f.write(pantry_serialized)
+            del response, tmp_pantry
+
+        # Load local pantry
+        with open(pantry_path, 'r') as f:
+            nspterminology = json.load(f)
+
+    if seed > 0 or seed < 0:
+        random.seed(seed)
+
+    # Parse Text
+    new_text = text
+    for term in nspterminology:
+        # Target Noodle
+        tkey = f'{noodle_key}{term}{noodle_key}'
+        # How many occurrences?
+        tcount = new_text.count(tkey)
+
+        if tcount > 0:
+            nsp_parsed = True
+
+        # Apply random results for each noodle counted
+        for _ in range(tcount):
+            new_text = new_text.replace(
+                tkey, random.choice(nspterminology[term]), 1)
+            seed += 1
+            random.seed(seed)
+
+    ttNl(f'{new_text}').t(f'{title} [{my_unique_id}]').p()
+
+
+    return new_text
 
 #---------------------------------------------------------------ttN/pipe START----------------------------------------------------------------------#
 class ttN_TSC_pipeLoader:
@@ -1022,9 +1070,15 @@ class ttN_TSC_pipeLoader:
         clip = clip.clone()
         if clip_skip != 0:
             clip.clip_layer(clip_skip)
+        
+        if "__" in positive:
+            positive = nsp_parse(positive, seed, title='pipeLoader Positive', my_unique_id=my_unique_id)
 
         positive_embeddings_final, positive_pooled = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
         positive_embeddings_final = [[positive_embeddings_final, {"pooled_output": positive_pooled}]]
+
+        if "__" in negative:
+            negative = nsp_parse(negative, seed, title='pipeLoader Negative', my_unique_id=my_unique_id)
 
         negative_embeddings_final, negative_pooled = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
         negative_embeddings_final = [[negative_embeddings_final, {"pooled_output": negative_pooled}]]
@@ -1364,7 +1418,7 @@ class ttN_pipeKSamplerAdvanced:
                optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, noise_seed, xyPlot, upscale_method, factor, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, force_full_denoise, disable_noise)
 
 class ttN_pipeLoaderSDXL:
-    version = '1.1.1'
+    version = '1.1.2'
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": { 
@@ -1405,7 +1459,7 @@ class ttN_pipeLoaderSDXL:
                         "batch_size": ("INT", {"default": 1, "min": 1, "max": 64}),
                         "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                         },
-                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoaderSDXL.version}}
+                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoaderSDXL.version}, "my_unique_id": "UNIQUE_ID"}
 
     RETURN_TYPES = ("PIPE_LINE_SDXL" ,"MODEL", "CONDITIONING", "CONDITIONING", "VAE", "CLIP", "MODEL", "CONDITIONING", "CONDITIONING", "VAE", "CLIP", "LATENT", "INT",)
     RETURN_NAMES = ("sdxl_pipe","model", "positive", "negative", "vae", "clip", "refiner_model", "refiner_positive", "refiner_negative", "refiner_vae", "refiner_clip", "latent", "seed",)
@@ -1422,7 +1476,7 @@ class ttN_pipeLoaderSDXL:
                        clip_skip,
                        positive, positive_token_normalization, positive_weight_interpretation, 
                        negative, negative_token_normalization, negative_weight_interpretation, 
-                       empty_latent_width, empty_latent_height, batch_size, seed, prompt=None):
+                       empty_latent_width, empty_latent_height, batch_size, seed, prompt=None, my_unique_id=None):
 
         def SDXL_loader(ckpt_name, vae_name,
                             lora1_name, lora1_model_strength, lora1_clip_strength,
@@ -1455,8 +1509,14 @@ class ttN_pipeLoaderSDXL:
             if clip_skip != 0:
                 clip.clip_layer(clip_skip)
 
+            if "__" in positive:
+                positive = nsp_parse(positive, seed, title="pipeLoaderSDXL positive", my_unique_id=my_unique_id)
+
             positive_embeddings_final, positive_pooled = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
             positive_embeddings_final = [[positive_embeddings_final, {"pooled_output": positive_pooled}]]
+
+            if "__" in negative:
+                negative = nsp_parse(negative, seed)
 
             negative_embeddings_final, negative_pooled = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
             negative_embeddings_final = [[negative_embeddings_final, {"pooled_output": negative_pooled}]]
@@ -2019,6 +2079,179 @@ class ttN_XYPlot:
         return (xy_plot, )
 #---------------------------------------------------------------ttN/pipe END------------------------------------------------------------------------#
 
+class ttN_pipeEncodeConcat:
+    version = '1.0.0'
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+                    "pipe": ("PIPE_LINE",),
+                    },
+                "optional": {
+                    "positive": ("STRING", {"default": "Positive","multiline": True}),
+                    "positive_token_normalization": (["none", "mean", "length", "length+mean"],),
+                    "positive_weight_interpretation": (["comfy", "A1111", "compel", "comfy++", "down_weight"],),
+                    "negative": ("STRING", {"default": "Negative","multiline": True}),
+                    "negative_token_normalization": (["none", "mean", "length", "length+mean"],),
+                    "negative_weight_interpretation": (["comfy", "A1111", "compel", "comfy++", "down_weight"],),
+                    "optional_positive_from": ("CONDITIONING",),
+                    "optional_negative_from": ("CONDITIONING",),
+                    "optional_clip": ("CLIP",),
+                    },
+                "hidden": {
+                    "ttNnodeVersion": ttN_pipeEncodeConcat.version, "my_unique_id": "UNIQUE_ID"
+                    },
+        }
+    
+    OUTPUT_NODE = True
+    RETURN_TYPES = ("PIPE_LINE", "CONDITIONING", "CONDITIONING", "CLIP")
+    RETURN_NAMES = ("pipe", "positive", "negative", "clip")
+    FUNCTION = "concat"
+
+    CATEGORY = "ttN/pipe"
+
+    def concat(self, positive_token_normalization, positive_weight_interpretation,
+               negative_token_normalization, negative_weight_interpretation,
+                 pipe=None, positive='', negative='', seed=None, my_unique_id=None, optional_positive_from=None, optional_negative_from=None, optional_clip=None): 
+        
+        pipe = {**pipe} if pipe is not None else None
+
+        positive_from = optional_positive_from if optional_positive_from is not None else pipe["positive"] 
+        negative_from = optional_negative_from if optional_negative_from is not None else pipe["negative"]
+        pipe["clip"] = optional_clip if optional_clip is not None else pipe["clip"]
+
+        new_text = ''
+
+        def enConcatConditioning(text, token_normalization, weight_interpretation, conditioning_from, new_text):
+            out = []
+            if "__" in text:
+                text = nsp_parse(text, pipe["seed"], title="conditionConcat", my_unique_id=my_unique_id)
+                new_text += text
+
+            conditioning_to, pooled = advanced_encode(pipe["clip"], text, token_normalization, weight_interpretation, w_max=1.0, apply_to_pooled='enable')
+            conditioning_to = [[conditioning_to, {"pooled_output": pooled}]]
+
+            if len(conditioning_from) > 1:
+                ttNl.warn("encode and concat conditioning_from contains more than 1 cond, only the first one will actually be applied to conditioning_to")
+
+            cond_from = conditioning_from[0][0]
+
+            for i in range(len(conditioning_to)):
+                t1 = conditioning_to[i][0]
+                tw = torch.cat((t1, cond_from),1)
+                n = [tw, conditioning_to[i][1].copy()]
+                out.append(n)
+
+            return out
+
+        if positive != '':
+            pipe["positive"] = enConcatConditioning(positive, positive_token_normalization, positive_weight_interpretation, positive_from, new_text)
+        if negative != '':
+            pipe["negative"] = enConcatConditioning(negative, negative_token_normalization, negative_weight_interpretation, negative_from, new_text)
+
+        return (pipe, pipe["positive"], pipe["negative"], pipe["clip"], { "ui": { "string": new_text } } )
+
+class ttN_modelMerge:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+    
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+                    "ckpt_name1": (folder_paths.get_filename_list("checkpoints"), ),
+                    "config_name1": (["Default",] + folder_paths.get_filename_list("configs"), {"default": "Default"} ),
+
+                    "ckpt_name2": (folder_paths.get_filename_list("checkpoints"), ),
+                    "config_name2": (["Default",] + folder_paths.get_filename_list("configs"), {"default": "Default"} ),
+
+                    "model_merge_type": (["Simple", "Blocks", "Subtract", "Add", "Model1", "Model2"],),
+                    # Simple
+                    "simple_ratio": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                    # Blocks
+                    "block_input": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                    "block_middle": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                    "block_out": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                    # Subtract
+                    "subtract_multiplier": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+
+                    "clip_merge_type": (["Simple", "Clip1", "Clip2"],),
+                    "clip_simple_ratio": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+
+                    "vae": (["bvae1", "bvae2"],),
+                    "save_model": (["True", "False"],),
+                    "save_prefix": ("STRING", {"default": "checkpoints/ComfyUI"}),
+                },
+                "optional": {
+                    "model_override": ("MODEL",),
+                    "vae_override": ("VAE",),
+                    "clip_override": ("CLIP",),
+                },
+                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "ttNnodeVersion": ttN_modelMerge.version},
+        }
+    
+    RETURN_TYPES = ("MODEL", "VAE", "CLIP")
+    RETURN_NAMES = ("model", "vae", "clip")
+    FUNCTION = "conmeow"
+
+    CATEGORY = "ttN"
+
+    def conmeow(self, ckpt_name1, config_name1, ckpt_name2, config_name2, 
+                model_merge_type, simple_ratio, block_input, block_middle, block_out, 
+                subtract_multiplier, clip_merge_type, clip_simple_ratio, vae, save_model, save_prefix, model_override=None, vae_override=None, clip_override=None, prompt=None, extra_pnginfo=None):
+        
+        model: ModelPatcher | None = None
+        clip: CLIP | None = None
+        model1: ModelPatcher | None = None
+        clip1: CLIP | None = None
+        vae1: VAE | None = None
+        model2: ModelPatcher | None = None
+        clip2: CLIP | None = None
+        vae2: VAE | None = None
+    
+        model1, clip1, vae1 = ttNcache.load_checkpoint(ckpt_name1, config_name1)
+        model2, clip2, vae2 = ttNcache.load_checkpoint(ckpt_name2, config_name2)
+
+        if model_merge_type == "Simple":
+            model = Nmm.ModelMergeSimple.merge(Nmm.ModelMergeSimple(), model1, model2, simple_ratio)[0]
+        elif model_merge_type == "Blocks":
+            model = Nmm.ModelMergeBlocks.merge(Nmm.ModelMergeBlocks(), model1, model2, block_input=block_input, block_middle=block_middle, block_out=block_out)[0]
+        elif model_merge_type == "Subtract":
+            model = Nmm.ModelSubtract.merge(Nmm.ModelSubtract(), model1, model2, subtract_multiplier)[0]
+        elif model_merge_type == "Add":
+            model = Nmm.ModelAdd.merge(Nmm.ModelAdd(), model1, model2)[0]
+        elif model_merge_type == "Model1":
+            model = model1
+        elif model_merge_type == "Model2":
+            model = model2
+
+        if model_override is not None:
+            model = model_override
+
+        if clip_merge_type == "Simple": 
+            clip = Nmm.CLIPMergeSimple.merge(Nmm.CLIPMergeSimple(), clip1, clip2, clip_simple_ratio)[0]
+        elif clip_merge_type == "Clip1":
+            clip = clip1
+        elif clip_merge_type == "Clip2":
+            clip = clip2
+        
+        if clip_override is not None:
+            clip = clip_override
+
+        print("VAE:",vae)
+
+        if vae == "bvae1":
+            vae = vae1
+        elif vae == "bvae2":
+            vae = vae2
+        
+        if vae_override is not None:
+            vae = vae_override
+
+        print(model, clip, vae)
+
+        if save_model == "True":
+            Nmm.CheckpointSave.save(Nmm.CheckpointSave(), model, clip, vae, save_prefix, prompt, extra_pnginfo)
+        return (model, vae, clip)
 
 #---------------------------------------------------------------ttN/text START----------------------------------------------------------------------#
 class ttN_text:
@@ -2033,7 +2266,7 @@ class ttN_text:
                 },
                 "hidden": {"ttNnodeVersion": ttN_text.version},
         }
-
+    
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("text",)
     FUNCTION = "conmeow"
@@ -2516,6 +2749,8 @@ TTN_VERSIONS = {
     "pipe2BASIC": ttN_pipe_2BASIC.version,
     "pipe2DETAILER": ttN_pipe_2DETAILER.version,
     "xyPlot": ttN_XYPlot.version,
+    "pipeEncodeConcat": ttN_pipeEncodeConcat.version,
+    "modelMerge": ttN_modelMerge.version,
     "text": ttN_text.version,
     "textDebug": ttN_textDebug.version,
     "concat": ttN_concat.version,
@@ -2541,6 +2776,10 @@ NODE_CLASS_MAPPINGS = {
     "ttN pipeEDIT": ttN_pipe_EDIT,
     "ttN pipe2BASIC": ttN_pipe_2BASIC,
     "ttN pipe2DETAILER": ttN_pipe_2DETAILER,
+
+    #ttN/encode
+    "ttN pipeEncodeConcat": ttN_pipeEncodeConcat,
+    "ttN modelMerge": ttN_modelMerge,
 
     #ttN/text
     "ttN text": ttN_text,
@@ -2572,6 +2811,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN pipeEDIT": "pipeEDIT",
     "ttN pipe2BASIC": "pipe > basic_pipe",
     "ttN pipe2DETAILER": "pipe > detailer_pipe",
+
+    #ttN/encode
+    "ttN pipeEncodeConcat": "pipeEncodeConcat",
+    "ttN modelMerge": "modelMerge",
 
     #ttN/text
     "ttN text": "text",

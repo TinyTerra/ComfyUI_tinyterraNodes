@@ -11,7 +11,7 @@ let ttN_FullscreenImageIndex = 0;
 let ttN_FullscreenNode = null;
 let ttN_Slideshow = true;
 
-let srcDict = {};
+let ttN_srcDict = {};
 let ttN_imageElementsDict = {};
 
 loadSrcDict()
@@ -19,14 +19,19 @@ loadSrcDict()
 const ARROW_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 
 function saveSrcDict() {
-    sessionStorage.setItem('srcDict', JSON.stringify(srcDict));
+    sessionStorage.setItem('ttN_srcDict', JSON.stringify(ttN_srcDict));
 }
 
 function loadSrcDict() {
-    const savedData = sessionStorage.getItem('srcDict');
+    const savedData = sessionStorage.getItem('ttN_srcDict');
     if (savedData) {
-        srcDict = JSON.parse(savedData);
+        ttN_srcDict = JSON.parse(savedData);
     }
+}
+
+function clearSrcDict() {
+    ttN_srcDict = {};
+    sessionStorage.removeItem('ttN_srcDict');
 }
 
 function _getSelectedNode() {
@@ -82,7 +87,7 @@ function _handleArrowKeys(e) {
 
     const FullscreenWrapper = document.getElementById(FULLSCREEN_WRAPPER_ID);
     const imagePreviewsWrapper = document.getElementById(IMAGE_PREVIEWS_WRAPPER_ID);
-    const imageList = srcDict[ttN_FullscreenNode.id] || [];
+    const imageList = ttN_srcDict[ttN_FullscreenNode.id] || [];
     const comfyMenu = document.getElementsByClassName("comfy-menu")[0]
     const litegraph = document.getElementsByClassName("litegraph")[0]
 
@@ -188,6 +193,12 @@ function _handleExecutedEvent(event) {
     setTimeout(updateImageTLDE, 500);
 }
 
+function _handleReconnectingEvent(e) {
+    clearSrcDict();
+    sessionStorage.removeItem('Comfy.Settings.ttN.default_fullscreen_node');
+    ttN_imageElementsDict = {};
+}
+
 function _triggerFullscreen(node) {
     updateImageTLDE();
     ttN_FullscreenImageIndex = -1;
@@ -197,7 +208,7 @@ function _triggerFullscreen(node) {
 
 function ttNfullscreenEventListener(e) {
     if (!ttN_isFullscreen) {
-        if (e.code === 'ArrowUp' && e.shiftKey) {
+        if ((e.code === 'ArrowUp' && e.shiftKey) && !e.ctrlKey) {
             e.stopPropagation();
 
             let selected_node = _getSelectedNode();
@@ -215,6 +226,7 @@ function ttNfullscreenEventListener(e) {
                 }
             }
         }
+
         return;
     }
 
@@ -223,7 +235,7 @@ function ttNfullscreenEventListener(e) {
     updateImageTLDE();
 
     const imagePreviewsWrapper = document.getElementById(IMAGE_PREVIEWS_WRAPPER_ID);
-    const imageList = srcDict[ttN_FullscreenNode.id] || [];
+    const imageList = ttN_srcDict[ttN_FullscreenNode.id] || [];
 
     switch (e.type) {
         case 'wheel':
@@ -242,17 +254,6 @@ function ttNfullscreenEventListener(e) {
     }
 }
 
-function _removeLatentPreviewImageSRC(node, imgSrc) {
-     let latentPreviewSrc = _findLatentPreviewImageSRC(node);
-        if (imgSrc && latentPreviewSrc) {
-            for (let i in node.imgs) {
-                if(!node.imgs[i].src.includes("filename")) {
-                    node.imgs.splice(i, 1);
-                }
-            }
-        }
-}
-
 function updateImageTLDE() {
     for (let node of app.graph._nodes) {
         if (!node.imgs) continue
@@ -262,12 +263,12 @@ function updateImageTLDE() {
 
         _removeLatentPreviewImageSRC(node, imgSrc)
 
-        srcDict[node.id] = srcDict[node.id] || [];
+        ttN_srcDict[node.id] = ttN_srcDict[node.id] || [];
 
-        let index = srcDict[node.id].length;
+        let index = ttN_srcDict[node.id].length;
 
-        if (!srcDict[node.id].includes((index, imgSrc))) {
-            srcDict[node.id].push((index, imgSrc));
+        if (!ttN_srcDict[node.id].includes((index, imgSrc))) {
+            ttN_srcDict[node.id].push((index, imgSrc));
             if (ttN_Slideshow) {
                 updateImageElements(index);
             }
@@ -299,6 +300,17 @@ function _getImageDivFromSrc(imgSrc, index) {
     return ttN_imageElementsDict[imgSrc];
 }
 
+function _removeLatentPreviewImageSRC(node, imgSrc) {
+     let latentPreviewSrc = _findLatentPreviewImageSRC(node);
+        if (imgSrc && latentPreviewSrc) {
+            for (let i in node.imgs) {
+                if(!node.imgs[i].src.includes("filename")) {
+                    node.imgs.splice(i, 1);
+                }
+            }
+        }
+}
+
 function _handleLatentPreview(imgDivList) {
     let latentPreview = _findLatentPreviewImageSRC(ttN_FullscreenNode);
     if (latentPreview && !latentPreview.includes("filename") && ttN_FullscreenImageIndex === imgDivList.length - 1) {
@@ -309,7 +321,7 @@ function _handleLatentPreview(imgDivList) {
 function updateImageElements(indexOverride = null) {
     if (!ttN_isFullscreen) return;
 
-    const srcList = srcDict[ttN_FullscreenNode.id] || null;
+    const srcList = ttN_srcDict[ttN_FullscreenNode.id] || null;
     if (!srcList) return;
 
     const fullscreenWrapper = document.getElementById(FULLSCREEN_WRAPPER_ID);
@@ -376,6 +388,7 @@ function updateImageElements(indexOverride = null) {
 api.addEventListener("status", _handleExecutedEvent);
 api.addEventListener("progress", _handleExecutedEvent);
 api.addEventListener("execution_cached", _handleExecutedEvent);
+api.addEventListener("reconnecting", _handleReconnectingEvent);
 
 app.registerExtension({
     name: "comfy.ttN.fullscreen",

@@ -156,9 +156,54 @@ function widgetLogic(node, widget) {
 			toggleWidget(node, findWidgetByName(node, 'control_after_generate'), true)
 		}
 	}
+	if (widget.name === 'model_merge_type') {
+		if (widget.value === "Simple") {
+			toggleWidget(node, findWidgetByName(node, 'simple_ratio'), true)
+			toggleWidget(node, findWidgetByName(node, 'block_input'))
+			toggleWidget(node, findWidgetByName(node, 'block_middle'))
+			toggleWidget(node, findWidgetByName(node, 'block_out'))
+			toggleWidget(node, findWidgetByName(node, 'subtract_multiplier'))
+		} else if (widget.value === "Blocks") {
+			toggleWidget(node, findWidgetByName(node, 'simple_ratio'))
+			toggleWidget(node, findWidgetByName(node, 'block_input'), true)
+			toggleWidget(node, findWidgetByName(node, 'block_middle'), true)
+			toggleWidget(node, findWidgetByName(node, 'block_out'), true)
+			toggleWidget(node, findWidgetByName(node, 'subtract_multiplier'))
+		} else if (widget.value === "Subtract") {
+			toggleWidget(node, findWidgetByName(node, 'simple_ratio'))
+			toggleWidget(node, findWidgetByName(node, 'block_input'))
+			toggleWidget(node, findWidgetByName(node, 'block_middle'))
+			toggleWidget(node, findWidgetByName(node, 'block_out'))
+			toggleWidget(node, findWidgetByName(node, 'subtract_multiplier'), true)
+		} else if (["Add", "model1", "model2"].includes(widget.value)) {
+			toggleWidget(node, findWidgetByName(node, 'simple_ratio'))
+			toggleWidget(node, findWidgetByName(node, 'block_input'))
+			toggleWidget(node, findWidgetByName(node, 'block_middle'))
+			toggleWidget(node, findWidgetByName(node, 'block_out'))
+			toggleWidget(node, findWidgetByName(node, 'subtract_multiplier'))
+		}
+	}
+	if (widget.name === 'clip_merge_type') {
+		if (widget.value === "Simple") {
+			toggleWidget(node, findWidgetByName(node, 'clip_simple_ration'), true)
+		} else {
+			toggleWidget(node, findWidgetByName(node, 'clip_simple_ration'))
+		}
+	}
+	if (widget.name === 'save_model') {
+		if (widget.value === "True") {
+			toggleWidget(node, findWidgetByName(node, 'save_prefix'), true)
+
+		} else {
+			toggleWidget(node, findWidgetByName(node, 'save_prefix'))
+		}
+	}
 }
 
-const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 'refiner_lora1_name', 'refiner_lora2_name', 'upscale_method', 'image_output', 'add_noise']
+const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 
+						'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 
+						'refiner_lora1_name', 'refiner_lora2_name', 'upscale_method', 
+						'image_output', 'add_noise', 'model_merge_type', 'clip_merge_type', 'save_model']
 
 function getSetters(node) {
 	if (node.widgets)
@@ -194,7 +239,8 @@ app.registerExtension({
 				node.getTitle() == "pipeKSamplerAdvanced" ||
 				node.getTitle() == "pipeKSamplerSDXL" ||
 				node.getTitle() == "imageRemBG" ||
-				node.getTitle() == "imageOutput") {
+				node.getTitle() == "imageOutput"||
+				node.getTitle() == "modelMerge") {
 			getSetters(node)
 		}
 	}
