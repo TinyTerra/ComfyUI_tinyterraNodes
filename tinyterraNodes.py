@@ -1022,7 +1022,7 @@ class ttN_TSC_pipeLoader:
     FUNCTION = "adv_pipeloader"
     CATEGORY = "ttN/pipe"
 
-    def adv_pipeloader(self, ckpt_name, vae_name, clip_skip,
+    def adv_pipeloader(self, ckpt_name, config_name, vae_name, clip_skip,
                        lora1_name, lora1_model_strength, lora1_clip_strength,
                        lora2_name, lora2_model_strength, lora2_clip_strength, 
                        lora3_name, lora3_model_strength, lora3_clip_strength, 
