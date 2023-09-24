@@ -1028,7 +1028,7 @@ class ttN_TSC_pipeLoader:
                        lora3_name, lora3_model_strength, lora3_clip_strength, 
                        positive, positive_token_normalization, positive_weight_interpretation, 
                        negative, negative_token_normalization, negative_weight_interpretation, 
-                       empty_latent_width, empty_latent_height, batch_size, seed, config_name, optional_clip=None, prompt=None, my_unique_id=None):
+                       empty_latent_width, empty_latent_height, batch_size, seed, optional_clip=None, prompt=None, my_unique_id=None):
 
         model: ModelPatcher | None = None
         clip: CLIP | None = None
