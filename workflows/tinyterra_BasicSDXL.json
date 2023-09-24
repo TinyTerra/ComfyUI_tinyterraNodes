@@ -1,62 +1,105 @@
 {
-  "last_node_id": 191,
-  "last_link_id": 482,
+  "last_node_id": 195,
+  "last_link_id": 489,
   "nodes": [
     {
-      "id": 191,
-      "type": "ttN pipeLoader",
+      "id": 188,
+      "type": "ttN text",
       "pos": [
-        10,
-        620
+        -450,
+        590
+      ],
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            484,
+            485
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ttN text",
+        "ttNnodeVersion": "1.0.0"
+      },
+      "widgets_values": [
+        "text, watermark"
+      ],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 195,
+      "type": "ttN pipeKSamplerAdvanced",
+      "pos": [
+        900,
+        -70
       ],
       "size": [
-        380,
-        614
+        453.6000061035156,
+        850
       ],
       "flags": {},
-      "order": 2,
+      "order": 5,
       "mode": 0,
       "inputs": [
         {
-          "name": "positive",
-          "type": "STRING",
-          "link": 478,
-          "widget": {
-            "name": "positive",
-            "config": [
-              "STRING",
-              {
-                "default": "Positive",
-                "multiline": true
-              }
-            ]
-          }
+          "name": "pipe",
+          "type": "PIPE_LINE",
+          "link": 488
         },
         {
-          "name": "negative",
-          "type": "STRING",
-          "link": 479,
-          "widget": {
-            "name": "negative",
-            "config": [
-              "STRING",
-              {
-                "default": "Negative",
-                "multiline": true
-              }
-            ]
-          }
+          "name": "optional_model",
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "optional_positive",
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "optional_negative",
+          "type": "CONDITIONING",
+          "link": null
+        },
+        {
+          "name": "optional_latent",
+          "type": "LATENT",
+          "link": 489
+        },
+        {
+          "name": "optional_vae",
+          "type": "VAE",
+          "link": null
+        },
+        {
+          "name": "optional_clip",
+          "type": "CLIP",
+          "link": null
+        },
+        {
+          "name": "xyPlot",
+          "type": "XYPLOT",
+          "link": null
         }
       ],
       "outputs": [
         {
           "name": "pipe",
           "type": "PIPE_LINE",
-          "links": [
-            482
-          ],
-          "shape": 3,
-          "slot_index": 0
+          "links": null,
+          "shape": 3
         },
         {
           "name": "model",
@@ -95,64 +138,71 @@
           "shape": 3
         },
         {
+          "name": "image",
+          "type": "IMAGE",
+          "links": null,
+          "shape": 3
+        },
+        {
           "name": "seed",
           "type": "INT",
           "links": null,
           "shape": 3
         }
       ],
-      "title": "pipeLoader - Base",
+      "title": "pipeKSamplerAdvanced - Refiner",
       "properties": {
-        "Node name for S&R": "ttN pipeLoader",
-        "ttNnodeVersion": "1.0.2"
+        "Node name for S&R": "ttN pipeKSamplerAdvanced",
+        "ttNnodeVersion": "1.0.5"
       },
       "widgets_values": [
-        "sd_xl_base_1.0.safetensors",
-        "sdxl_vae.safetensors",
-        -2,
-        "sd_xl_offset_example-lora_1.0.safetensors",
-        0.5,
-        1,
         "None",
         1,
         1,
         "None",
-        1,
-        1,
-        "big tree",
-        "none",
-        "comfy",
-        "Negative",
-        "none",
-        "comfy",
-        1024,
-        1024,
-        1,
-        7,
-        "fixed"
+        2,
+        "disabled",
+        "Sample",
+        "disable",
+        20,
+        9.5,
+        "uni_pc_bh2",
+        "normal",
+        14,
+        60,
+        "disable",
+        "Save",
+        "ComfyUI",
+        425870239082281,
+        "randomize"
       ],
-      "color": "#232",
-      "bgcolor": "#353"
+      "color": "#323",
+      "bgcolor": "#535"
     },
     {
-      "id": 190,
+      "id": 192,
       "type": "ttN pipeLoader",
       "pos": [
         10,
-        -30
+        -70
       ],
       "size": [
         380,
-        600
+        626
       ],
       "flags": {},
-      "order": 3,
+      "order": 2,
       "mode": 0,
       "inputs": [
         {
+          "name": "optional_clip",
+          "type": "CLIP",
+          "link": null
+        },
+        {
           "name": "positive",
           "type": "STRING",
-          "link": 476,
+          "link": 483,
           "widget": {
             "name": "positive",
             "config": [
@@ -167,7 +217,7 @@
         {
           "name": "negative",
           "type": "STRING",
-          "link": 480,
+          "link": 484,
           "widget": {
             "name": "negative",
             "config": [
@@ -185,7 +235,7 @@
           "name": "pipe",
           "type": "PIPE_LINE",
           "links": [
-            481
+            488
           ],
           "shape": 3,
           "slot_index": 0
@@ -236,7 +286,7 @@
       "title": "pipeLoader - Refiner",
       "properties": {
         "Node name for S&R": "ttN pipeLoader",
-        "ttNnodeVersion": "1.0.2"
+        "ttNnodeVersion": "1.0.3"
       },
       "widgets_values": [
         "sd_xl_refiner_1.0.safetensors",
@@ -267,144 +317,51 @@
       "bgcolor": "#535"
     },
     {
-      "id": 187,
-      "type": "ttN text",
+      "id": 193,
+      "type": "ttN pipeLoader",
       "pos": [
-        -450,
-        340
+        10,
+        620
       ],
       "size": [
-        400,
-        200
+        380,
+        674
       ],
       "flags": {},
-      "order": 0,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "text",
-          "type": "STRING",
-          "links": [
-            476,
-            478
-          ],
-          "shape": 3,
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "ttN text",
-        "ttNnodeVersion": "1.0.0"
-      },
-      "widgets_values": [
-        "evening sunset scenery blue sky nature, glass bottle with a galaxy in it"
-      ],
-      "color": "#232",
-      "bgcolor": "#353"
-    },
-    {
-      "id": 188,
-      "type": "ttN text",
-      "pos": [
-        -450,
-        590
-      ],
-      "size": {
-        "0": 400,
-        "1": 200
-      },
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "text",
-          "type": "STRING",
-          "links": [
-            479,
-            480
-          ],
-          "shape": 3,
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "ttN text",
-        "ttNnodeVersion": "1.0.0"
-      },
-      "widgets_values": [
-        "text, watermark"
-      ],
-      "color": "#322",
-      "bgcolor": "#533"
-    },
-    {
-      "id": 178,
-      "type": "ttN pipeKSamplerAdvanced",
-      "pos": [
-        750,
-        10
-      ],
-      "size": [
-        450,
-        850
-      ],
-      "flags": {},
-      "order": 5,
+      "order": 3,
       "mode": 0,
       "inputs": [
-        {
-          "name": "pipe",
-          "type": "PIPE_LINE",
-          "link": 481
-        },
-        {
-          "name": "optional_model",
-          "type": "MODEL",
-          "link": null
-        },
-        {
-          "name": "optional_positive",
-          "type": "CONDITIONING",
-          "link": null
-        },
-        {
-          "name": "optional_negative",
-          "type": "CONDITIONING",
-          "link": null
-        },
-        {
-          "name": "optional_latent",
-          "type": "LATENT",
-          "link": 437
-        },
-        {
-          "name": "optional_vae",
-          "type": "VAE",
-          "link": null
-        },
         {
           "name": "optional_clip",
           "type": "CLIP",
           "link": null
         },
         {
-          "name": "xyPlot",
-          "type": "XYPLOT",
-          "link": null
+          "name": "positive",
+          "type": "STRING",
+          "link": 486,
+          "widget": {
+            "name": "positive",
+            "config": [
+              "STRING",
+              {
+                "default": "Positive",
+                "multiline": true
+              }
+            ]
+          }
         },
         {
-          "name": "noise_seed",
-          "type": "INT",
-          "link": null,
+          "name": "negative",
+          "type": "STRING",
+          "link": 485,
           "widget": {
-            "name": "noise_seed",
+            "name": "negative",
             "config": [
-              "INT",
+              "STRING",
               {
-                "default": 0,
-                "min": 0,
-                "max": 18446744073709552000
+                "default": "Negative",
+                "multiline": true
               }
             ]
           }
@@ -414,8 +371,11 @@
         {
           "name": "pipe",
           "type": "PIPE_LINE",
-          "links": null,
-          "shape": 3
+          "links": [
+            487
+          ],
+          "shape": 3,
+          "slot_index": 0
         },
         {
           "name": "model",
@@ -438,9 +398,8 @@
         {
           "name": "latent",
           "type": "LATENT",
-          "links": [],
-          "shape": 3,
-          "slot_index": 4
+          "links": null,
+          "shape": 3
         },
         {
           "name": "vae",
@@ -455,59 +414,55 @@
           "shape": 3
         },
         {
-          "name": "image",
-          "type": "IMAGE",
-          "links": [],
-          "shape": 3,
-          "slot_index": 7
-        },
-        {
           "name": "seed",
           "type": "INT",
-          "links": [],
-          "shape": 3,
-          "slot_index": 8
+          "links": null,
+          "shape": 3
         }
       ],
-      "title": "pipeKSamplerAdvanced - Refiner",
+      "title": "pipeLoader - Base",
       "properties": {
-        "Node name for S&R": "ttN pipeKSamplerAdvanced",
+        "Node name for S&R": "ttN pipeLoader",
         "ttNnodeVersion": "1.0.3"
       },
       "widgets_values": [
+        "sd_xl_base_1.0.safetensors",
+        "sdxl_vae.safetensors",
+        -2,
+        "sd_xl_offset_example-lora_1.0.safetensors",
+        0.5,
+        1,
         "None",
         1,
         1,
         "None",
-        2,
-        "disabled",
-        "Sample",
-        "disable",
-        20,
-        9.5,
-        "uni_pc_bh2",
-        "normal",
-        14,
-        60,
-        "disable",
-        "Save",
-        "Comfy",
-        425870239082281,
-        "randomize"
+        1,
+        1,
+        "big tree",
+        "none",
+        "comfy",
+        "Negative",
+        "none",
+        "comfy",
+        1024,
+        1024,
+        1,
+        7,
+        "fixed"
       ],
-      "color": "#323",
-      "bgcolor": "#535"
+      "color": "#232",
+      "bgcolor": "#353"
     },
     {
-      "id": 176,
+      "id": 194,
       "type": "ttN pipeKSamplerAdvanced",
       "pos": [
-        420,
+        410,
         620
       ],
       "size": [
-        280,
-        482
+        424.5285445098874,
+        530
       ],
       "flags": {},
       "order": 4,
@@ -516,7 +471,7 @@
         {
           "name": "pipe",
           "type": "PIPE_LINE",
-          "link": 482
+          "link": 487
         },
         {
           "name": "optional_model",
@@ -552,22 +507,6 @@
           "name": "xyPlot",
           "type": "XYPLOT",
           "link": null
-        },
-        {
-          "name": "noise_seed",
-          "type": "INT",
-          "link": null,
-          "widget": {
-            "name": "noise_seed",
-            "config": [
-              "INT",
-              {
-                "default": 0,
-                "min": 0,
-                "max": 18446744073709552000
-              }
-            ]
-          }
         }
       ],
       "outputs": [
@@ -599,7 +538,7 @@
           "name": "latent",
           "type": "LATENT",
           "links": [
-            437
+            489
           ],
           "shape": 3,
           "slot_index": 4
@@ -632,7 +571,7 @@
       "title": "pipeKSamplerAdvanced - Base",
       "properties": {
         "Node name for S&R": "ttN pipeKSamplerAdvanced",
-        "ttNnodeVersion": "1.0.3"
+        "ttNnodeVersion": "1.0.5"
       },
       "widgets_values": [
         "None",
@@ -657,64 +596,100 @@
       ],
       "color": "#232",
       "bgcolor": "#353"
+    },
+    {
+      "id": 187,
+      "type": "ttN text",
+      "pos": [
+        -450,
+        340
+      ],
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            483,
+            486
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ttN text",
+        "ttNnodeVersion": "1.0.0"
+      },
+      "widgets_values": [
+        "evening sunset scenery blue sky nature, glass bottle with a galaxy in it"
+      ],
+      "color": "#232",
+      "bgcolor": "#353"
     }
   ],
   "links": [
     [
-      437,
-      176,
+      483,
+      187,
+      0,
+      192,
+      1,
+      "STRING"
+    ],
+    [
+      484,
+      188,
+      0,
+      192,
+      2,
+      "STRING"
+    ],
+    [
+      485,
+      188,
+      0,
+      193,
+      2,
+      "STRING"
+    ],
+    [
+      486,
+      187,
+      0,
+      193,
+      1,
+      "STRING"
+    ],
+    [
+      487,
+      193,
+      0,
+      194,
+      0,
+      "PIPE_LINE"
+    ],
+    [
+      488,
+      192,
+      0,
+      195,
+      0,
+      "PIPE_LINE"
+    ],
+    [
+      489,
+      194,
       4,
-      178,
+      195,
       4,
       "LATENT"
-    ],
-    [
-      476,
-      187,
-      0,
-      190,
-      0,
-      "STRING"
-    ],
-    [
-      478,
-      187,
-      0,
-      191,
-      0,
-      "STRING"
-    ],
-    [
-      479,
-      188,
-      0,
-      191,
-      1,
-      "STRING"
-    ],
-    [
-      480,
-      188,
-      0,
-      190,
-      1,
-      "STRING"
-    ],
-    [
-      481,
-      190,
-      0,
-      178,
-      0,
-      "PIPE_LINE"
-    ],
-    [
-      482,
-      191,
-      0,
-      176,
-      0,
-      "PIPE_LINE"
     ]
   ],
   "groups": [],

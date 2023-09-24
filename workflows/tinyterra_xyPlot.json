@@ -1,18 +1,18 @@
 {
-  "last_node_id": 25,
-  "last_link_id": 17,
+  "last_node_id": 27,
+  "last_link_id": 19,
   "nodes": [
     {
-      "id": 23,
+      "id": 26,
       "type": "ttN pipeKSampler",
       "pos": [
         1000,
         70
       ],
-      "size": {
-        "0": 720,
-        "1": 1080
-      },
+      "size": [
+        720,
+        1080
+      ],
       "flags": {},
       "order": 2,
       "mode": 0,
@@ -20,7 +20,7 @@
         {
           "name": "pipe",
           "type": "PIPE_LINE",
-          "link": 17
+          "link": 19
         },
         {
           "name": "optional_model",
@@ -55,23 +55,7 @@
         {
           "name": "xyPlot",
           "type": "XYPLOT",
-          "link": 16
-        },
-        {
-          "name": "seed",
-          "type": "INT",
-          "link": null,
-          "widget": {
-            "name": "seed",
-            "config": [
-              "INT",
-              {
-                "default": 0,
-                "min": 0,
-                "max": 18446744073709552000
-              }
-            ]
-          }
+          "link": 18
         }
       ],
       "outputs": [
@@ -132,7 +116,7 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeKSampler",
-        "ttNnodeVersion": "1.0.3"
+        "ttNnodeVersion": "1.0.5"
       },
       "widgets_values": [
         "None",
@@ -162,10 +146,10 @@
         650,
         210
       ],
-      "size": [
-        300,
-        300
-      ],
+      "size": {
+        "0": 300,
+        "1": 300
+      },
       "flags": {},
       "order": 0,
       "mode": 0,
@@ -174,7 +158,7 @@
           "name": "xyPlot",
           "type": "XYPLOT",
           "links": [
-            16
+            18
           ],
           "shape": 3,
           "slot_index": 0
@@ -198,7 +182,7 @@
       "bgcolor": "#355"
     },
     {
-      "id": 25,
+      "id": 27,
       "type": "ttN pipeLoader",
       "pos": [
         200,
@@ -211,12 +195,19 @@
       "flags": {},
       "order": 1,
       "mode": 0,
+      "inputs": [
+        {
+          "name": "optional_clip",
+          "type": "CLIP",
+          "link": null
+        }
+      ],
       "outputs": [
         {
           "name": "pipe",
           "type": "PIPE_LINE",
           "links": [
-            17
+            19
           ],
           "shape": 3,
           "slot_index": 0
@@ -266,7 +257,7 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeLoader",
-        "ttNnodeVersion": "1.0.2"
+        "ttNnodeVersion": "1.0.3"
       },
       "widgets_values": [
         "dreamshaper_6NoVae.safetensors",
@@ -299,18 +290,18 @@
   ],
   "links": [
     [
-      16,
+      18,
       24,
       0,
-      23,
+      26,
       7,
       "XYPLOT"
     ],
     [
-      17,
-      25,
+      19,
+      27,
       0,
-      23,
+      26,
       0,
       "PIPE_LINE"
     ]

@@ -1,9 +1,9 @@
 {
-  "last_node_id": 193,
-  "last_link_id": 477,
+  "last_node_id": 195,
+  "last_link_id": 478,
   "nodes": [
     {
-      "id": 193,
+      "id": 195,
       "type": "ttN pipeKSamplerSDXL",
       "pos": [
         520,
@@ -20,7 +20,7 @@
         {
           "name": "sdxl_pipe",
           "type": "PIPE_LINE_SDXL",
-          "link": 477
+          "link": 478
         },
         {
           "name": "optional_model",
@@ -71,22 +71,6 @@
           "name": "optional_clip",
           "type": "CLIP",
           "link": null
-        },
-        {
-          "name": "seed",
-          "type": "INT",
-          "link": null,
-          "widget": {
-            "name": "seed",
-            "config": [
-              "INT",
-              {
-                "default": 0,
-                "min": 0,
-                "max": 18446744073709552000
-              }
-            ]
-          }
         }
       ],
       "outputs": [
@@ -171,7 +155,7 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeKSamplerSDXL",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.0.2"
       },
       "widgets_values": [
         "None",
@@ -192,7 +176,7 @@
       "bgcolor": "#535"
     },
     {
-      "id": 192,
+      "id": 194,
       "type": "ttN pipeLoaderSDXL",
       "pos": [
         10,
@@ -210,7 +194,7 @@
           "name": "sdxl_pipe",
           "type": "PIPE_LINE_SDXL",
           "links": [
-            477
+            478
           ],
           "shape": 3,
           "slot_index": 0
@@ -240,6 +224,12 @@
           "shape": 3
         },
         {
+          "name": "clip",
+          "type": "CLIP",
+          "links": null,
+          "shape": 3
+        },
+        {
           "name": "refiner_model",
           "type": "MODEL",
           "links": null,
@@ -264,14 +254,14 @@
           "shape": 3
         },
         {
-          "name": "latent",
-          "type": "LATENT",
+          "name": "refiner_clip",
+          "type": "CLIP",
           "links": null,
           "shape": 3
         },
         {
-          "name": "clip",
-          "type": "CLIP",
+          "name": "latent",
+          "type": "LATENT",
           "links": null,
           "shape": 3
         },
@@ -284,7 +274,7 @@
       ],
       "properties": {
         "Node name for S&R": "ttN pipeLoaderSDXL",
-        "ttNnodeVersion": "1.0.0"
+        "ttNnodeVersion": "1.1.1"
       },
       "widgets_values": [
         "sd_xl_base_1.0.safetensors",
@@ -322,10 +312,10 @@
   ],
   "links": [
     [
-      477,
-      192,
+      478,
+      194,
       0,
-      193,
+      195,
       0,
       "PIPE_LINE_SDXL"
     ]
