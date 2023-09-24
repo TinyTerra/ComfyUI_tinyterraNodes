@@ -29,36 +29,6 @@ function loadSrcDict() {
     }
 }
 
-function _debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-function _smoothTransition(element, property, toValue) {
-    let startValue = parseFloat(getComputedStyle(element)[property]);
-    let startTime = null;
-
-    function animate(time) {
-        if (startTime === null) startTime = time;
-        let progress = time - startTime;
-        element.style[property] = startValue + progress * (toValue - startValue) / 500 + 'px';
-        if (progress < 500) {
-            requestAnimationFrame(animate);
-        } else {
-            element.style[property] = toValue + 'px';
-        }
-    }
-
-    requestAnimationFrame(animate);
-}
-
 function _getSelectedNode() {
     const graphcanvas = LGraphCanvas.active_canvas;
     if (graphcanvas.selected_nodes && Object.keys(graphcanvas.selected_nodes).length === 1) {
@@ -75,7 +45,7 @@ function _findFullImageSRC(node) {
     return null;
 }
 
-function _findSelectedOrHoveredImageSRC(node) {
+function _findLatentPreviewImageSRC(node) {
     if (!node.imgs) return null;
 
     if (node.imageIndex !== null && node.imageIndex < node.imgs.length) {
@@ -197,6 +167,17 @@ function _handleEscapeKey(e) {
     LGraphCanvas.prototype.ttNcloseFullscreen();
 }
 
+function _handleExecutedEvent(event) {
+    setTimeout(updateImageTLDE, 500);
+}
+
+function _triggerFullscreen(node) {
+    updateImageTLDE();
+    ttN_FullscreenImageIndex = -1;
+    LGraphCanvas.prototype.ttNcreateFullscreen(node);
+    ttN_FullscreenNode = node;
+}
+
 function ttNfullscreenEventListener(e) {
     if (!ttN_isFullscreen) {
         if (e.code === 'ArrowUp' && e.shiftKey) {
@@ -204,20 +185,15 @@ function ttNfullscreenEventListener(e) {
 
             let selected_node = _getSelectedNode();
             if (selected_node) {
-                updateImageTLDE();
-                LGraphCanvas.prototype.ttNcreateFullscreen(selected_node);
-                ttN_FullscreenNode = selected_node;
+                _triggerFullscreen(selected_node);
                 return
             }
 
             let defaultNodeID = JSON.parse(sessionStorage.getItem('Comfy.Settings.ttN.default_fullscreen_node'));
             if (defaultNodeID) {
                 let defaultNode = app.graph._nodes_by_id[defaultNodeID];
-                updateImageTLDE();
-
                 if (defaultNode) {
-                    LGraphCanvas.prototype.ttNcreateFullscreen(defaultNode);
-                    ttN_FullscreenNode = defaultNode;
+                    _triggerFullscreen(defaultNode);
                     return
                 }
             }
@@ -249,31 +225,41 @@ function ttNfullscreenEventListener(e) {
     }
 }
 
-function handleExecutedEvent(event) {
-    setTimeout(updateImageTLDE, 500);
+function _removeLatentPreviewImageSRC(node, imgSrc) {
+     let latentPreviewSrc = _findLatentPreviewImageSRC(node);
+        if (imgSrc && latentPreviewSrc) {
+            console.log(node.imgs)
+            for (let i in node.imgs) {
+                if(!node.imgs[i].src.includes("filename")) {
+                    node.imgs.splice(i, 1);
+                }
+            }
+        }
 }
 
 function updateImageTLDE() {
     for (let node of app.graph._nodes) {
         if (!node.imgs) continue
 
-        let img = node.imgs.find(imgElement => imgElement.src.includes("filename"));
+        let imgSrc = _findFullImageSRC(node);
+        if (!imgSrc) continue;
 
-        if (!img) continue;
+        _removeLatentPreviewImageSRC(node, imgSrc)
 
         srcDict[node.id] = srcDict[node.id] || [];
 
         let index = srcDict[node.id].length;
 
-        if (!srcDict[node.id].includes((index, img.src))) {
-            srcDict[node.id].push((index, img.src));
+        if (!srcDict[node.id].includes((index, imgSrc))) {
+            srcDict[node.id].push((index, imgSrc));
             if (ttN_Slideshow) {
                 updateImageElements(index);
             }
         }
-        saveSrcDict();
-        updateImageElements();
+        
     }
+    saveSrcDict();
+    updateImageElements();
 };
 
 function _getImageDivFromSrc(imgSrc, index) {
@@ -295,6 +281,13 @@ function _getImageDivFromSrc(imgSrc, index) {
         ttN_imageElementsDict[imgSrc] = imgWrapper;
     }
     return ttN_imageElementsDict[imgSrc];
+}
+
+function _handleLatentPreview(imgDivList) {
+    let latentPreview = _findLatentPreviewImageSRC(ttN_FullscreenNode);
+    if (latentPreview && !latentPreview.includes("filename") && ttN_FullscreenImageIndex === imgDivList.length - 1) {
+        ttN_FullscreenImage.src = latentPreview
+    }
 }
 
 function updateImageElements(indexOverride = null) {
@@ -321,12 +314,7 @@ function updateImageElements(indexOverride = null) {
 
     if (ttN_Slideshow) { 
         fullscreenWrapper.classList.add('ttN-slideshow')
-        let latentPreview = _findSelectedOrHoveredImageSRC(ttN_FullscreenNode);
-        console.log(ttN_FullscreenNode)
-        if (latentPreview) {
-            console.log('latent found')
-            ttN_FullscreenImage.src = latentPreview.src
-        }
+        _handleLatentPreview(imgDivList);
     } else { 
         fullscreenWrapper.classList.remove('ttN-slideshow') 
     }
@@ -369,8 +357,9 @@ function updateImageElements(indexOverride = null) {
     _applyTranslation(previewsWrapper, ttN_FullscreenImageIndex, imgDivList);
 }
 
-api.addEventListener("status", handleExecutedEvent);
-api.addEventListener("execution_cached", handleExecutedEvent);
+api.addEventListener("status", _handleExecutedEvent);
+api.addEventListener("progress", _handleExecutedEvent);
+api.addEventListener("execution_cached", _handleExecutedEvent);
 
 app.registerExtension({
     name: "comfy.ttN.fullscreen",
@@ -389,7 +378,7 @@ app.registerExtension({
             document.body.appendChild(fullscreenWrapper);
 
             const fullscreenImage = new Image();
-            fullscreenImage.src = _findFullImageSRC(node) || _findSelectedOrHoveredImageSRC(node) || '';
+            fullscreenImage.src = _findFullImageSRC(node) || _findLatentPreviewImageSRC(node) || '';
             fullscreenImage.id = FULLSCREEN_IMAGE_ID;
             fullscreenWrapper.appendChild(fullscreenImage);
 
