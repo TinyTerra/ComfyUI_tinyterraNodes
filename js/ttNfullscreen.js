@@ -151,13 +151,30 @@ function _handleArrowKeys(e) {
 
 function _handleWheelEvent(e) {
     e.stopPropagation();
-    if (e.deltaY > 0) {
-        // Scrolling down
-        ttN_FullscreenImageIndex += 1;
-    } else if (e.deltaY < 0) {
-        // Scrolling up
-        ttN_FullscreenImageIndex -= 1;
-        if (ttN_FullscreenImageIndex < 0) ttN_FullscreenImageIndex = 0;
+
+    var InvertMenuScrolling = localStorage.getItem('Comfy.Settings.Comfy.InvertMenuScrolling')
+    console.log("InvertMenuScrolling", InvertMenuScrolling)
+    
+    if (InvertMenuScrolling === "true") {
+        console.log('yes')
+        if (e.deltaY > 0) {
+            // Scrolling down
+            ttN_FullscreenImageIndex += 1;
+        } else if (e.deltaY < 0) {
+            // Scrolling up
+            ttN_FullscreenImageIndex -= 1;
+            if (ttN_FullscreenImageIndex < 0) ttN_FullscreenImageIndex = 0;
+        }
+    } else {
+        console.log('no')
+        if (e.deltaY < 0) {
+            // Scrolling down
+            ttN_FullscreenImageIndex += 1;
+        } else if (e.deltaY > 0) {
+            // Scrolling up
+            ttN_FullscreenImageIndex -= 1;
+            if (ttN_FullscreenImageIndex < 0) ttN_FullscreenImageIndex = 0;
+        }
     }
     updateImageElements()
 }

@@ -44,6 +44,7 @@ Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
   + 'Right arrow' => _Select Image to the right_
   + 'shift + right arrow' => _Select Image 5 to the right_
   + 'ctrl + right arrow' => _Select last Image_
+  + 'mouse scroll' => _Select image to Left/Right_
   + 'esc' => _Close Fullscreen Mode_
 
 **Embedding Auto Complete**
