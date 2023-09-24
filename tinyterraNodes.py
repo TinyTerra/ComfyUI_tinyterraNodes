@@ -191,11 +191,11 @@ class ttNloader:
         self.clear_unused_objects(desired_lora_names, "lora")
 
     def load_checkpoint(self, ckpt_name, config_name=None):
+        cache_name = ckpt_name
         if config_name not in [None, "Default"]:
-            ckpt_name = ckpt_name + "_" + config_name
-
-        if ckpt_name in self.loaded_objects["ckpt"]:
-            return self.loaded_objects["ckpt"][ckpt_name], self.loaded_objects["clip"][ckpt_name], self.loaded_objects["bvae"][ckpt_name]
+            cache_name = ckpt_name + "_" + config_name
+        if cache_name in self.loaded_objects["ckpt"]:
+            return self.loaded_objects["ckpt"][cache_name], self.loaded_objects["clip"][cache_name], self.loaded_objects["bvae"][cache_name]
 
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
 
@@ -205,9 +205,9 @@ class ttNloader:
         else:
             loaded_ckpt = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
 
-        self.loaded_objects["ckpt"][ckpt_name] = loaded_ckpt[0]
-        self.loaded_objects["clip"][ckpt_name] = loaded_ckpt[1]
-        self.loaded_objects["bvae"][ckpt_name] = loaded_ckpt[2]
+        self.loaded_objects["ckpt"][cache_name] = loaded_ckpt[0]
+        self.loaded_objects["clip"][cache_name] = loaded_ckpt[1]
+        self.loaded_objects["bvae"][cache_name] = loaded_ckpt[2]
 
         return loaded_ckpt[0], loaded_ckpt[1], loaded_ckpt[2]
 
