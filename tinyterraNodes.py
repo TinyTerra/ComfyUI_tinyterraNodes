@@ -188,12 +188,22 @@ class ttNloader:
         self.clear_unused_objects(desired_vae_names, "vae")
         self.clear_unused_objects(desired_lora_names, "lora")
 
-    def load_checkpoint(self, ckpt_name):
+    def load_checkpoint(self, ckpt_name, config_name=None):
+        if config_name is not None:
+            ckpt_name = ckpt_name + "_" + config_name
+
         if ckpt_name in self.loaded_objects["ckpt"]:
             return self.loaded_objects["ckpt"][ckpt_name], self.loaded_objects["clip"][ckpt_name], self.loaded_objects["bvae"][ckpt_name]
 
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
-        loaded_ckpt = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
+
+        if config_name is not None:
+            config_path = folder_paths.get_full_path("configs", config_name)
+            loaded_ckpt = comfy.sd.load_checkpoint(config_path, ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
+
+        else:
+            loaded_ckpt = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
+
         self.loaded_objects["ckpt"][ckpt_name] = loaded_ckpt[0]
         self.loaded_objects["clip"][ckpt_name] = loaded_ckpt[1]
         self.loaded_objects["bvae"][ckpt_name] = loaded_ckpt[2]
@@ -921,11 +931,12 @@ sampler = ttNsampler()
 
 #---------------------------------------------------------------ttN/pipe START----------------------------------------------------------------------#
 class ttN_TSC_pipeLoader:
-    version = '1.0.3'
+    version = '1.1.0'
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": { 
                         "ckpt_name": (folder_paths.get_filename_list("checkpoints"), ),
+                        "config_name": (["Default",] + folder_paths.get_filename_list("configs"), {"default": "Default"} ),
                         "vae_name": (["Baked VAE"] + folder_paths.get_filename_list("vae"),),
                         "clip_skip": ("INT", {"default": -1, "min": -24, "max": 0, "step": 1}),
 
@@ -955,7 +966,7 @@ class ttN_TSC_pipeLoader:
                         "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                         },                
                 "optional": {"optional_clip": ("CLIP",),},
-                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_TSC_pipeLoader.version}}
+                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_TSC_pipeLoader.version}, "my_unique_id": "UNIQUE_ID",}
 
     RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT",)
     RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed",)
@@ -969,7 +980,7 @@ class ttN_TSC_pipeLoader:
                        lora3_name, lora3_model_strength, lora3_clip_strength, 
                        positive, positive_token_normalization, positive_weight_interpretation, 
                        negative, negative_token_normalization, negative_weight_interpretation, 
-                       empty_latent_width, empty_latent_height, batch_size, seed, optional_clip=None, prompt=None):
+                       empty_latent_width, empty_latent_height, batch_size, seed, config_name, optional_clip=None, prompt=None, my_unique_id=None):
 
         model: ModelPatcher | None = None
         clip: CLIP | None = None
@@ -983,7 +994,10 @@ class ttN_TSC_pipeLoader:
         ttNcache.update_loaded_objects(prompt)
 
         # Load models
-        model, clip, vae = ttNcache.load_checkpoint(ckpt_name)
+        if config_name == "Default":
+            config_name = None
+
+        model, clip, vae = ttNcache.load_checkpoint(ckpt_name, config_name)
 
         if optional_clip is not None:
             clip = optional_clip
