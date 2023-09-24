@@ -319,7 +319,17 @@ function updateImageElements(indexOverride = null) {
     const previewsWrapper = document.getElementById(IMAGE_PREVIEWS_WRAPPER_ID);
     if (!previewsWrapper) return
 
-    if (ttN_Slideshow) { fullscreenWrapper.classList.add('ttN-slideshow') } else { fullscreenWrapper.classList.remove('ttN-slideshow') }
+    if (ttN_Slideshow) { 
+        fullscreenWrapper.classList.add('ttN-slideshow')
+        let latentPreview = _findSelectedOrHoveredImageSRC(ttN_FullscreenNode);
+        console.log(ttN_FullscreenNode)
+        if (latentPreview) {
+            console.log('latent found')
+            ttN_FullscreenImage.src = latentPreview.src
+        }
+    } else { 
+        fullscreenWrapper.classList.remove('ttN-slideshow') 
+    }
 
     if (ttN_FullscreenImageIndex > imgDivList.length - 1) ttN_FullscreenImageIndex = imgDivList.length - 1;
     if (ttN_FullscreenImageIndex < 0) ttN_FullscreenImageIndex = 0;
