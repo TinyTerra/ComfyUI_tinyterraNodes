@@ -60,8 +60,35 @@ function widgetLogic(node, widget) {
 			toggleWidget(node, findWidgetByName(node, 'lora3_clip_strength'), true)
 		}
 	}
-	if (widget.name === 'refiner_lora1_name') {
+	if (widget.name === 'refiner_ckpt_name') {
+		let refiner_lora1 = findWidgetByName(node, 'refiner_lora1_name').value
+		let refiner_lora2 = findWidgetByName(node, 'refiner_lora2_name').value
 		if (widget.value === "None") {
+			toggleWidget(node, findWidgetByName(node, 'refiner_vae_name'))
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora1_name'))
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora1_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora1_clip_strength'))
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora2_name'))
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora2_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora2_clip_strength'))
+		} else {
+			toggleWidget(node, findWidgetByName(node, 'refiner_vae_name'), true)
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora1_name'), true)
+			if (refiner_lora1 !== "None") {
+				toggleWidget(node, findWidgetByName(node, 'refiner_lora1_model_strength'), true)
+				toggleWidget(node, findWidgetByName(node, 'refiner_lora1_clip_strength'), true)
+			}
+			toggleWidget(node, findWidgetByName(node, 'refiner_lora2_name'), true)
+			if (refiner_lora2 !== "None") {
+				toggleWidget(node, findWidgetByName(node, 'refiner_lora2_model_strength'), true)
+				toggleWidget(node, findWidgetByName(node, 'refiner_lora2_clip_strength'), true)
+			}
+		}
+	}
+	if (widget.name === 'refiner_lora1_name') {
+		let refiner_ckpt = findWidgetByName(node, 'refiner_ckpt_name').value
+
+		if (widget.value === "None" || refiner_ckpt === "None") {
 			toggleWidget(node, findWidgetByName(node, 'refiner_lora1_model_strength'))
 			toggleWidget(node, findWidgetByName(node, 'refiner_lora1_clip_strength'))
 		} else {
@@ -70,7 +97,9 @@ function widgetLogic(node, widget) {
 		}
 	}
 	if (widget.name === 'refiner_lora2_name') {
-		if (widget.value === "None") {
+		let refiner_ckpt = findWidgetByName(node, 'refiner_ckpt_name').value
+
+		if (widget.value === "None" || refiner_ckpt === "None") {
 			toggleWidget(node, findWidgetByName(node, 'refiner_lora2_model_strength'))
 			toggleWidget(node, findWidgetByName(node, 'refiner_lora2_clip_strength'))
 		} else {
@@ -184,7 +213,7 @@ const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output',
 						'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 
 						'refiner_lora1_name', 'refiner_lora2_name', 'upscale_method', 
 						'image_output', 'add_noise', 
-						'ckpt_B_name', 'ckpt_C_name', 'save_model']
+						'ckpt_B_name', 'ckpt_C_name', 'save_model', 'refiner_ckpt_name']
 
 function getSetters(node) {
 	if (node.widgets)
