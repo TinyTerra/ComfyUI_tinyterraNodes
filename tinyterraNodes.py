@@ -2238,9 +2238,19 @@ class ttN_pipeEncodeConcat:
         return (pipe, pipe["positive"], pipe["negative"], samp_clip, { "ui": { "string": new_text } } )
 #---------------------------------------------------------------ttN/pipe END------------------------------------------------------------------------#
 
+#----------------------------------------------------------------model START------------------------------------------------------------------------#
+WEIGHTED_SUM = "Weighted sum = (  A*(1-M) + B*M  )"
+ADD_DIFFERENCE = "Add difference = (  A + (B-C)*M  )"
+A_ONLY = "A Only"
+MODEL_INTERPOLATIONS = [WEIGHTED_SUM, ADD_DIFFERENCE, A_ONLY]
+FOLLOW = "Follow model interp"
+B_ONLY = "B Only"
+C_ONLY = "C Only"
+CLIP_INTERPOLATIONS = [FOLLOW, WEIGHTED_SUM, ADD_DIFFERENCE, A_ONLY, B_ONLY, C_ONLY]
+ABC = "ABC"
 
 class ttN_multiModelMerge:
-    version = '1.0.0'
+    version = '1.0.1'
     def __init__(self):
         pass
     
@@ -2254,11 +2264,13 @@ class ttN_multiModelMerge:
                     "ckpt_C_name": (["None",] + folder_paths.get_filename_list("checkpoints"), ),
                     "config_C_name": (["Default",] + folder_paths.get_filename_list("configs"), {"default": "Default"} ),
 
-                    "interpolation": (["None (A only)", "Weighted sum = (  A*(1-M) + B*M  )", "Add difference = (  A + (B-C)*M  )"],),
+                    "model_interpolation": (MODEL_INTERPOLATIONS,),
+                    "model_multiplier": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                    
+                    "clip_interpolation": (CLIP_INTERPOLATIONS,),
+                    "clip_multiplier": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
 
-                    "multiplier": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-
-                    "save_model": (["True", "False"],),
+                    "save_model": (["True", "False"],{"default": "False"}),
                     "save_prefix": ("STRING", {"default": "checkpoints/ComfyUI"}),
                 },
                 "optional": {
@@ -2270,7 +2282,7 @@ class ttN_multiModelMerge:
                     "clip_C_override": ("CLIP",),
                     "optional_vae": ("VAE",),
                 },
-                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "ttNnodeVersion": ttN_modelMerge.version},
+                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "ttNnodeVersion": ttN_multiModelMerge.version, "my_unique_id": "UNIQUE_ID"},
         }
     
     RETURN_TYPES = ("MODEL", "CLIP", "VAE",)
@@ -2280,21 +2292,58 @@ class ttN_multiModelMerge:
     CATEGORY = "ttN"
 
     def mergificate(self, ckpt_A_name, config_A_name, ckpt_B_name, config_B_name, ckpt_C_name, config_C_name,
-                interpolation, multiplier, save_model, save_prefix,
+                model_interpolation, model_multiplier, clip_interpolation, clip_multiplier, save_model, save_prefix,
                 model_A_override=None, model_B_override=None, model_C_override=None,
                 clip_A_override=None, clip_B_override=None, clip_C_override=None,
-                optional_vae=None, prompt=None, extra_pnginfo=None):
+                optional_vae=None, prompt=None, extra_pnginfo=None, my_unique_id=None):
+        
+        def required_assets(model_interpolation, clip_interpolation):
+            required = set(["model_A"])
+            
+            if clip_interpolation in [A_ONLY, B_ONLY, C_ONLY]:
+                required.add(f"clip_{clip_interpolation[0]}")
+            elif clip_interpolation in [WEIGHTED_SUM, ADD_DIFFERENCE]:
+                required.update([f"clip_{letter}" for letter in ABC if letter in clip_interpolation])
+            elif clip_interpolation == FOLLOW:
+                required.add("clip_A")
+            
+            if model_interpolation in [WEIGHTED_SUM, ADD_DIFFERENCE]:
+                letters = [letter for letter in ABC if letter in model_interpolation]
+                required.update([f"model_{letter}" for letter in letters])
+                if clip_interpolation == FOLLOW:
+                    required.update([f"clip_{letter}" for letter in letters])
+            
+            return sorted(list(required))
 
-        def compile_letter(model_o, clip_o, ckpt_name, config_name):
-            if model_o and clip_o:
-                return model_o, clip_o
-            else:
-                model, clip, _ = ttNcache.load_checkpoint(ckpt_name, config_name)
+        def _collect_letter(letter, required_list, model_override, clip_override, ckpt_name, config_name = None):
+            model, clip, loaded_clip = None, None, None
+            config_name = config_name
+            
+            if f'model_{letter}' in required_list:
+                if model_override not in [None, "None"]:
+                    model = model_override
+                else:
+                    if ckpt_name not in [None, "None"]:
+                        model, loaded_clip, _ = ttNcache.load_checkpoint(ckpt_name, config_name)
+                    else:
+                        e = f"Checkpoint name or model override not provided for model_{letter}.\nUnable to merge models using the following interpolation: {model_interpolation}"
+                        ttNl(e).t(f'multiModelMerge [{my_unique_id}]').error().p().interrupt(e)
 
-                model = model_o if model_o is not None else model
-                clip = clip_o if clip_o is not None else clip
-                
-                return model, clip
+
+            
+            if f'clip_{letter}' in required_list:
+                if clip_override is not None:
+                    clip = clip_override
+                elif loaded_clip is not None:
+                    clip = loaded_clip
+                elif ckpt_name not in [None, "None"]:
+                    _, clip, _ = ttNcache.load_checkpoint(ckpt_name, config_name)
+                else:
+                    e = f"Checkpoint name or clip override not provided for clip_{letter}.\nUnable to merge clips using the following interpolation: {clip_interpolation}"
+                    ttNl(e).t(f'multiModelMerge [{my_unique_id}]').error().p().interrupt(e)
+            
+            return model, clip
+
 
         def merge(base_model, base_strength, patch_model, patch_strength):
             m = base_model.clone()
@@ -2312,27 +2361,49 @@ class ttN_multiModelMerge:
                 m.add_patches({k: kp[k]}, patch_strength, base_strength)
             return m
 
-        if (interpolation == "None (A only)") or ((ckpt_B_name == "None") and (model_B_override == None)):
-            model, clip = compile_letter(model_A_override, clip_A_override, ckpt_A_name, config_A_name)
-
-
-        elif (interpolation == "Weighted sum = (  A*(1-M) + B*M  )") or ((ckpt_C_name == "None") and (model_C_override == None)):
-            model_A, clip_A = compile_letter(model_A_override, clip_A_override, ckpt_A_name, config_A_name)
-            model_B, clip_B = compile_letter(model_B_override, clip_B_override, ckpt_B_name, config_B_name)
-            
-            model = merge(model_A, (1.0 - multiplier), model_B, multiplier)
-            clip = clip_merge(clip_A, (1.0 - multiplier), clip_B, multiplier)
-
-        elif (interpolation == "Add difference = (  A + (B-C)*M  )"):
-            model_A, clip_A = compile_letter(model_A_override, clip_A_override, ckpt_A_name, config_A_name)
-            model_B, clip_B = compile_letter(model_B_override, clip_B_override, ckpt_B_name, config_B_name)
-            model_C, clip_C = compile_letter(model_C_override, clip_C_override, ckpt_C_name, config_C_name)
-
-            B_minus_C = merge(model_B, 1.0, model_C, -1.0)
-            model = merge(model_A, 1.0, B_minus_C, multiplier)
-
-            B_minus_C = clip_merge(clip_B, 1.0, clip_C, -1.0)
-            clip = clip_merge(clip_A, 1.0, B_minus_C, multiplier)
+        def _add_assets(a1, a2, is_clip=False, multiplier=1.0, weighted=False):
+            if is_clip:
+                if weighted:
+                    return clip_merge(a1, (1.0 - multiplier), a2, multiplier)
+                else:
+                    return clip_merge(a1, 1.0, a2, multiplier)
+            else:
+                if weighted:
+                    return merge(a1, (1.0 - multiplier), a2, multiplier)
+                else:
+                    return merge(a1, 1.0, a2, multiplier)
+        
+        def _subtract_assets(a1, a2, is_clip=False, multiplier=1.0):
+            if is_clip:
+                    return clip_merge(a1, 1.0, a2, -multiplier)
+            else:
+                    return merge(a1, 1.0, a2, -multiplier)
+        
+        required_list = required_assets(model_interpolation, clip_interpolation)
+        model_A, clip_A = _collect_letter("A", required_list, model_A_override, clip_A_override, ckpt_A_name, config_A_name)
+        model_B, clip_B = _collect_letter("B", required_list, model_B_override, clip_B_override, ckpt_B_name, config_B_name)
+        model_C, clip_C = _collect_letter("C", required_list, model_C_override, clip_C_override, ckpt_C_name, config_C_name)
+        
+        if (model_interpolation == A_ONLY):
+            model = model_A
+        if (model_interpolation == WEIGHTED_SUM):
+            model = _add_assets(model_A, model_B, False, model_multiplier, True)
+        if (model_interpolation == ADD_DIFFERENCE):
+            model = _add_assets(model_A, _subtract_assets(model_B, model_C), False, model_multiplier)
+        
+        if (clip_interpolation == FOLLOW):
+            clip_interpolation = model_interpolation
+        if (clip_interpolation == A_ONLY):
+            clip = clip_A
+        if (clip_interpolation == B_ONLY):
+            clip = clip_B
+        if (clip_interpolation == C_ONLY):
+            clip = clip_C
+        if (clip_interpolation == WEIGHTED_SUM):
+            clip = _add_assets(clip_A, clip_B, True, clip_multiplier, True)
+        if (clip_interpolation == ADD_DIFFERENCE):
+            clip = _add_assets(clip_A, _subtract_assets(clip_B, clip_C, True), True, clip_multiplier)
+        
 
         if optional_vae not in ["None", None]:
             vae_sd = optional_vae.get_sd()
