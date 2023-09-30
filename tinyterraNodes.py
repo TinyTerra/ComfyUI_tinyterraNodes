@@ -1,15 +1,26 @@
+"""
+@author: tinyterra
+@title: tinyterraNodes
+@nickname: ttNodes
+@description: This extension offers various pipe nodes, fullscreen image viewer based on node history, dynamic widgets, interface customization, and more.
+"""
+
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 # tinyterraNodes developed in 2023 by tinyterra             https://github.com/TinyTerra                                                            #
 # for ComfyUI                                               https://github.com/comfyanonymous/ComfyUI                                               #
+# Like the pack and want to support me?                     https://www.buymeacoffee.com/tinyterra                                                  #
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
-ttN_version = '1.1.4'
+
+ttN_version = '1.2.0'
 
 MAX_RESOLUTION=8192
 
 import os
 import re
 import json
+import time
 import torch
+import psutil
 import random
 import datetime
 import comfy.sd
@@ -28,7 +39,6 @@ from collections import defaultdict
 from PIL.PngImagePlugin import PngInfo
 from PIL import Image, ImageDraw, ImageFont
 from comfy.model_patcher import ModelPatcher
-import comfy_extras.nodes_model_merging as Nmm
 from comfy_extras.chainner_models import model_loading
 from typing import Dict, List, Optional, Tuple, Union, Any
 from .adv_encode import advanced_encode, advanced_encode_XL
@@ -93,6 +103,10 @@ class ttNl:
     
     def p(self):
         print(self.header_value + self.label_value + self.title_value + self.input_string)
+        return self
+
+    def interrupt(self, msg):
+        raise Exception(msg)
 
 class ttNpaths:
     ComfyUI = folder_paths.base_path
@@ -108,6 +122,7 @@ class ttNloader:
             "vae": defaultdict(object),
             "lora": defaultdict(dict), # {lora_name: {UID: (model_lora, clip_lora)}}
         }
+        self.memory_threshold = self.determine_memory_threshold(0.7)
 
     def clean_values(self, values: str):
         original_values = values.split("; ")
@@ -132,25 +147,27 @@ class ttNloader:
         return cleaned_values
 
     def clear_unused_objects(self, desired_names: set, object_type: str):
-        for key in list(self.loaded_objects[object_type].keys()):
-            if key not in desired_names:
-                del self.loaded_objects[object_type][key]
+        keys = set(self.loaded_objects[object_type].keys())
+        for key in keys - desired_names:
+            del self.loaded_objects[object_type][key]
+
+    def get_input_value(self, entry, key):
+        val = entry["inputs"][key]
+        return val if isinstance(val, str) else val[0]
+
+    def process_pipe_loader(self, entry,
+                            desired_ckpt_names, desired_vae_names,
+                            desired_lora_names, desired_lora_settings, num_loras=3, suffix=""):
+        for idx in range(1, num_loras + 1):
+            lora_name_key = f"{suffix}lora{idx}_name"
+            desired_lora_names.add(self.get_input_value(entry, lora_name_key))
+            setting = f'{self.get_input_value(entry, lora_name_key)};{entry["inputs"][f"{suffix}lora{idx}_model_strength"]};{entry["inputs"][f"{suffix}lora{idx}_clip_strength"]}'
+            desired_lora_settings.add(setting)
+
+        desired_ckpt_names.add(self.get_input_value(entry, f"{suffix}ckpt_name"))
+        desired_vae_names.add(self.get_input_value(entry, f"{suffix}vae_name"))
 
     def update_loaded_objects(self, prompt):
-        def get_input_value(entry, key):
-            val = entry["inputs"][key]
-            return val if isinstance(val, str) else val[0]
-        
-        def process_pipe_loader(entry, num_loras=3, suffix=""):
-            for idx in range(1, (num_loras+1)):
-                lora_name_key = f"{suffix}lora{idx}_name"
-                desired_lora_names.add(get_input_value(entry, lora_name_key))
-                setting = f'{get_input_value(entry, lora_name_key)};{entry["inputs"][f"{suffix}lora{idx}_model_strength"]};{entry["inputs"][f"{suffix}lora{idx}_clip_strength"]}'
-                desired_lora_settings.add(setting)
-
-            desired_ckpt_names.add(get_input_value(entry, f"{suffix}ckpt_name"))
-            desired_vae_names.add(get_input_value(entry, f"{suffix}vae_name"))
-            
         desired_ckpt_names = set()
         desired_vae_names = set()
         desired_lora_names = set()
@@ -160,14 +177,17 @@ class ttNloader:
             class_type = entry["class_type"]
 
             if class_type == "ttN pipeLoader":
-                process_pipe_loader(entry)
-
+                self.process_pipe_loader(entry, desired_ckpt_names=desired_ckpt_names,
+                                         desired_vae_names=desired_vae_names,
+                                         desired_lora_names=desired_lora_names,
+                                         desired_lora_settings=desired_lora_settings)
+                
             elif class_type == "ttN pipeLoaderSDXL":
-                process_pipe_loader(entry, 2)
-                process_pipe_loader(entry, 2, "refiner_")
+                self.process_pipe_loader(entry, num_loras=2, suffix="refiner_", desired_ckpt_names=desired_ckpt_names, desired_vae_names=desired_vae_names, desired_lora_names=desired_lora_names, desired_lora_settings=desired_lora_settings)
+                self.process_pipe_loader(entry, num_loras=2, desired_ckpt_names=desired_ckpt_names, desired_vae_names=desired_vae_names, desired_lora_names=desired_lora_names, desired_lora_settings=desired_lora_settings)
 
             elif class_type == "ttN pipeKSampler":
-                lora_name = get_input_value(entry, "lora_name")
+                lora_name = self.get_input_value(entry, "lora_name")
                 desired_lora_names.add(lora_name)
                 setting = f'{lora_name};{entry["inputs"]["lora_model_strength"]};{entry["inputs"]["lora_clip_strength"]}'
                 desired_lora_settings.add(setting)
@@ -178,26 +198,86 @@ class ttNloader:
                     if entry["inputs"][axis_key] != "None":
                         axis_entry = entry["inputs"][axis_key].split(": ")[1]
                         vals = self.clean_values(entry["inputs"][f"{axis}_values"])
-                        
-                        if axis_entry == "vae_name":
-                            desired_vae_names.update(vals)
-                        elif axis_entry == "ckpt_name":
-                            desired_ckpt_names.update(vals)
-                        elif axis_entry in ["lora1_name", "lora2_name", "lora3_name"]:
-                            desired_lora_names.update(vals)
+                        desired_names_set = {
+                            "vae_name": desired_vae_names,
+                            "ckpt_name": desired_ckpt_names,
+                            "lora1_name": desired_lora_names,
+                            "lora2_name": desired_lora_names,
+                            "lora3_name": desired_lora_names,
+                        }
+                        desired_names_set[axis_entry].update(vals)
 
-        self.clear_unused_objects(desired_ckpt_names, "ckpt")
-        self.clear_unused_objects(desired_ckpt_names, "clip")
-        self.clear_unused_objects(desired_ckpt_names, "bvae")
-        self.clear_unused_objects(desired_vae_names, "vae")
-        self.clear_unused_objects(desired_lora_names, "lora")
+            elif class_type == "ttN multiModelMerge":
+                for letter in "ABC":
+                    desired_ckpt_names.add(self.get_input_value(entry, f"ckpt_{letter}_name"))
+
+        object_types = ["ckpt", "clip", "bvae", "vae", "lora"]
+        for object_type in object_types:
+            desired_names = desired_ckpt_names if object_type in ["ckpt", "clip", "bvae"] else desired_vae_names if object_type == "vae" else desired_lora_names
+            self.clear_unused_objects(desired_names, object_type)
+
+    def add_to_cache(self, obj_type, key, value):
+        """
+        Add an item to the cache with the current timestamp.
+        """
+        timestamped_value = (value, time.time())
+        self.loaded_objects[obj_type][key] = timestamped_value
+
+
+    def determine_memory_threshold(self, percentage=0.8):
+        """
+        Determines the memory threshold as a percentage of the total available memory.
+
+        Args:
+        - percentage (float): The fraction of total memory to use as the threshold. 
+                              Should be a value between 0 and 1. Default is 0.8 (80%).
+
+        Returns:
+        - memory_threshold (int): Memory threshold in bytes.
+        """
+        total_memory = psutil.virtual_memory().total
+        memory_threshold = total_memory * percentage
+        return memory_threshold
+    
+    def get_memory_usage(self):
+        """
+        Returns the memory usage of the current process in bytes.
+        """
+        process = psutil.Process(os.getpid())
+        return process.memory_info().rss
+
+    def eviction_based_on_memory(self):
+        """
+        Evicts objects from cache based on memory usage and priority.
+        """
+        current_memory = self.get_memory_usage()
+
+        if current_memory < self.memory_threshold:
+            return
+
+        eviction_order = ["vae", "lora", "bvae", "clip", "ckpt"]
+        
+        for obj_type in eviction_order:
+            if current_memory < self.memory_threshold:
+                break
+
+            # Sort items based on age (using the timestamp)
+            items = list(self.loaded_objects[obj_type].items())
+            items.sort(key=lambda x: x[1][1])  # Sorting by timestamp
+
+            for item in items:
+                if current_memory < self.memory_threshold:
+                    break
+                
+                del self.loaded_objects[obj_type][item[0]]
+                current_memory = self.get_memory_usage()
 
     def load_checkpoint(self, ckpt_name, config_name=None):
         cache_name = ckpt_name
         if config_name not in [None, "Default"]:
             cache_name = ckpt_name + "_" + config_name
         if cache_name in self.loaded_objects["ckpt"]:
-            return self.loaded_objects["ckpt"][cache_name], self.loaded_objects["clip"][cache_name], self.loaded_objects["bvae"][cache_name]
+            return self.loaded_objects["ckpt"][cache_name][0], self.loaded_objects["clip"][cache_name][0], self.loaded_objects["bvae"][cache_name][0]
 
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
 
@@ -207,34 +287,41 @@ class ttNloader:
         else:
             loaded_ckpt = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
 
-        self.loaded_objects["ckpt"][cache_name] = loaded_ckpt[0]
-        self.loaded_objects["clip"][cache_name] = loaded_ckpt[1]
-        self.loaded_objects["bvae"][cache_name] = loaded_ckpt[2]
+        self.add_to_cache("ckpt", cache_name, loaded_ckpt[0])
+        self.add_to_cache("clip", cache_name, loaded_ckpt[1])
+        self.add_to_cache("bvae", cache_name, loaded_ckpt[2])
+
+        self.eviction_based_on_memory()
+
 
         return loaded_ckpt[0], loaded_ckpt[1], loaded_ckpt[2]
 
     def load_vae(self, vae_name):
         if vae_name in self.loaded_objects["vae"]:
-            return self.loaded_objects["vae"][vae_name]
+            return self.loaded_objects["vae"][vae_name][0]
 
         vae_path = folder_paths.get_full_path("vae", vae_name)
         loaded_vae = comfy.sd.VAE(ckpt_path=vae_path)
-        self.loaded_objects["vae"][vae_name] = loaded_vae
+        self.add_to_cache("vae", vae_name, loaded_vae)
+        self.eviction_based_on_memory()
 
         return loaded_vae
 
     def load_lora(self, lora_name, model, clip, strength_model, strength_clip):
-        model_hash = str(model)[33:-1]
-        unique_id = f'{model_hash};{lora_name};{strength_model};{strength_clip}'
+        model_hash = str(model)[44:-1]
+        clip_hash = str(clip)[25:-1]
 
-        if lora_name in self.loaded_objects["lora"] and unique_id in self.loaded_objects["lora"][lora_name]:
-            return self.loaded_objects["lora"][lora_name][unique_id]
+        unique_id = f'{model_hash};{clip_hash};{lora_name};{strength_model};{strength_clip}'
+
+        if unique_id in self.loaded_objects["lora"] and unique_id in self.loaded_objects["lora"][lora_name]:
+            return self.loaded_objects["lora"][unique_id][0]
 
         lora_path = folder_paths.get_full_path("loras", lora_name)
         lora = comfy.utils.load_torch_file(lora_path, safe_load=True)
         model_lora, clip_lora = comfy.sd.load_lora_for_models(model, clip, lora, strength_model, strength_clip)
 
-        self.loaded_objects["lora"][lora_name][unique_id] = (model_lora, clip_lora)
+        self.add_to_cache("lora", unique_id, (model_lora, clip_lora))
+        self.eviction_based_on_memory()
 
         return model_lora, clip_lora
 
@@ -974,7 +1061,7 @@ def nsp_parse(text, seed=0, noodle_key='__', nspterminology=None, pantry_path=No
             seed += 1
             random.seed(seed)
 
-    ttNl(f'{new_text}').t(f'{title} [{my_unique_id}]').p()
+    ttNl(new_text).t(f'{title}[{my_unique_id}]').p()
 
 
     return new_text
@@ -1509,14 +1596,12 @@ class ttN_pipeLoaderSDXL:
             if clip_skip != 0:
                 clip.clip_layer(clip_skip)
 
-            if "__" in positive:
-                positive = nsp_parse(positive, seed, title="pipeLoaderSDXL positive", my_unique_id=my_unique_id)
+            positive = nsp_parse(positive, seed, title="pipeLoaderSDXL positive", my_unique_id=my_unique_id)
 
             positive_embeddings_final, positive_pooled = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
             positive_embeddings_final = [[positive_embeddings_final, {"pooled_output": positive_pooled}]]
 
-            if "__" in negative:
-                negative = nsp_parse(negative, seed)
+            negative = nsp_parse(negative, seed)
 
             negative_embeddings_final, negative_pooled = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
             negative_embeddings_final = [[negative_embeddings_final, {"pooled_output": negative_pooled}]]
@@ -1770,8 +1855,9 @@ class ttN_pipe_IN:
                 "latent": ("LATENT",),
                 "vae": ("VAE",),
                 "clip": ("CLIP",),
-                "image": ("IMAGE",),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            },"optional": {
+                "image": ("IMAGE",),
             },
             "hidden": {"ttNnodeVersion": ttN_pipe_IN.version},
         }
@@ -2077,7 +2163,6 @@ class ttN_XYPlot:
                    "output_individuals": output_individuals}
         
         return (xy_plot, )
-#---------------------------------------------------------------ttN/pipe END------------------------------------------------------------------------#
 
 class ttN_pipeEncodeConcat:
     version = '1.0.0'
@@ -2117,17 +2202,17 @@ class ttN_pipeEncodeConcat:
 
         positive_from = optional_positive_from if optional_positive_from is not None else pipe["positive"] 
         negative_from = optional_negative_from if optional_negative_from is not None else pipe["negative"]
-        pipe["clip"] = optional_clip if optional_clip is not None else pipe["clip"]
+        samp_clip = optional_clip if optional_clip is not None else pipe["clip"]
 
         new_text = ''
 
         def enConcatConditioning(text, token_normalization, weight_interpretation, conditioning_from, new_text):
             out = []
             if "__" in text:
-                text = nsp_parse(text, pipe["seed"], title="conditionConcat", my_unique_id=my_unique_id)
+                text = nsp_parse(text, pipe["seed"], title="encodeConcat", my_unique_id=my_unique_id)
                 new_text += text
 
-            conditioning_to, pooled = advanced_encode(pipe["clip"], text, token_normalization, weight_interpretation, w_max=1.0, apply_to_pooled='enable')
+            conditioning_to, pooled = advanced_encode(samp_clip, text, token_normalization, weight_interpretation, w_max=1.0, apply_to_pooled='enable')
             conditioning_to = [[conditioning_to, {"pooled_output": pooled}]]
 
             if len(conditioning_from) > 1:
@@ -2147,107 +2232,12 @@ class ttN_pipeEncodeConcat:
             pipe["positive"] = enConcatConditioning(positive, positive_token_normalization, positive_weight_interpretation, positive_from, new_text)
         if negative != '':
             pipe["negative"] = enConcatConditioning(negative, negative_token_normalization, negative_weight_interpretation, negative_from, new_text)
-
-        return (pipe, pipe["positive"], pipe["negative"], pipe["clip"], { "ui": { "string": new_text } } )
-
-class ttN_modelMerge:
-    version = '1.0.0'
-    def __init__(self):
-        pass
-    
-    @classmethod
-    def INPUT_TYPES(s):
-        return {"required": {
-                    "ckpt_name1": (folder_paths.get_filename_list("checkpoints"), ),
-                    "config_name1": (["Default",] + folder_paths.get_filename_list("configs"), {"default": "Default"} ),
-
-                    "ckpt_name2": (folder_paths.get_filename_list("checkpoints"), ),
-                    "config_name2": (["Default",] + folder_paths.get_filename_list("configs"), {"default": "Default"} ),
-
-                    "model_merge_type": (["Simple", "Blocks", "Subtract", "Add", "Model1", "Model2"],),
-                    # Simple
-                    "simple_ratio": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    # Blocks
-                    "block_input": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    "block_middle": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    "block_out": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                    # Subtract
-                    "subtract_multiplier": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
-
-                    "clip_merge_type": (["Simple", "Clip1", "Clip2"],),
-                    "clip_simple_ratio": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-
-                    "vae": (["bvae1", "bvae2"],),
-                    "save_model": (["True", "False"],),
-                    "save_prefix": ("STRING", {"default": "checkpoints/ComfyUI"}),
-                },
-                "optional": {
-                    "model_override": ("MODEL",),
-                    "vae_override": ("VAE",),
-                    "clip_override": ("CLIP",),
-                },
-                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "ttNnodeVersion": ttN_modelMerge.version},
-        }
-    
-    RETURN_TYPES = ("MODEL", "VAE", "CLIP")
-    RETURN_NAMES = ("model", "vae", "clip")
-    FUNCTION = "conmeow"
-
-    CATEGORY = "ttN"
-
-    def conmeow(self, ckpt_name1, config_name1, ckpt_name2, config_name2, 
-                model_merge_type, simple_ratio, block_input, block_middle, block_out, 
-                subtract_multiplier, clip_merge_type, clip_simple_ratio, vae, save_model, save_prefix, model_override=None, vae_override=None, clip_override=None, prompt=None, extra_pnginfo=None):
         
-        model: ModelPatcher | None = None
-        clip: CLIP | None = None
-        model1: ModelPatcher | None = None
-        clip1: CLIP | None = None
-        vae1: VAE | None = None
-        model2: ModelPatcher | None = None
-        clip2: CLIP | None = None
-        vae2: VAE | None = None
-    
-        model1, clip1, vae1 = ttNcache.load_checkpoint(ckpt_name1, config_name1)
-        model2, clip2, vae2 = ttNcache.load_checkpoint(ckpt_name2, config_name2)
+        pipe["clip"] = samp_clip
 
-        if model_merge_type == "Simple":
-            model = Nmm.ModelMergeSimple.merge(Nmm.ModelMergeSimple(), model1, model2, simple_ratio)[0]
-        elif model_merge_type == "Blocks":
-            model = Nmm.ModelMergeBlocks.merge(Nmm.ModelMergeBlocks(), model1, model2, block_input=block_input, block_middle=block_middle, block_out=block_out)[0]
-        elif model_merge_type == "Subtract":
-            model = Nmm.ModelSubtract.merge(Nmm.ModelSubtract(), model1, model2, subtract_multiplier)[0]
-        elif model_merge_type == "Add":
-            model = Nmm.ModelAdd.merge(Nmm.ModelAdd(), model1, model2)[0]
-        elif model_merge_type == "Model1":
-            model = model1
-        elif model_merge_type == "Model2":
-            model = model2
+        return (pipe, pipe["positive"], pipe["negative"], samp_clip, { "ui": { "string": new_text } } )
+#---------------------------------------------------------------ttN/pipe END------------------------------------------------------------------------#
 
-        if model_override is not None:
-            model = model_override
-
-        if clip_merge_type == "Simple": 
-            clip = Nmm.CLIPMergeSimple.merge(Nmm.CLIPMergeSimple(), clip1, clip2, clip_simple_ratio)[0]
-        elif clip_merge_type == "Clip1":
-            clip = clip1
-        elif clip_merge_type == "Clip2":
-            clip = clip2
-        
-        if clip_override is not None:
-            clip = clip_override
-
-        if vae == "bvae1":
-            vae = vae1
-        elif vae == "bvae2":
-            vae = vae2
-        
-        if vae_override is not None:
-            vae = vae_override
-
-        if save_model == "True":
-            Nmm.CheckpointSave.save(Nmm.CheckpointSave(), model, clip, vae, save_prefix, prompt, extra_pnginfo)
-        return (model, vae, clip)
 
 class ttN_multiModelMerge:
     version = '1.0.0'
