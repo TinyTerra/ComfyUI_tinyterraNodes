@@ -1280,9 +1280,6 @@ class ttN_TSC_pipeKSampler:
 
     def sample(self, pipe, lora_name, lora_model_strength, lora_clip_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
                optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, seed=None, xyPlot=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False, disable_noise=False):
-
-        pipe = {**pipe}
-
         # Clean Loader Models from Global
         ttNcache.update_loaded_objects(prompt)
 
@@ -1290,45 +1287,58 @@ class ttN_TSC_pipeKSampler:
 
         ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo)
 
-        pipe["model"] = optional_model if optional_model is not None else pipe["model"]
-        pipe["positive"] = optional_positive if optional_positive is not None else pipe["positive"]
-        pipe["negative"] = optional_negative if optional_negative is not None else pipe["negative"]
-        pipe["samples"] = optional_latent if optional_latent is not None else pipe["samples"]
-        pipe["vae"] = optional_vae if optional_vae is not None else pipe["vae"]
-        pipe["clip"] = optional_clip if optional_clip is not None else pipe["clip"]
-
+        samp_model = optional_model if optional_model is not None else pipe["model"]
+        samp_positive = optional_positive if optional_positive is not None else pipe["positive"]
+        samp_negative = optional_negative if optional_negative is not None else pipe["negative"]
+        samp_samples = optional_latent if optional_latent is not None else pipe["samples"]
+        samp_vae = optional_vae if optional_vae is not None else pipe["vae"]
+        samp_clip = optional_clip if optional_clip is not None else pipe["clip"]
 
         if seed in (None, 'undefined'):
-            seed = pipe["seed"]
+            samp_seed = pipe["seed"]
         else:
-            pipe["seed"] = seed      
+            samp_seed = seed      
 
-        def process_sample_state(pipe, lora_name, lora_model_strength, lora_clip_strength,
+        def process_sample_state(pipe, samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
                                  steps, cfg, sampler_name, scheduler, denoise,
                                  image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, disable_noise=disable_noise):
             # Load Lora
             if lora_name not in (None, "None"):
-                pipe["model"], pipe["clip"] = ttNcache.load_lora(lora_name, pipe["model"], pipe["clip"], lora_model_strength, lora_clip_strength)
+                samp_model, samp_clip = ttNcache.load_lora(lora_name, samp_model, samp_clip, lora_model_strength, lora_clip_strength)
 
             # Upscale samples if enabled
-            pipe["samples"] = sampler.handle_upscale(pipe["samples"], upscale_method, factor, crop)
+            samp_samples = sampler.handle_upscale(samp_samples, upscale_method, factor, crop)
 
-            pipe["samples"] = sampler.common_ksampler(pipe["model"], pipe["seed"], steps, cfg, sampler_name, scheduler, pipe["positive"], pipe["negative"], pipe["samples"], denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
+            samp_samples = sampler.common_ksampler(samp_model, samp_seed, steps, cfg, sampler_name, scheduler, samp_positive, samp_negative, samp_samples, denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
       
 
-            latent = pipe["samples"]["samples"]
-            pipe["images"] = pipe["vae"].decode(latent).cpu()
+            latent = samp_samples["samples"]
+            samp_images = samp_vae.decode(latent).cpu()
 
-            results = ttN_save.images(pipe["images"], save_prefix, image_output)
+            results = ttN_save.images(samp_images, save_prefix, image_output)
 
             sampler.update_value_by_id("results", my_unique_id, results)
 
             # Clean loaded_objects
             ttNcache.update_loaded_objects(prompt)
 
-            new_pipe = {**pipe}
+            new_pipe = {
+                "model": samp_model,
+                "positive": samp_positive,
+                "negative": samp_negative,
+                "vae": samp_vae,
+                "clip": samp_clip,
+
+                "samples": samp_samples,
+                "images": samp_images,
+                "seed": samp_seed,
+
+                "loader_settings": pipe["loader_settings"],
+            }
             
             sampler.update_value_by_id("pipe_line", my_unique_id, new_pipe)
+
+            del pipe
             
             if image_output in ("Hide", "Hide/Save"):
                 return sampler.get_output(new_pipe)
@@ -1337,18 +1347,16 @@ class ttN_TSC_pipeKSampler:
                     "result": sampler.get_output(new_pipe)}
 
         def process_hold_state(pipe, image_output, my_unique_id):
-            ttNl('Held').t(f'pipeKSampler[{my_unique_id}]').p()
-
             last_pipe = sampler.init_state(my_unique_id, "pipe_line", pipe)
 
             last_results = sampler.init_state(my_unique_id, "results", list())
-
+            
             if image_output in ("Hide", "Hide/Save"):
                 return sampler.get_output(last_pipe)
 
             return {"ui": {"images": last_results}, "result": sampler.get_output(last_pipe)} 
 
-        def process_xyPlot(pipe, lora_name, lora_model_strength, lora_clip_strength,
+        def process_xyPlot(pipe, samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
                            steps, cfg, sampler_name, scheduler, denoise,
                            image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, xyPlot):
             
@@ -1362,9 +1370,9 @@ class ttN_TSC_pipeKSampler:
             plot_image_vars = {
                 "x_node_type": sampleXYplot.x_node_type, "y_node_type": sampleXYplot.y_node_type,
                 "lora_name": lora_name, "lora_model_strength": lora_model_strength, "lora_clip_strength": lora_clip_strength,
-                "steps": steps, "cfg": cfg, "sampler_name": sampler_name, "scheduler": scheduler, "denoise": denoise, "seed": pipe["seed"],
+                "steps": steps, "cfg": cfg, "sampler_name": sampler_name, "scheduler": scheduler, "denoise": denoise, "seed": samp_seed,
 
-                "model": pipe["model"], "vae": pipe["vae"], "clip": pipe["clip"], "positive_cond": pipe["positive"], "negative_cond": pipe["negative"],
+                "model": samp_model, "vae": samp_vae, "clip": samp_clip, "positive_cond": samp_positive, "negative_cond": samp_negative,
                 
                 "ckpt_name": pipe['loader_settings']['ckpt_name'],
                 "vae_name": pipe['loader_settings']['vae_name'],
@@ -1390,11 +1398,11 @@ class ttN_TSC_pipeKSampler:
             
             latents_plot = sampleXYplot.get_labels_and_sample(plot_image_vars, latent_image, preview_latent, start_step, last_step, force_full_denoise, disable_noise)
 
-            pipe['samples'] = {"samples": latents_plot}
+            samp_samples = {"samples": latents_plot}
 
             images = sampleXYplot.plot_images_and_labels()
 
-            pipe["images"] = images
+            samp_images = images
 
             results = ttN_save.images(images, save_prefix, image_output)
 
@@ -1403,9 +1411,23 @@ class ttN_TSC_pipeKSampler:
             # Clean loaded_objects
             ttNcache.update_loaded_objects(prompt)
 
-            new_pipe = {**pipe}
+            new_pipe = {
+                "model": samp_model,
+                "positive": samp_positive,
+                "negative": samp_negative,
+                "vae": samp_vae,
+                "clip": samp_clip,
+
+                "samples": samp_samples,
+                "images": samp_images,
+                "seed": samp_seed,
+
+                "loader_settings": pipe["loader_settings"],
+            }
 
             sampler.update_value_by_id("pipe_line", my_unique_id, new_pipe)
+
+            del pipe
 
             if image_output in ("Hide", "Hide/Save"):
                 return sampler.get_output(new_pipe)
@@ -1417,10 +1439,11 @@ class ttN_TSC_pipeKSampler:
             preview_latent = False
 
         if sampler_state == "Sample" and xyPlot is None:
-            return process_sample_state(pipe, lora_name, lora_model_strength, lora_clip_strength, steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent)
+            return process_sample_state(pipe, samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
+                                        steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent)
 
         elif sampler_state == "Sample" and xyPlot is not None:
-            return process_xyPlot(pipe, lora_name, lora_model_strength, lora_clip_strength, steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, xyPlot)
+            return process_xyPlot(pipe, samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength, steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, xyPlot)
 
         elif sampler_state == "Hold":
             return process_hold_state(pipe, image_output, my_unique_id)
