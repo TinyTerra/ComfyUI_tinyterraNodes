@@ -1068,7 +1068,7 @@ def nsp_parse(text, seed=0, noodle_key='__', nspterminology=None, pantry_path=No
 
 #---------------------------------------------------------------ttN/pipe START----------------------------------------------------------------------#
 class ttN_TSC_pipeLoader:
-    version = '1.1.0'
+    version = '1.1.1'
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": { 
@@ -1102,7 +1102,7 @@ class ttN_TSC_pipeLoader:
                         "batch_size": ("INT", {"default": 1, "min": 1, "max": 64}),
                         "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                         },                
-                "optional": {"optional_clip": ("CLIP",),},
+                "optional": {"optional_clip": ("CLIP",), "optional_lora_stack": ("LORA_STACK",),},
                 "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_TSC_pipeLoader.version}, "my_unique_id": "UNIQUE_ID",}
 
     RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT",)
@@ -1117,7 +1117,7 @@ class ttN_TSC_pipeLoader:
                        lora3_name, lora3_model_strength, lora3_clip_strength, 
                        positive, positive_token_normalization, positive_weight_interpretation, 
                        negative, negative_token_normalization, negative_weight_interpretation, 
-                       empty_latent_width, empty_latent_height, batch_size, seed, optional_clip=None, prompt=None, my_unique_id=None):
+                       empty_latent_width, empty_latent_height, batch_size, seed, optional_clip=None, optional_lora_stack=None, prompt=None, my_unique_id=None):
 
         model: ModelPatcher | None = None
         clip: CLIP | None = None
@@ -1131,11 +1131,14 @@ class ttN_TSC_pipeLoader:
         ttNcache.update_loaded_objects(prompt)
 
         # Load models
-
         model, clip, vae = ttNcache.load_checkpoint(ckpt_name, config_name)
 
         if optional_clip is not None:
             clip = optional_clip
+
+        if optional_lora_stack is not None:
+            for lora in optional_lora_stack:
+                model, clip = ttNcache.load_lora(lora[0], model, clip, lora[1], lora[2])
 
         if lora1_name != "None":
             model, clip = ttNcache.load_lora(lora1_name, model, clip, lora1_model_strength, lora1_clip_strength)
@@ -1154,20 +1157,18 @@ class ttN_TSC_pipeLoader:
         if not clip:
             raise Exception("No CLIP found")
         
-        clip = clip.clone()
+        clipped = clip.clone()
         if clip_skip != 0:
-            clip.clip_layer(clip_skip)
+            clipped.clip_layer(clip_skip)
         
-        if "__" in positive:
-            positive = nsp_parse(positive, seed, title='pipeLoader Positive', my_unique_id=my_unique_id)
+        positive = nsp_parse(positive, seed, title='pipeLoader Positive', my_unique_id=my_unique_id)
 
-        positive_embeddings_final, positive_pooled = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
+        positive_embeddings_final, positive_pooled = advanced_encode(clipped, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
         positive_embeddings_final = [[positive_embeddings_final, {"pooled_output": positive_pooled}]]
 
-        if "__" in negative:
-            negative = nsp_parse(negative, seed, title='pipeLoader Negative', my_unique_id=my_unique_id)
+        negative = nsp_parse(negative, seed, title='pipeLoader Negative', my_unique_id=my_unique_id)
 
-        negative_embeddings_final, negative_pooled = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
+        negative_embeddings_final, negative_pooled = advanced_encode(clipped, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
         negative_embeddings_final = [[negative_embeddings_final, {"pooled_output": negative_pooled}]]
         image = ttNsampler.pil2tensor(Image.new('RGB', (1, 1), (0, 0, 0)))
 
@@ -1177,12 +1178,6 @@ class ttN_TSC_pipeLoader:
                 "negative": negative_embeddings_final,
                 "vae": vae,
                 "clip": clip,
-
-                "refiner_model": None,
-                "refiner_positive": None,
-                "refiner_negative": None,
-                "refiner_vae": None,
-                "refiner_clip": None,
 
                 "samples": samples,
                 "images": image,
