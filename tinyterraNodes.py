@@ -1538,7 +1538,7 @@ class ttN_pipeLoaderSDXL:
                         "lora2_model_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
                         "lora2_clip_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
 
-                        "refiner_ckpt_name": (folder_paths.get_filename_list("checkpoints"), ),
+                        "refiner_ckpt_name": (["None"] + folder_paths.get_filename_list("checkpoints"), ),
                         "refiner_vae_name": (["Baked VAE"] + folder_paths.get_filename_list("vae"),),
 
                         "refiner_lora1_name": (["None"] + folder_paths.get_filename_list("loras"),),
@@ -1610,18 +1610,18 @@ class ttN_pipeLoaderSDXL:
             if not clip:
                 raise Exception("No CLIP found")
             
-            clip = clip.clone()
+            clipped = clip.clone()
             if clip_skip != 0:
-                clip.clip_layer(clip_skip)
+                clipped.clip_layer(clip_skip)
 
             positive = nsp_parse(positive, seed, title="pipeLoaderSDXL positive", my_unique_id=my_unique_id)
 
-            positive_embeddings_final, positive_pooled = advanced_encode(clip, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
+            positive_embeddings_final, positive_pooled = advanced_encode(clipped, positive, positive_token_normalization, positive_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
             positive_embeddings_final = [[positive_embeddings_final, {"pooled_output": positive_pooled}]]
 
             negative = nsp_parse(negative, seed)
 
-            negative_embeddings_final, negative_pooled = advanced_encode(clip, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
+            negative_embeddings_final, negative_pooled = advanced_encode(clipped, negative, negative_token_normalization, negative_weight_interpretation, w_max=1.0, apply_to_pooled='enable')
             negative_embeddings_final = [[negative_embeddings_final, {"pooled_output": negative_pooled}]]
 
             return model, positive_embeddings_final, negative_embeddings_final, vae, clip
@@ -1636,11 +1636,14 @@ class ttN_pipeLoaderSDXL:
                                                                                     positive, positive_token_normalization, positive_weight_interpretation,
                                                                                     negative, negative_token_normalization, negative_weight_interpretation)
         
-        refiner_model, refiner_positive_embeddings, refiner_negative_embeddings, refiner_vae, refiner_clip = SDXL_loader(refiner_ckpt_name, refiner_vae_name,
-                                                                                                                            refiner_lora1_name, refiner_lora1_model_strength, refiner_lora1_clip_strength,
-                                                                                                                            refiner_lora2_name, refiner_lora2_model_strength, refiner_lora2_clip_strength, 
-                                                                                                                            positive, positive_token_normalization, positive_weight_interpretation,
-                                                                                                                            negative, negative_token_normalization, negative_weight_interpretation)
+        if refiner_ckpt_name != "None":
+            refiner_model, refiner_positive_embeddings, refiner_negative_embeddings, refiner_vae, refiner_clip = SDXL_loader(refiner_ckpt_name, refiner_vae_name,
+                                                                                                                                refiner_lora1_name, refiner_lora1_model_strength, refiner_lora1_clip_strength,
+                                                                                                                                refiner_lora2_name, refiner_lora2_model_strength, refiner_lora2_clip_strength, 
+                                                                                                                                positive, positive_token_normalization, positive_weight_interpretation,
+                                                                                                                                negative, negative_token_normalization, negative_weight_interpretation)
+        else:
+            refiner_model, refiner_positive_embeddings, refiner_negative_embeddings, refiner_vae, refiner_clip = None, None, None, None, None
 
         # Clean models from loaded_objects
         ttNcache.update_loaded_objects(prompt)
@@ -1726,7 +1729,7 @@ class ttN_pipeKSamplerSDXL:
                     "sampler_state": (["Sample", "Hold"], ),
 
                     "base_steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                    "refiner_steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
+                    "refiner_steps": ("INT", {"default": 20, "min": 0, "max": 10000}),
                     "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
                     "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
                     "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
@@ -1776,62 +1779,90 @@ class ttN_pipeKSamplerSDXL:
 
         ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo)
 
-        sdxl_pipe["samples"] = optional_latent if optional_latent is not None else sdxl_pipe["samples"]
+        sdxl_samples = optional_latent if optional_latent is not None else sdxl_pipe["samples"]
 
-        sdxl_pipe["model"] = optional_model if optional_model is not None else sdxl_pipe["model"]
-        sdxl_pipe["positive"] = optional_positive if optional_positive is not None else sdxl_pipe["positive"]
-        sdxl_pipe["negative"] = optional_negative if optional_negative is not None else sdxl_pipe["negative"]
-        sdxl_pipe["vae"] = optional_vae if optional_vae is not None else sdxl_pipe["vae"]
-        sdxl_pipe["clip"] = optional_clip if optional_clip is not None else sdxl_pipe["clip"]
-        sdxl_pipe["refiner_model"] = optional_refiner_model if optional_refiner_model is not None else sdxl_pipe["refiner_model"]
-        sdxl_pipe["refiner_positive"] = optional_refiner_positive if optional_refiner_positive is not None else sdxl_pipe["refiner_positive"]
-        sdxl_pipe["refiner_negative"] = optional_refiner_negative if optional_refiner_negative is not None else sdxl_pipe["refiner_negative"]
-        sdxl_pipe["refiner_vae"] = optional_refiner_vae if optional_refiner_vae is not None else sdxl_pipe["refiner_vae"]
+        sdxl_model = optional_model if optional_model is not None else sdxl_pipe["model"]
+        sdxl_positive = optional_positive if optional_positive is not None else sdxl_pipe["positive"]
+        sdxl_negative = optional_negative if optional_negative is not None else sdxl_pipe["negative"]
+        sdxl_vae = optional_vae if optional_vae is not None else sdxl_pipe["vae"]
+        sdxl_clip = optional_clip if optional_clip is not None else sdxl_pipe["clip"]
+        sdxl_refiner_model = optional_refiner_model if optional_refiner_model is not None else sdxl_pipe["refiner_model"]
+        sdxl_refiner_positive = optional_refiner_positive if optional_refiner_positive is not None else sdxl_pipe["refiner_positive"]
+        sdxl_refiner_negative = optional_refiner_negative if optional_refiner_negative is not None else sdxl_pipe["refiner_negative"]
+        sdxl_refiner_vae = optional_refiner_vae if optional_refiner_vae is not None else sdxl_pipe["refiner_vae"]
+        sdxl_refiner_clip = sdxl_pipe["refiner_clip"]
 
         if seed in (None, 'undefined'):
-            seed = sdxl_pipe["seed"]
+            sdxl_seed = sdxl_pipe["seed"]
         else:
-            sdxl_pipe["seed"] = seed      
+            sdxl_seed = seed      
 
-        def process_sample_state(sdxl_pipe, base_steps, refiner_steps,
-                                 cfg, sampler_name, scheduler, denoise,
+        def process_sample_state(sdxl_pipe, sdxl_samples, sdxl_model, sdxl_positive, sdxl_negative, sdxl_vae, sdxl_clip, sdxl_seed,
+                                 sdxl_refiner_model, sdxl_refiner_positive, sdxl_refiner_negative, sdxl_refiner_vae, sdxl_refiner_clip,
+                                 base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise,
                                  image_output, save_prefix, prompt, my_unique_id, preview_latent, disable_noise=disable_noise):
             
             total_steps = base_steps + refiner_steps
 
             # Upscale samples if enabled
-            sdxl_pipe["samples"] = sampler.handle_upscale(sdxl_pipe["samples"], upscale_method, factor, crop)
+            sdxl_samples = sampler.handle_upscale(sdxl_samples, upscale_method, factor, crop)
 
-            # Base Sample
-            sdxl_pipe["samples"] = sampler.common_ksampler(sdxl_pipe["model"], sdxl_pipe["seed"], total_steps, cfg, 
-                                                           sampler_name, scheduler, sdxl_pipe["positive"], sdxl_pipe["negative"], sdxl_pipe["samples"], 
-                                                           denoise=denoise, preview_latent=preview_latent, start_step=0, last_step=base_steps, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
 
-            # Refiner Sample
-            sdxl_pipe["samples"] = sampler.common_ksampler(sdxl_pipe["refiner_model"], sdxl_pipe["seed"], total_steps, cfg, 
-                                                           sampler_name, scheduler, sdxl_pipe["refiner_positive"], sdxl_pipe["refiner_negative"], sdxl_pipe["samples"], 
-                                                           denoise=denoise, preview_latent=preview_latent, start_step=base_steps, last_step=10000, force_full_denoise=True, disable_noise=True)
+            if (refiner_steps > 0) and (sdxl_refiner_model not in [None, "None"]):
+                # Base Sample
+                sdxl_samples = sampler.common_ksampler(sdxl_model, sdxl_seed, total_steps, cfg, sampler_name, scheduler, sdxl_positive, sdxl_negative, sdxl_samples,
+                                                       denoise=denoise, preview_latent=preview_latent, start_step=0, last_step=base_steps, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
 
-            latent = sdxl_pipe["samples"]["samples"]
-            sdxl_pipe["images"] = sdxl_pipe["refiner_vae"].decode(latent).cpu()
-            del latent
+                # Refiner Sample
+                sdxl_samples = sampler.common_ksampler(sdxl_refiner_model, sdxl_seed, total_steps, cfg, sampler_name, scheduler, sdxl_refiner_positive, sdxl_refiner_negative, sdxl_samples,
+                                                       denoise=denoise, preview_latent=preview_latent, start_step=base_steps, last_step=10000, force_full_denoise=True, disable_noise=True)
+                
+                latent = sdxl_samples["samples"]
+                sdxl_images = sdxl_refiner_vae.decode(latent).cpu()
+                del latent
+            else:
+                sdxl_samples = sampler.common_ksampler(sdxl_model, sdxl_seed, base_steps, cfg, sampler_name, scheduler, sdxl_positive, sdxl_negative, sdxl_samples,
+                                                       denoise=denoise, preview_latent=preview_latent, start_step=0, last_step=base_steps, force_full_denoise=True, disable_noise=disable_noise)
 
-            results = ttN_save.images(sdxl_pipe["images"], save_prefix, image_output)
+                latent = sdxl_samples["samples"]
+                sdxl_images = sdxl_vae.decode(latent).cpu()
+                del latent
+
+            results = ttN_save.images(sdxl_images, save_prefix, image_output)
 
             sampler.update_value_by_id("results", my_unique_id, results)
 
             # Clean loaded_objects
             ttNcache.update_loaded_objects(prompt)
+
+            new_sdxl_pipe = {"model": sdxl_model,
+                "positive": sdxl_positive,
+                "negative": sdxl_negative,
+                "vae": sdxl_vae,
+                "clip": sdxl_clip,
+
+                "refiner_model": sdxl_refiner_model,
+                "refiner_positive": sdxl_refiner_positive,
+                "refiner_negative": sdxl_refiner_negative,
+                "refiner_vae": sdxl_refiner_vae,
+                "refiner_clip": sdxl_refiner_clip,
+
+                "samples": sdxl_samples,
+                "images": sdxl_images,
+                "seed": sdxl_seed,
+ 
+                "loader_settings": sdxl_pipe["loader_settings"],
+            }
             
-            sampler.update_value_by_id("pipe_line", my_unique_id, sdxl_pipe)
+            del sdxl_pipe
+
+            sampler.update_value_by_id("pipe_line", my_unique_id, new_sdxl_pipe)
             
             if image_output in ("Hide", "Hide/Save"):
-                return sampler.get_output_sdxl(sdxl_pipe)
-            
-            print('FINAL: ', sdxl_pipe)
-            
+                return sampler.get_output_sdxl(new_sdxl_pipe)
+                        
             return {"ui": {"images": results},
-                    "result": sampler.get_output_sdxl(sdxl_pipe)}
+                    "result": sampler.get_output_sdxl(new_sdxl_pipe)}
 
         def process_hold_state(sdxl_pipe, image_output, my_unique_id):
             ttNl('Held').t(f'pipeKSamplerSDXL[{my_unique_id}]').p()
@@ -1850,7 +1881,8 @@ class ttN_pipeKSamplerSDXL:
             preview_latent = False
 
         if sampler_state == "Sample" and xyPlot is None:
-            return process_sample_state(sdxl_pipe, base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, my_unique_id, preview_latent)
+            return process_sample_state(sdxl_pipe, sdxl_samples, sdxl_model, sdxl_positive, sdxl_negative, sdxl_vae, sdxl_clip, sdxl_seed,
+                                        sdxl_refiner_model, sdxl_refiner_positive, sdxl_refiner_negative, sdxl_refiner_vae, sdxl_refiner_clip, base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, my_unique_id, preview_latent)
 
         #elif sampler_state == "Sample" and xyPlot is not None:
         #    return process_xyPlot(sdxl_pipe, lora_name, lora_model_strength, lora_clip_strength, steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, xyPlot)
