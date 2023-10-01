@@ -186,7 +186,7 @@ class ttNloader:
                 self.process_pipe_loader(entry, num_loras=2, suffix="refiner_", desired_ckpt_names=desired_ckpt_names, desired_vae_names=desired_vae_names, desired_lora_names=desired_lora_names, desired_lora_settings=desired_lora_settings)
                 self.process_pipe_loader(entry, num_loras=2, desired_ckpt_names=desired_ckpt_names, desired_vae_names=desired_vae_names, desired_lora_names=desired_lora_names, desired_lora_settings=desired_lora_settings)
 
-            elif class_type == "ttN pipeKSampler":
+            elif class_type == "ttN pipeKSampler" or class_type == "ttN pipeKSamplerAdvanced":
                 lora_name = self.get_input_value(entry, "lora_name")
                 desired_lora_names.add(lora_name)
                 setting = f'{lora_name};{entry["inputs"]["lora_model_strength"]};{entry["inputs"]["lora_clip_strength"]}'
@@ -201,11 +201,13 @@ class ttNloader:
                         desired_names_set = {
                             "vae_name": desired_vae_names,
                             "ckpt_name": desired_ckpt_names,
+                            "lora_name": desired_lora_names,
                             "lora1_name": desired_lora_names,
                             "lora2_name": desired_lora_names,
                             "lora3_name": desired_lora_names,
                         }
-                        desired_names_set[axis_entry].update(vals)
+                        if desired_names_set.get(axis_entry) is not None:
+                            desired_names_set[axis_entry].update(vals)
 
             elif class_type == "ttN multiModelMerge":
                 for letter in "ABC":
