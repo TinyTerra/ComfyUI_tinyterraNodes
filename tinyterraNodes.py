@@ -2076,7 +2076,8 @@ class ttN_pipe_2DETAILER:
     CATEGORY = "ttN/pipe"
 
     def flush(self, pipe, bbox_detector, wildcard, sam_model_opt=None, segm_detector_opt=None, detailer_hook=None):
-        detailer_pipe = (pipe.get('model'), pipe.get('clip'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'), wildcard, bbox_detector, segm_detector_opt, sam_model_opt, detailer_hook)
+        detailer_pipe = (pipe.get('model'), pipe.get('clip'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'), wildcard,
+                         bbox_detector, segm_detector_opt, sam_model_opt, detailer_hook, None, None, None, None)
         return (detailer_pipe, pipe, )
 
 class ttN_XYPlot:
@@ -2288,9 +2289,87 @@ class ttN_pipeEncodeConcat:
         pipe["clip"] = samp_clip
 
         return (pipe, pipe["positive"], pipe["negative"], samp_clip, { "ui": { "string": new_text } } )
+
+class ttN_pipeLoraStack:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        inputs = {
+            "required": {
+                "toggle": ([True, False],),
+                "mode": (["simple", "advanced"],),
+                "num_loras": ("INT", {"default": 1, "min": 0, "max": 20}),
+            },
+            "optional": {
+                "optional_pipe": ("PIPE_LINE", {"default": None}),
+                "optional_lora_stack": ("LORA_STACK",),
+            }, 
+            "hidden": {
+                "ttNnodeVersion": (ttN_pipeLoraStack.version),
+            },
+        }
+
+        for i in range(1, 21):
+            inputs["optional"][f"lora_{i}_name"] = (["None"] + folder_paths.get_filename_list("loras"),{"default": "None"})
+            inputs["optional"][f"lora_{i}_strength"] = ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}) 
+            inputs["optional"][f"lora_{i}_model_strength"] = ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01})
+            inputs["optional"][f"lora_{i}_clip_strength"] = ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01})
+        
+        return inputs
+    
+    
+    RETURN_TYPES = ("PIPE_LINE", "LORA_STACK",)
+    RETURN_NAMES = ("optional_pipe","lora_stack",)
+    FUNCTION = "stack"
+
+    CATEGORY = "ttN/pipe"
+
+    def stack(self, toggle, mode, num_loras, optional_pipe=None, lora_stack=None, **kwargs):
+        print(f"stack({toggle}, {mode})")
+        if (toggle in [False, None, "False"]) or (kwargs is None):
+            return optional_pipe, None
+        
+        loras = []
+
+        # Import Stack values
+        if lora_stack is not None:
+            loras.extend([l for l in lora_stack if l[0] != "None"])
+
+        # Import Lora values
+        for i in range(1, num_loras + 1):
+            lora_name = kwargs.get(f"lora_{i}_name")
+            if lora_name in ["None", None]:
+                continue
+
+            if mode == "simple":
+                lora_strength = float(kwargs.get(f"lora_{i}_strength"))
+                loras.append((lora_name, lora_strength, lora_strength))
+                continue
+
+            if mode == "advanced":
+                model_strength = float(kwargs.get(f"lora_{i}_model_strength"))
+                clip_strength = float(kwargs.get(f"lora_{i}_clip_strength"))
+                loras.append((lora_name, model_strength, clip_strength))
+                continue
+        
+        # Load Loras
+        if optional_pipe is not None and len(loras) != 0:
+            model = optional_pipe.get("model")
+            clip = optional_pipe.get("clip")
+            
+            for lora in loras:
+                model, clip = ttNcache.load_lora(lora[0], model, clip, lora[1], lora[2])
+            
+            optional_pipe["model"] = model
+            optional_pipe["clip"] = clip
+
+        return optional_pipe, loras
 #---------------------------------------------------------------ttN/pipe END------------------------------------------------------------------------#
 
-#----------------------------------------------------------------model START------------------------------------------------------------------------#
+#----------------------------------------------------------------misc START------------------------------------------------------------------------#
 WEIGHTED_SUM = "Weighted sum = (  A*(1-M) + B*M  )"
 ADD_DIFFERENCE = "Add difference = (  A + (B-C)*M  )"
 A_ONLY = "A Only"
@@ -2505,6 +2584,87 @@ class ttN_multiModelMerge:
             comfy.utils.save_torch_file(sd, output_checkpoint, metadata=metadata)
 
         return (model, clip, vae)
+
+class ttN_pipeLoraStack:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        inputs = {
+            "required": {
+                "toggle": ([True, False],),
+                "mode": (["simple", "advanced"],),
+                "num_loras": ("INT", {"default": 1, "min": 0, "max": 20}),
+            },
+            "optional": {
+                "optional_pipe": ("PIPE_LINE", {"default": None}),
+                "optional_lora_stack": ("LORA_STACK",),
+            }, 
+            "hidden": {
+                "ttNnodeVersion": (ttN_pipeLoraStack.version),
+            },
+        }
+
+        for i in range(1, 21):
+            inputs["optional"][f"lora_{i}_name"] = (["None"] + folder_paths.get_filename_list("loras"),{"default": "None"})
+            inputs["optional"][f"lora_{i}_strength"] = ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}) 
+            inputs["optional"][f"lora_{i}_model_strength"] = ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01})
+            inputs["optional"][f"lora_{i}_clip_strength"] = ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01})
+        
+        return inputs
+    
+    
+    RETURN_TYPES = ("PIPE_LINE", "LORA_STACK",)
+    RETURN_NAMES = ("optional_pipe","lora_stack",)
+    FUNCTION = "stack"
+
+    CATEGORY = "ttN"
+
+    def stack(self, toggle, mode, num_loras, optional_pipe=None, lora_stack=None, **kwargs):
+        print(f"stack({toggle}, {mode})")
+        if (toggle in [False, None, "False"]) or (kwargs is None):
+            return optional_pipe, None
+        
+        loras = []
+
+        # Import Stack values
+        if lora_stack is not None:
+            loras.extend([l for l in lora_stack if l[0] != "None"])
+
+        print('loras', loras)
+        # Import Lora values
+        for i in range(1, num_loras + 1):
+            lora_name = kwargs.get(f"lora_{i}_name")
+            if lora_name in ["None", None]:
+                continue
+
+            if mode == "simple":
+                lora_strength = float(kwargs.get(f"lora_{i}_strength"))
+                loras.append((lora_name, lora_strength, lora_strength))
+                continue
+
+            if mode == "advanced":
+                model_strength = float(kwargs.get(f"lora_{i}_model_strength"))
+                clip_strength = float(kwargs.get(f"lora_{i}_clip_strength"))
+                loras.append((lora_name, model_strength, clip_strength))
+                continue
+
+        print('loras2', loras)
+        
+        # Load Loras
+        if optional_pipe is not None and len(loras) != 0:
+            model = optional_pipe.get("model")
+            clip = optional_pipe.get("clip")
+            
+            for lora in loras:
+                model, clip = ttNcache.load_lora(lora[0], model, clip, lora[1], lora[2])
+            
+            optional_pipe["model"] = model
+            optional_pipe["clip"] = clip
+
+        return optional_pipe, loras
 
 #---------------------------------------------------------------ttN/text START----------------------------------------------------------------------#
 class ttN_text:
@@ -3003,7 +3163,7 @@ TTN_VERSIONS = {
     "pipe2DETAILER": ttN_pipe_2DETAILER.version,
     "xyPlot": ttN_XYPlot.version,
     "pipeEncodeConcat": ttN_pipeEncodeConcat.version,
-    #"modelMerge": ttN_modelMerge.version,
+    "multiLoraStack": ttN_pipeLoraStack.version,
     "multiModelMerge": ttN_multiModelMerge.version,
     "text": ttN_text.version,
     "textDebug": ttN_textDebug.version,
@@ -3030,10 +3190,10 @@ NODE_CLASS_MAPPINGS = {
     "ttN pipeEDIT": ttN_pipe_EDIT,
     "ttN pipe2BASIC": ttN_pipe_2BASIC,
     "ttN pipe2DETAILER": ttN_pipe_2DETAILER,
+    "ttN pipeEncodeConcat": ttN_pipeEncodeConcat,
+    "ttN pipeLoraStack": ttN_pipeLoraStack,
 
     #ttN/encode
-    "ttN pipeEncodeConcat": ttN_pipeEncodeConcat,
-    #"ttN modelMerge": ttN_modelMerge,
     "ttN multiModelMerge": ttN_multiModelMerge,
 
     #ttN/text
@@ -3066,10 +3226,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN pipeEDIT": "pipeEDIT",
     "ttN pipe2BASIC": "pipe > basic_pipe",
     "ttN pipe2DETAILER": "pipe > detailer_pipe",
-
-    #ttN/encode
     "ttN pipeEncodeConcat": "pipeEncodeConcat",
-    #"ttN modelMerge": "modelMerge",
+    "ttN pipeLoraStack": "pipeLoraStack",
+
+    #ttN/misc
     "ttN multiModelMerge": "multiModelMerge",
 
     #ttN/text

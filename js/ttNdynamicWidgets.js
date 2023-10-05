@@ -6,6 +6,10 @@ const findWidgetByName = (node, name) => node.widgets.find((w) => w.name === nam
 
 const doesInputWithNameExist = (node, name) => node.inputs ? node.inputs.some((input) => input.name === name) : false;
 
+function updateNodeHeight(node) {
+	node.setSize([node.size[0], node.computeSize()[1]]);
+}
+
 function toggleWidget(node, widget, show = false, suffix = "") {
 	if (!widget || doesInputWithNameExist(node, widget.name)) return;
 	if (!origProps[widget.name]) {
@@ -207,13 +211,54 @@ function widgetLogic(node, widget) {
 			toggleWidget(node, findWidgetByName(node, 'save_prefix'))
 		}
 	}
+	if (widget.name === 'num_loras') {
+		let number_to_show = widget.value + 1
+		for (let i = 0; i < number_to_show; i++) {
+			toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_name'), true)
+			if (findWidgetByName(node, 'mode').value === "simple") {
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_strength'), true)
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_model_strength'))
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_clip_strength'))
+			} else {
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_strength'))
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_model_strength'), true)
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_clip_strength'), true)
+			}
+		}
+		for (let i = number_to_show; i < 21; i++) {
+			toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_name'))
+			toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_model_strength'))
+			toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_clip_strength'))
+		}
+		updateNodeHeight(node)
+	}
+	if (widget.name === 'mode') {
+		let number_to_show = findWidgetByName(node, 'num_loras').value + 1
+		for (let i = 0; i < number_to_show; i++) {
+			if (widget.value === "simple") {
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_strength'), true)
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_model_strength'))
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_clip_strength'))
+			} else {
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_strength'))
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_model_strength'), true)
+				toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_clip_strength'), true)}
+		}
+		updateNodeHeight(node)
+	}
+	if (widget.name === 'toggle') {
+		widget.type = 'toggle'
+		widget.options = {on: 'Enabled', off: 'Disabled'}
+	}
 }
 
 const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 
 						'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 
 						'refiner_lora1_name', 'refiner_lora2_name', 'upscale_method', 
 						'image_output', 'add_noise', 
-						'ckpt_B_name', 'ckpt_C_name', 'save_model', 'refiner_ckpt_name']
+						'ckpt_B_name', 'ckpt_C_name', 'save_model', 'refiner_ckpt_name',
+						'num_loras', 'mode', 'toggle']
 
 function getSetters(node) {
 	if (node.widgets)
@@ -250,7 +295,8 @@ app.registerExtension({
 				node.getTitle() == "pipeKSamplerSDXL" ||
 				node.getTitle() == "imageRemBG" ||
 				node.getTitle() == "imageOutput"||
-				node.getTitle() == "multiModelMerge") {
+				node.getTitle() == "multiModelMerge" ||
+				node.getTitle() == "pipeLoraStack") {
 			getSetters(node)
 		}
 	}
