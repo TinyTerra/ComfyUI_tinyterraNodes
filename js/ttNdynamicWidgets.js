@@ -296,7 +296,8 @@ app.registerExtension({
 				node.getTitle() == "imageRemBG" ||
 				node.getTitle() == "imageOutput"||
 				node.getTitle() == "multiModelMerge" ||
-				node.getTitle() == "pipeLoraStack") {
+				node.getTitle() == "pipeLoraStack" ||
+				node.getTitle() == "pipeEncodeConcat") {
 			getSetters(node)
 		}
 	}
