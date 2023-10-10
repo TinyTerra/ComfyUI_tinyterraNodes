@@ -2310,7 +2310,7 @@ class ttN_pipeEncodeConcat:
         return (new_pipe, new_pipe["positive"], new_pipe["negative"], samp_clip, { "ui": { "string": new_text } } )
 
 class ttN_pipeLoraStack:
-    version = '1.0.0'
+    version = '1.1.0'
     def __init__(self):
         pass
 
@@ -2324,6 +2324,8 @@ class ttN_pipeLoraStack:
             },
             "optional": {
                 "optional_pipe": ("PIPE_LINE", {"default": None}),
+                "model_override": ("MODEL",),
+                "clip_override": ("CLIP",),
                 "optional_lora_stack": ("LORA_STACK",),
             }, 
             "hidden": {
@@ -2346,9 +2348,8 @@ class ttN_pipeLoraStack:
 
     CATEGORY = "ttN/pipe"
 
-    def stack(self, toggle, mode, num_loras, optional_pipe=None, lora_stack=None, **kwargs):
-        print(f"stack({toggle}, {mode})")
-        if (toggle in [False, None, "False"]) or (kwargs is None):
+    def stack(self, toggle, mode, num_loras, optional_pipe=None, lora_stack=None, model_override=None, clip_override=None, **kwargs):
+        if (toggle in [False, None, "False"]) or not kwargs:
             return optional_pipe, None
         
         loras = []
@@ -2360,32 +2361,48 @@ class ttN_pipeLoraStack:
         # Import Lora values
         for i in range(1, num_loras + 1):
             lora_name = kwargs.get(f"lora_{i}_name")
-            if lora_name in ["None", None]:
+
+            if not lora_name or lora_name == "None":
                 continue
 
             if mode == "simple":
                 lora_strength = float(kwargs.get(f"lora_{i}_strength"))
                 loras.append((lora_name, lora_strength, lora_strength))
-                continue
-
-            if mode == "advanced":
+            elif mode == "advanced":
                 model_strength = float(kwargs.get(f"lora_{i}_model_strength"))
                 clip_strength = float(kwargs.get(f"lora_{i}_clip_strength"))
                 loras.append((lora_name, model_strength, clip_strength))
-                continue
+        
+        if not loras or not optional_pipe:
+            return None, None
         
         # Load Loras
-        if optional_pipe is not None and len(loras) != 0:
-            model = optional_pipe.get("model")
-            clip = optional_pipe.get("clip")
-            
-            for lora in loras:
-                model, clip = ttNcache.load_lora(lora[0], model, clip, lora[1], lora[2])
-            
-            optional_pipe["model"] = model
-            optional_pipe["clip"] = clip
+        model = model_override or optional_pipe.get("model")
+        clip = clip_override or optional_pipe.get("clip")
 
-        return optional_pipe, loras
+        if not model or not clip:
+            return optional_pipe, loras
+        
+        for lora in loras:
+            model, clip = ttNcache.load_lora(lora[0], model, clip, lora[1], lora[2])
+
+        new_pipe = {
+            "model": model,
+            "positive": optional_pipe["positive"],
+            "negative": optional_pipe["negative"],
+            "vae": optional_pipe["vae"],
+            "clip": clip,
+
+            "samples": optional_pipe["samples"],
+            "images": optional_pipe["images"],
+            "seed": optional_pipe["seed"],
+
+            "loader_settings": optional_pipe["loader_settings"],
+        }
+
+        del optional_pipe
+
+        return new_pipe, loras
 #---------------------------------------------------------------ttN/pipe END------------------------------------------------------------------------#
 
 #----------------------------------------------------------------misc START------------------------------------------------------------------------#
