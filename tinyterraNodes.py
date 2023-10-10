@@ -1070,7 +1070,7 @@ def nsp_parse(text, seed=0, noodle_key='__', nspterminology=None, pantry_path=No
 
 #---------------------------------------------------------------ttN/pipe START----------------------------------------------------------------------#
 class ttN_TSC_pipeLoader:
-    version = '1.1.1'
+    version = '1.1.2'
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": { 
@@ -1104,7 +1104,7 @@ class ttN_TSC_pipeLoader:
                         "batch_size": ("INT", {"default": 1, "min": 1, "max": 64}),
                         "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                         },                
-                "optional": {"optional_clip": ("CLIP",), "optional_lora_stack": ("LORA_STACK",),},
+                "optional": {"model_override": ("MODEL",), "clip_override": ("CLIP",), "optional_lora_stack": ("LORA_STACK",),},
                 "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_TSC_pipeLoader.version}, "my_unique_id": "UNIQUE_ID",}
 
     RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT",)
@@ -1119,7 +1119,7 @@ class ttN_TSC_pipeLoader:
                        lora3_name, lora3_model_strength, lora3_clip_strength, 
                        positive, positive_token_normalization, positive_weight_interpretation, 
                        negative, negative_token_normalization, negative_weight_interpretation, 
-                       empty_latent_width, empty_latent_height, batch_size, seed, optional_clip=None, optional_lora_stack=None, prompt=None, my_unique_id=None):
+                       empty_latent_width, empty_latent_height, batch_size, seed, model_override=None, clip_override=None, optional_lora_stack=None, prompt=None, my_unique_id=None):
 
         model: ModelPatcher | None = None
         clip: CLIP | None = None
@@ -1135,8 +1135,11 @@ class ttN_TSC_pipeLoader:
         # Load models
         model, clip, vae = ttNcache.load_checkpoint(ckpt_name, config_name)
 
-        if optional_clip is not None:
-            clip = optional_clip
+        if model_override is not None:
+            model = model_override
+
+        if clip_override is not None:
+            clip = clip_override
 
         if optional_lora_stack is not None:
             for lora in optional_lora_stack:
