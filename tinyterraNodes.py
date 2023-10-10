@@ -2219,11 +2219,12 @@ class ttN_XYPlot:
         return (xy_plot, )
 
 class ttN_pipeEncodeConcat:
-    version = '1.0.0'
+    version = '1.0.2'
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
                     "pipe": ("PIPE_LINE",),
+                    "toggle": ([True, False],),
                     },
                 "optional": {
                     "positive": ("STRING", {"default": "Positive","multiline": True}),
@@ -2248,12 +2249,13 @@ class ttN_pipeEncodeConcat:
 
     CATEGORY = "ttN/pipe"
 
-    def concat(self, positive_token_normalization, positive_weight_interpretation,
+    def concat(self, toggle, positive_token_normalization, positive_weight_interpretation,
                negative_token_normalization, negative_weight_interpretation,
-                 pipe=None, positive='', negative='', seed=None, my_unique_id=None, optional_positive_from=None, optional_negative_from=None, optional_clip=None): 
+                 pipe=None, positive='', negative='', seed=None, my_unique_id=None, optional_positive_from=None, optional_negative_from=None, optional_clip=None):
         
-        pipe = {**pipe} if pipe is not None else None
-
+        if toggle == False:
+            return (pipe, pipe["positive"], pipe["negative"], pipe["clip"])
+        
         positive_from = optional_positive_from if optional_positive_from is not None else pipe["positive"] 
         negative_from = optional_negative_from if optional_negative_from is not None else pipe["negative"]
         samp_clip = optional_clip if optional_clip is not None else pipe["clip"]
@@ -2283,13 +2285,29 @@ class ttN_pipeEncodeConcat:
             return out
 
         if positive != '':
-            pipe["positive"] = enConcatConditioning(positive, positive_token_normalization, positive_weight_interpretation, positive_from, new_text)
+            pos = enConcatConditioning(positive, positive_token_normalization, positive_weight_interpretation, positive_from, new_text)
         if negative != '':
-            pipe["negative"] = enConcatConditioning(negative, negative_token_normalization, negative_weight_interpretation, negative_from, new_text)
-        
-        pipe["clip"] = samp_clip
+            neg = enConcatConditioning(negative, negative_token_normalization, negative_weight_interpretation, negative_from, new_text)
 
-        return (pipe, pipe["positive"], pipe["negative"], samp_clip, { "ui": { "string": new_text } } )
+        pos = pos if pos is not None else pipe["positive"]
+        neg = neg if neg is not None else pipe["negative"]
+        
+        new_pipe = {
+                "model": pipe["model"],
+                "positive": pos,
+                "negative": neg,
+                "vae": pipe["vae"],
+                "clip": samp_clip,
+
+                "samples": pipe["samples"],
+                "images": pipe["images"],
+                "seed": pipe["seed"],
+
+                "loader_settings": pipe["loader_settings"],
+            }
+        del pipe
+
+        return (new_pipe, new_pipe["positive"], new_pipe["negative"], samp_clip, { "ui": { "string": new_text } } )
 
 class ttN_pipeLoraStack:
     version = '1.0.0'
