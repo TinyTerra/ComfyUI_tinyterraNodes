@@ -16,6 +16,30 @@ app.registerExtension({
                 'bgcolor': bgColor,
                 'pos': [node.pos[0], node.pos[1]]
             }
+            let inputLinks = []
+            let outputLinks = []
+            for (const input of node.inputs) {
+                if (input.link) { 
+                    const input_name = input.name
+                    const input_slot = node.findInputSlot(input_name)
+                    const input_node = node.getInputNode(input_slot)
+                    const input_link = node.getInputLink(input_slot)
+
+                    inputLinks.push([input_link.origin_slot, input_node, input_name])
+                }
+            }
+            for (const output of node.outputs) {
+                if (output.links) { 
+                    const output_name = output.name
+                    const output_slot = node.findOutputSlot(output_name)
+
+                    for (const linkID of output.links) {
+                        const output_link = graph.links[linkID]
+                        const output_node = graph._nodes_by_id[output_link.target_id]
+                        outputLinks.push([output_name, output_node, output_link.target_slot]) 
+                    }  
+                }              
+            }
 
             let prevValObj = { 'val': undefined };
 
@@ -26,7 +50,7 @@ app.registerExtension({
                 newNode.properties.ttNnodeVersion = newNode.constructor.ttNnodeVersion;
             }
 
-
+            // replace widget values
             function evalWidgetValues(testValue, newWidg, prevValObj) {
                 let prevVal = prevValObj.val;
                 if (prevVal !== undefined && evalWidgetValues(prevVal, newWidg, { 'val': undefined }) === prevVal) {
@@ -51,6 +75,23 @@ app.registerExtension({
                         newWidget.value = evalWidgetValues(oldWidget.value, newWidget, prevValObj);
                     }
                 }
+            }
+
+            // replace input and output links
+            for (const input of inputLinks) {
+                const output_slot = input[0]
+                const output_node = input[1]
+                const input_name = input[2]
+
+                output_node.connect(output_slot, newNode.id, input_name)
+            }
+
+            for (const output of outputLinks) {
+                const output_name = output[0]
+                const input_node = output[1]
+                const input_slot = output[2]
+
+                newNode.connect(output_name, input_node, input_slot)
             }
         };
 
