@@ -2004,34 +2004,32 @@ class ttN_pipe_EDIT:
     CATEGORY = "ttN/pipe"
 
     def flush(self, pipe, model=None, pos=None, neg=None, latent=None, vae=None, clip=None, image=None, seed=None):
-
-        pipe = {**pipe}
-
-        if model is not None:
-            pipe['model'] = model
         
-        if pos is not None:
-            pipe['positive'] = pos
+        model = model or pipe.get("model")
+        pos = pos or pipe.get("positive")
+        neg = neg or pipe.get("negative")
+        samples = latent or pipe.get("samples")
+        vae = vae or pipe.get("vae")
+        clip = clip or pipe.get("clip")
+        image = image or pipe.get("images")
+        seed = seed or pipe.get("seed")
 
-        if neg is not None:
-            pipe['negative'] = neg
+        new_pipe = {
+            "model": model,
+            "positive": pos,
+            "negative": neg,
+            "vae": vae,
+            "clip": clip,
 
-        if latent is not None:
-            pipe['samples'] = latent
+            "samples": samples,
+            "images": image,
+            "seed": seed,
 
-        if vae is not None:
-            pipe['vae'] = vae
+            "loader_settings": pipe["loader_settings"],
+        }
+        del pipe
 
-        if clip is not None:
-            pipe['clip'] = clip
-
-        if image is not None:
-            pipe['images'] = image
-
-        if seed is not None:
-            pipe['seed'] = seed
-
-        return (pipe, )
+        return (new_pipe, )
 
 class ttN_pipe_2BASIC:
     version = '1.1.0'
