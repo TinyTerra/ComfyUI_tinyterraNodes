@@ -16,6 +16,7 @@ app.registerExtension({
                 'bgcolor': bgColor,
                 'pos': [node.pos[0], node.pos[1]]
             }
+            
             let inputLinks = []
             let outputLinks = []
             for (const input of node.inputs) {
@@ -41,8 +42,6 @@ app.registerExtension({
                 }              
             }
 
-            let prevValObj = { 'val': undefined };
-
             app.graph.remove(node)
             const newNode = app.graph.add(LiteGraph.createNode(nodeType, nodeTitle, options));
 
@@ -50,29 +49,10 @@ app.registerExtension({
                 newNode.properties.ttNnodeVersion = newNode.constructor.ttNnodeVersion;
             }
 
-            // replace widget values
-            function evalWidgetValues(testValue, newWidg, prevValObj) {
-                let prevVal = prevValObj.val;
-                if (prevVal !== undefined && evalWidgetValues(prevVal, newWidg, { 'val': undefined }) === prevVal) {
-                    const newVal = prevValObj.val
-                    prevValObj.val = testValue
-                    return newVal
-                }
-                else if ((newWidg.options?.values && newWidg.options.values.includes(testValue)) ||
-                    (newWidg.options?.min <= testValue && testValue <= newWidg.options.max) ||
-                    (newWidg.inputEl)) {
-                    return testValue
-                }
-                else {
-                    prevValObj.val = testValue
-                    return newWidg.value
-                }
-            }
-
             for (const oldWidget of oldNode.widgets ? oldNode.widgets : []) {
                 for (const newWidget of newNode.widgets ? newNode.widgets : []) {
-                    if (newWidget.name === oldWidget.name) {
-                        newWidget.value = evalWidgetValues(oldWidget.value, newWidget, prevValObj);
+                    if ((newWidget.name === oldWidget.name) && (newWidget.type === oldWidget.type)) {
+                        newWidget.value = oldWidget.value;
                     }
                 }
             }
