@@ -2310,7 +2310,7 @@ class ttN_pipeEncodeConcat:
         return (new_pipe, new_pipe["positive"], new_pipe["negative"], samp_clip, { "ui": { "string": new_text } } )
 
 class ttN_pipeLoraStack:
-    version = '1.1.0'
+    version = '1.1.1'
     def __init__(self):
         pass
 
@@ -2373,8 +2373,11 @@ class ttN_pipeLoraStack:
                 clip_strength = float(kwargs.get(f"lora_{i}_clip_strength"))
                 loras.append((lora_name, model_strength, clip_strength))
         
-        if not loras or not optional_pipe:
-            return None, None
+        if not loras:
+            return optional_pipe, None
+        
+        if loras and not optional_pipe:
+            return optional_pipe, loras
         
         # Load Loras
         model = model_override or optional_pipe.get("model")
