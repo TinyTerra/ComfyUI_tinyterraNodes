@@ -1921,7 +1921,7 @@ class ttN_pipe_IN:
     RETURN_NAMES = ("pipe", )
     FUNCTION = "flush"
 
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN/legacy"
 
     def flush(self, model, pos=0, neg=0, latent=0, vae=0, clip=0, image=0, seed=0):
         pipe = {"model": model,
@@ -1962,7 +1962,7 @@ class ttN_pipe_OUT:
     RETURN_NAMES = ("model", "pos", "neg", "latent", "vae", "clip", "image", "seed", "pipe")
     FUNCTION = "flush"
 
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN/legacy"
     
     def flush(self, pipe):
         model = pipe.get("model")
@@ -1977,14 +1977,15 @@ class ttN_pipe_OUT:
         return model, pos, neg, latent, vae, clip, image, seed, pipe
 
 class ttN_pipe_EDIT:
-    version = '1.1.0'
+    version = '1.1.1'
     def __init__(self):
         pass
     
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"pipe": ("PIPE_LINE",)},
+        return {"required": {},
                 "optional": {
+                    "pipe": ("PIPE_LINE",),
                     "model": ("MODEL",),
                     "pos": ("CONDITIONING",),
                     "neg": ("CONDITIONING",),
@@ -1994,25 +1995,41 @@ class ttN_pipe_EDIT:
                     "image": ("IMAGE",),
                     "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
                 },
-                "hidden": {"ttNnodeVersion": ttN_pipe_EDIT.version},
+                "hidden": {"ttNnodeVersion": ttN_pipe_EDIT.version, "my_unique_id": "UNIQUE_ID"},
             }
 
-    RETURN_TYPES = ("PIPE_LINE", )
-    RETURN_NAMES = ("pipe", )
+    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT")
+    RETURN_NAMES = ("pipe", "model", "pos", "neg", "latent", "vae", "clip", "image", "seed")
     FUNCTION = "flush"
 
     CATEGORY = "ttN/pipe"
 
-    def flush(self, pipe, model=None, pos=None, neg=None, latent=None, vae=None, clip=None, image=None, seed=None):
-        
+    def flush(self, pipe=None, model=None, pos=None, neg=None, latent=None, vae=None, clip=None, image=None, seed=None, my_unique_id=None):
+
         model = model or pipe.get("model")
+        if model is None:
+            ttNl("Model missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
         pos = pos or pipe.get("positive")
+        if pos is None:
+            ttNl("Positive conditioning missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
         neg = neg or pipe.get("negative")
+        if neg is None:
+            ttNl("Negative conditioning missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
         samples = latent or pipe.get("samples")
+        if samples is None:
+            ttNl("Latent missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
         vae = vae or pipe.get("vae")
+        if vae is None:
+            ttNl("VAE missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
         clip = clip or pipe.get("clip")
+        if clip is None:
+            ttNl("Clip missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
         image = image or pipe.get("images")
+        if image is None:
+            ttNl("Image missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
         seed = seed or pipe.get("seed")
+        if seed is None:
+            ttNl("Seed missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
 
         new_pipe = {
             "model": model,
@@ -3180,8 +3197,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN pipeLoaderSDXL": "pipeLoaderSDXL",
     "ttN pipeKSamplerSDXL": "pipeKSamplerSDXL",
     "ttN xyPlot": "xyPlot",
-    "ttN pipeIN": "pipeIN",
-    "ttN pipeOUT": "pipeOUT",
+    "ttN pipeIN": "pipeIN (Legacy)",
+    "ttN pipeOUT": "pipeOUT (Legacy)",
     "ttN pipeEDIT": "pipeEDIT",
     "ttN pipe2BASIC": "pipe > basic_pipe",
     "ttN pipe2DETAILER": "pipe > detailer_pipe",
