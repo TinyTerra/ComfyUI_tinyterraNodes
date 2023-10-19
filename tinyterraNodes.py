@@ -303,7 +303,8 @@ class ttNloader:
             return self.loaded_objects["vae"][vae_name][0]
 
         vae_path = folder_paths.get_full_path("vae", vae_name)
-        loaded_vae = comfy.sd.VAE(ckpt_path=vae_path)
+        sd = comfy.utils.load_torch_file(vae_path)
+        loaded_vae = comfy.sd.VAE(sd=sd)
         self.add_to_cache("vae", vae_name, loaded_vae)
         self.eviction_based_on_memory()
 
