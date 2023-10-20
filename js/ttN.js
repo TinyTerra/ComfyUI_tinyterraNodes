@@ -1,20 +1,81 @@
 import { app } from "../../scripts/app.js";
 import { ComfyWidgets } from "../../scripts/widgets.js";
 
+const CONVERTED_TYPE = "converted-widget";
+const GET_CONFIG = Symbol();
+
+function hideWidget(node, widget, suffix = "") {
+	widget.origType = widget.type;
+	widget.origComputeSize = widget.computeSize;
+	widget.origSerializeValue = widget.serializeValue;
+	widget.computeSize = () => [0, -4]; // -4 is due to the gap litegraph adds between widgets automatically
+	widget.type = CONVERTED_TYPE + suffix;
+	widget.serializeValue = () => {
+		// Prevent serializing the widget if we have no input linked
+		if (!node.inputs) {
+			return undefined;
+		}
+		let node_input = node.inputs.find((i) => i.widget?.name === widget.name);
+
+		if (!node_input || !node_input.link) {
+			return undefined;
+		}
+		return widget.origSerializeValue ? widget.origSerializeValue() : widget.value;
+	};
+
+	// Hide any linked widgets, e.g. seed+seedControl
+	if (widget.linkedWidgets) {
+		for (const w of widget.linkedWidgets) {
+			hideWidget(node, w, ":" + widget.name);
+		}
+	}
+}
+
+function convertToInput(node, widget, config) {
+    console.log('config:', config)
+	hideWidget(node, widget);
+
+	const { type } = getWidgetType(config);
+
+	// Add input and store widget config for creating on primitive node
+	const sz = node.size;
+	node.addInput(widget.name, type, {
+		widget: { name: widget.name, [GET_CONFIG]: () => config },
+	});
+
+	for (const widget of node.widgets) {
+		widget.last_y += LiteGraph.NODE_SLOT_HEIGHT;
+	}
+
+	// Restore original size but grow if needed
+	node.setSize([Math.max(sz[0], node.size[0]), Math.max(sz[1], node.size[1])]);
+}
+
+function getWidgetType(config) {
+	// Special handling for COMBO so we restrict links based on the entries
+	let type = config[0];
+	if (type instanceof Array) {
+		type = "COMBO";
+	}
+	return { type };
+}
+
 app.registerExtension({
     name: "comfy.ttN",
     init() {
         const ttNreloadNode = function (node) {
             const nodeType = node.constructor.type;
-            const nodeTitle = node.properties.origVals ? node.properties.origVals.title : node.title
-            const nodeColor = node.properties.origVals ? node.properties.origVals.color : node.color
-            const bgColor = node.properties.origVals ? node.properties.origVals.bgcolor : node.bgcolor
+            const origVals = node.properties.origVals || {};
+
+            const nodeTitle = origVals.title || node.title;
+            const nodeColor = origVals.color || node.color;
+            const bgColor = origVals.bgcolor || node.bgcolor;
             const oldNode = node
             const options = {
-                'size': [node.size[0], node.size[1]],
+                'size': [...node.size],
                 'color': nodeColor,
                 'bgcolor': bgColor,
-                'pos': [node.pos[0], node.pos[1]]
+                'pos': [...node.pos]
             }
             
             let inputLinks = []
@@ -32,7 +93,6 @@ app.registerExtension({
             for (const output of node.outputs) {
                 if (output.links) { 
                     const output_name = output.name
-                    const output_slot = node.findOutputSlot(output_name)
 
                     for (const linkID of output.links) {
                         const output_link = graph.links[linkID]
@@ -44,35 +104,92 @@ app.registerExtension({
 
             app.graph.remove(node)
             const newNode = app.graph.add(LiteGraph.createNode(nodeType, nodeTitle, options));
-
             if (newNode?.constructor?.hasOwnProperty('ttNnodeVersion')) {
                 newNode.properties.ttNnodeVersion = newNode.constructor.ttNnodeVersion;
             }
 
-            for (const oldWidget of oldNode.widgets ? oldNode.widgets : []) {
-                for (const newWidget of newNode.widgets ? newNode.widgets : []) {
-                    if ((newWidget.name === oldWidget.name) && (newWidget.type === oldWidget.type)) {
-                        newWidget.value = oldWidget.value;
+            function handleLinks() {
+                // re-convert inputs
+                for (let w of oldNode.widgets) {
+                    if (w.type === 'converted-widget') {
+                        const WidgetToConvert = newNode.widgets.find((nw) => nw.name === w.name);
+                        for (let i of oldNode.inputs) {
+                            if (i.name === w.name) {
+                                convertToInput(newNode, WidgetToConvert, i.widget);
+                            }
+                        }               
                     }
+                }
+                // replace input and output links
+                for (let input of inputLinks) {
+                    const [output_slot, output_node, input_name] = input;
+                    output_node.connect(output_slot, newNode.id, input_name)
+                }
+                for (let output of outputLinks) {
+                    const [output_name, input_node, input_slot] = output;
+                    newNode.connect(output_name, input_node, input_slot)
                 }
             }
 
-            // replace input and output links
-            for (const input of inputLinks) {
-                const output_slot = input[0]
-                const output_node = input[1]
-                const input_name = input[2]
-
-                output_node.connect(output_slot, newNode.id, input_name)
+            // fix widget values
+            let values = oldNode.widgets_values;
+            if (!values) {
+                newNode.widgets.forEach((newWidget, index) => {
+                    const oldWidget = oldNode.widgets[index];
+                    if (newWidget.name === oldWidget.name && newWidget.type === oldWidget.type) {
+                        newWidget.value = oldWidget.value;
+                    }
+                });
+                handleLinks();
+                return;
             }
-
-            for (const output of outputLinks) {
-                const output_name = output[0]
-                const input_node = output[1]
-                const input_slot = output[2]
-
-                newNode.connect(output_name, input_node, input_slot)
+            let pass = false
+            const isIterateForwards = values.length <= newNode.widgets.length;
+            let vi = isIterateForwards ? 0 : values.length - 1;
+            function evalWidgetValues(testValue, newWidg) {
+                if (testValue === true || testValue === false) {
+                    if (newWidg.options?.on && newWidg.options?.off) {
+                        return { value: testValue, pass: true };
+                    }
+                } else if (typeof testValue === "number") {
+                    if (newWidg.options?.min <= testValue && testValue <= newWidg.options?.max) {
+                        return { value: testValue, pass: true };
+                    }
+                } else if (newWidg.options?.values?.includes(testValue)) {
+                    return { value: testValue, pass: true };
+                } else if (newWidg.inputEl && typeof testValue === "string") {
+                    return { value: testValue, pass: true };
+                }
+                return { value: newWidg.value, pass: false };
             }
+            const updateValue = (wi) => {
+                const oldWidget = oldNode.widgets[wi];
+                let newWidget = newNode.widgets[wi];
+                if (newWidget.name === oldWidget.name && newWidget.type === oldWidget.type) {
+                    while ((isIterateForwards ? vi < values.length : vi >= 0) && !pass) {
+                        let { value, pass } = evalWidgetValues(values[vi], newWidget);
+                        if (pass && value !== null) {
+                            newWidget.value = value;
+                            break;
+                        }
+                        vi += isIterateForwards ? 1 : -1;
+                    }
+                    vi++
+                    if (!isIterateForwards) {
+                        vi = values.length - (newNode.widgets.length - 1 - wi);
+                    }
+                }
+            };
+            if (isIterateForwards) {
+                for (let wi = 0; wi < newNode.widgets.length; wi++) {
+                    updateValue(wi);
+                }
+            } else {
+                for (let wi = newNode.widgets.length - 1; wi >= 0; wi--) {
+                    updateValue(wi);
+                }
+            }
+            handleLinks();
         };
 
         const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
