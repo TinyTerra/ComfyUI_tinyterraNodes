@@ -4,7 +4,7 @@ import itertools
 from math import gcd
 
 from comfy import model_management
-from comfy.sdxl_clip import SDXLClipModel
+from comfy.sdxl_clip import SDXLClipModel, SDXLRefinerClipModel, SDXLClipG
 
 def _grouper(n, iterable):
     it = iter(iterable)
@@ -238,7 +238,7 @@ def prepareXL(embs_l, embs_g, pooled, clip_balance):
 
 def advanced_encode(clip, text, token_normalization, weight_interpretation, w_max=1.0, clip_balance=.5, apply_to_pooled=True):
     tokenized = clip.tokenize(text, return_word_ids=True)
-    if isinstance(tokenized, dict):
+    if isinstance(clip.cond_stage_model, (SDXLClipModel, SDXLRefinerClipModel, SDXLClipG)):
         embs_l = None
         embs_g = None
         pooled = None
@@ -259,10 +259,10 @@ def advanced_encode(clip, text, token_normalization, weight_interpretation, w_ma
                                                          apply_to_pooled=apply_to_pooled)
         return prepareXL(embs_l, embs_g, pooled, clip_balance)
     else:
-        return advanced_encode_from_tokens(tokenized, 
+        return advanced_encode_from_tokens(tokenized['l'], 
                                            token_normalization, 
                                            weight_interpretation, 
-                                           lambda x: (clip.encode_from_tokens(x), None),
+                                           lambda x: (clip.encode_from_tokens({'l': x}), None),
                                            w_max=w_max)
 def advanced_encode_XL(clip, text1, text2, token_normalization, weight_interpretation, w_max=1.0, clip_balance=.5, apply_to_pooled=True):
     tokenized1 = clip.tokenize(text1, return_word_ids=True)
