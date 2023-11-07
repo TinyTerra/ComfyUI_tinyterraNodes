@@ -39,7 +39,7 @@ def update_config():
     section_data = {
         "ttNodes": {
             "auto_update": False,
-            "install_rembg": True,
+            "install_rembg": False,
             "enable_interface": True,
             "enable_fullscreen": True,
             "enable_embed_autocomplete": True,
@@ -126,28 +126,31 @@ if config_value_validator("ttNodes", "auto_update", 'false') == 'true':
         pass
 
 # Install RemBG if True
-try:
-    from rembg import remove
-    config_write("ttNodes", "install_rembg", 'Already Installed')
-except ImportError:
-    if config_read("ttNodes", "install_rembg") not in ('Failed to install', 'Installed successfully'):
-        try:
-            print("\033[92m[ttNodes] \033[0;31mREMBG is not installed. Attempting to install...\033[0m")
-            p = subprocess.Popen([sys.executable, "-m", "pip", "install", "rembg[gpu]"])
-            p.wait()
-            print("\033[92m[ttNodes] REMBG[GPU] Installed!\033[0m")
 
-            config_write("ttNodes", "install_rembg", 'Installed successfully')
-        except:
+Install = config_read("ttNodes", "install_rembg")
+if Install in [True, 'true', 'True']:
+    try:
+        from rembg import remove
+        config_write("ttNodes", "install_rembg", 'Already Installed')
+    except ImportError:
+        if Install not in ('Failed to install', 'Installed successfully'):
             try:
-                print("\033[92m[ttNodes] \033[0;31mREMBG[GPU] failed to install. Attempting to install REMBG...\033[0m")
-                p = subprocess.Popen([sys.executable, "-m", "pip", "install", "rembg"])
+                print("\033[92m[ttNodes] \033[0;31mREMBG is not installed. Attempting to install...\033[0m")
+                p = subprocess.Popen([sys.executable, "-m", "pip", "install", "rembg[gpu]"])
                 p.wait()
-                print("\033[92m[ttNodes] REMBG Installed!\033[0m")
+                print("\033[92m[ttNodes] REMBG[GPU] Installed!\033[0m")
+
                 config_write("ttNodes", "install_rembg", 'Installed successfully')
             except:
-                config_write("ttNodes", "install_rembg", 'Failed to install')
-                print("\033[92m[ttNodes] \033[0;31mFailed to install REMBG.\033[0m")
+                try:
+                    print("\033[92m[ttNodes] \033[0;31mREMBG[GPU] failed to install. Attempting to install REMBG...\033[0m")
+                    p = subprocess.Popen([sys.executable, "-m", "pip", "install", "rembg"])
+                    p.wait()
+                    print("\033[92m[ttNodes] REMBG Installed!\033[0m")
+                    config_write("ttNodes", "install_rembg", 'Installed successfully')
+                except:
+                    config_write("ttNodes", "install_rembg", 'Failed to install')
+                    print("\033[92m[ttNodes] \033[0;31mFailed to install REMBG.\033[0m")
 
 # --------- WEB ---------- #
 web_extension_path = os.path.join(comfy_path, "web", "extensions", "tinyterraNodes")
