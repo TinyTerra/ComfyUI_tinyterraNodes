@@ -3031,7 +3031,6 @@ class ttN_modelScale:
     def INPUT_TYPES(s):
         return {"required": { "model_name": (folder_paths.get_filename_list("upscale_models"),),
                               "image": ("IMAGE",),
-                              "info": ("INFO", {"default": "Rescale based on model upscale image size ⬇", "multiline": True}),
                               "rescale_after_model": ([False, True],{"default": True}),
                               "rescale_method": (s.upscale_methods,),
                               "rescale": (["by percentage", "to Width/Height", 'to longer side - maintain aspect'],),
