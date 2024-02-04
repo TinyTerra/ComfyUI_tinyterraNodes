@@ -208,7 +208,7 @@ function _triggerFullscreen(node) {
 
 function ttNfullscreenEventListener(e) {
     if (!ttN_isFullscreen) {
-        if ((e.code === 'ArrowUp' && e.shiftKey) && !e.ctrlKey) {
+        if ((e.code === 'F11' && e.shiftKey) && !e.ctrlKey) {
             e.stopPropagation();
 
             let selected_node = _getSelectedNode();
