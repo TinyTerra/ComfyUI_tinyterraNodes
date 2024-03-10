@@ -598,7 +598,11 @@ class ttNxyPlot:
     
     def adjust_font_size(self, text, initial_font_size, label_width):
         font = self.get_font(initial_font_size)
-        text_width, _ = font.getsize(text)
+        try:
+            text_width, _ = font.getsize(text)
+        except AttributeError:
+            left, top, right, bottom = font.getbbox(text)
+            text_width = right - left
 
         scaling_factor = 0.9
         if text_width > (label_width * scaling_factor):
