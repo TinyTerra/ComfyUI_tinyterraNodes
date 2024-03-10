@@ -2713,8 +2713,8 @@ class ttN_textDebug:
                     if node['id'] == int(input_node[0]):
                         input_from = node['outputs'][input_node[1]].get('label')
                     
-                    if input_from == None:
-                        input_from = node['outputs'][input_node[1]].get('name')
+                        if input_from == None:
+                            input_from = node['outputs'][input_node[1]].get('name')
 
                 ttNl(text).t(f'textDebug[{my_unique_id}] - {CC.VIOLET}{input_from}').p()
 
@@ -2750,6 +2750,9 @@ class ttN_concat:
         text2 = '' if text2 == 'undefined' else text2
         text3 = '' if text3 == 'undefined' else text3
 
+        if delimiter == '\\n':
+            delimiter = '\n'
+
         concat = delimiter.join([text1, text2, text3])
        
         return (concat,)
@@ -2782,6 +2785,9 @@ class ttN_text3BOX_3WAYconcat:
         text1 = '' if text1 == 'undefined' else text1
         text2 = '' if text2 == 'undefined' else text2
         text3 = '' if text3 == 'undefined' else text3
+
+        if delimiter == '\\n':
+            delimiter = '\n'
 
         t_1n2 = delimiter.join([text1, text2])
         t_1n3 = delimiter.join([text1, text3])
@@ -2819,17 +2825,20 @@ class ttN_text7BOX_concat:
     CATEGORY = "ttN/text"
 
     def conmeow(self, text1, text2, text3, text4, text5, text6, text7, delimiter):
-            text1 = '' if text1 == 'undefined' else text1
-            text2 = '' if text2 == 'undefined' else text2
-            text3 = '' if text3 == 'undefined' else text3
-            text4 = '' if text4 == 'undefined' else text4
-            text5 = '' if text5 == 'undefined' else text5
-            text6 = '' if text6 == 'undefined' else text6
-            text7 = '' if text7 == 'undefined' else text7
+        text1 = '' if text1 == 'undefined' else text1
+        text2 = '' if text2 == 'undefined' else text2
+        text3 = '' if text3 == 'undefined' else text3
+        text4 = '' if text4 == 'undefined' else text4
+        text5 = '' if text5 == 'undefined' else text5
+        text6 = '' if text6 == 'undefined' else text6
+        text7 = '' if text7 == 'undefined' else text7
+
+        if delimiter == '\\n':
+            delimiter = '\n'
             
-            texts = [text1, text2, text3, text4, text5, text6, text7]        
-            concat = delimiter.join(text for text in texts if text)
-            return text1, text2, text3, text4, text5, text6, text7, concat
+        texts = [text1, text2, text3, text4, text5, text6, text7]        
+        concat = delimiter.join(text for text in texts if text)
+        return text1, text2, text3, text4, text5, text6, text7, concat
 #---------------------------------------------------------------ttN/text END------------------------------------------------------------------------#
 
 
