@@ -168,8 +168,12 @@ ttNfullscreen_JS_file = os.path.join(cwd_path, "js", "ttNfullscreen.js")
 if not os.path.exists(web_extension_path):
     os.makedirs(web_extension_path)
 else:
-    shutil.rmtree(web_extension_path)
-    os.makedirs(web_extension_path)
+    try:
+        shutil.rmtree(web_extension_path)
+        os.makedirs(web_extension_path)
+    except:
+        print("\033[92m[ttNodes] \033[0;31mFailed to remove old web extension.\033[0m")
+        pass
 
 copy_to_web(ttN_JS_file)
 copy_to_web(ttNwidgets_JS_file)
