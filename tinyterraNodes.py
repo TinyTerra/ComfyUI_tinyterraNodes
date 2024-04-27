@@ -2656,7 +2656,7 @@ class ttN_text:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "text": ("STRING", {"default": "", "multiline": True}),
+                    "text": ("STRING", {"default": "", "multiline": True, "dynamicPrompts": True}),
                 },
                 "hidden": {"ttNnodeVersion": ttN_text.version},
         }
@@ -2682,7 +2682,7 @@ class ttN_textDebug:
                     "print_to_console": ([False, True],),
                     "console_title": ("STRING", {"default": ""}),
                     "execute": (["Always", "On Change"],),
-                    "text": ("STRING", {"default": '', "multiline": True, "forceInput": True}),
+                    "text": ("STRING", {"default": '', "multiline": True, "forceInput": True, "dynamicPrompts": True}),
                     },
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
                            "ttNnodeVersion": ttN_textDebug.version},
@@ -2735,9 +2735,9 @@ class ttN_concat:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "text1": ("STRING", {"multiline": True, "default": ''}),
-                    "text2": ("STRING", {"multiline": True, "default": ''}),
-                    "text3": ("STRING", {"multiline": True, "default": ''}),
+                    "text1": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
+                    "text2": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
+                    "text3": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
                     "delimiter": ("STRING", {"default":",","multiline": False}),
                     },
                 "hidden": {"ttNnodeVersion": ttN_concat.version},
@@ -2771,9 +2771,9 @@ class ttN_text3BOX_3WAYconcat:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "text1": ("STRING", {"multiline": True, "default": ''}),
-                    "text2": ("STRING", {"multiline": True, "default": ''}),
-                    "text3": ("STRING", {"multiline": True, "default": ''}),
+                    "text1": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
+                    "text2": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
+                    "text3": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
                     "delimiter": ("STRING", {"default":",","multiline": False}),
                     },
                 "hidden": {"ttNnodeVersion": ttN_text3BOX_3WAYconcat.version},
@@ -2810,13 +2810,13 @@ class ttN_text7BOX_concat:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "text1": ("STRING", {"multiline": True, "default": ''}),
-                    "text2": ("STRING", {"multiline": True, "default": ''}),
-                    "text3": ("STRING", {"multiline": True, "default": ''}),
-                    "text4": ("STRING", {"multiline": True, "default": ''}),
-                    "text5": ("STRING", {"multiline": True, "default": ''}),
-                    "text6": ("STRING", {"multiline": True, "default": ''}),
-                    "text7": ("STRING", {"multiline": True, "default": ''}),
+                    "text1": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
+                    "text2": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
+                    "text3": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
+                    "text4": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
+                    "text5": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
+                    "text6": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
+                    "text7": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
                     "delimiter": ("STRING", {"default":",","multiline": False}),
                     },
                 "hidden": {"ttNnodeVersion": ttN_text7BOX_concat.version},
