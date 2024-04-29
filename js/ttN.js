@@ -4,6 +4,11 @@ import { ComfyWidgets } from "../../scripts/widgets.js";
 const CONVERTED_TYPE = "converted-widget";
 const GET_CONFIG = Symbol();
 
+function getConfig(widgetName, node) {
+    const { nodeData } = node.constructor;
+	return nodeData?.input?.required[widgetName] ?? nodeData?.input?.optional?.[widgetName];
+}
+
 function hideWidget(node, widget, suffix = "") {
 	widget.origType = widget.type;
 	widget.origComputeSize = widget.computeSize;
@@ -32,7 +37,6 @@ function hideWidget(node, widget, suffix = "") {
 }
 
 function convertToInput(node, widget, config) {
-    console.log('config:', config)
 	hideWidget(node, widget);
 
 	const { type } = getWidgetType(config);
@@ -63,31 +67,29 @@ function getWidgetType(config) {
 app.registerExtension({
     name: "comfy.ttN",
     init() {
-        const ttNreloadNode = function (node) {
-            const nodeType = node.constructor.type;
-            const origVals = node.properties.origVals || {};
-
-            const nodeTitle = origVals.title || node.title;
-            const nodeColor = origVals.color || node.color;
-            const bgColor = origVals.bgcolor || node.bgcolor;
-            const oldNode = node
+        function ttNreloadNode(node) {
+            // Retrieves original values or uses current ones as fallback. Options for creating a new node.
+            const { title: nodeTitle, color: nodeColor, bgcolor: bgColor } = node.properties.origVals || node;
             const options = {
-                'size': [...node.size],
-                'color': nodeColor,
-                'bgcolor': bgColor,
-                'pos': [...node.pos]
-            }
-            
-            let inputLinks = []
-            let outputLinks = []
-            for (const input of node.inputs) {
+                size: [...node.size],
+                color: nodeColor,
+                bgcolor: bgColor,
+                pos: [...node.pos]
+            };
+
+            // Store a reference to the old node before it gets replaced.
+            const oldNode = node
+
+            // Track connections to re-establish later.
+            const inputConnections = [], outputConnections = [];
+            for (const input of node.inputs ?? []) {
                 if (input.link) { 
                     const input_name = input.name
                     const input_slot = node.findInputSlot(input_name)
                     const input_node = node.getInputNode(input_slot)
                     const input_link = node.getInputLink(input_slot)
 
-                    inputLinks.push([input_link.origin_slot, input_node, input_name])
+                    inputConnections.push([input_link.origin_slot, input_node, input_name])
                 }
             }
             for (const output of node.outputs) {
@@ -97,35 +99,36 @@ app.registerExtension({
                     for (const linkID of output.links) {
                         const output_link = graph.links[linkID]
                         const output_node = graph._nodes_by_id[output_link.target_id]
-                        outputLinks.push([output_name, output_node, output_link.target_slot]) 
+                        outputConnections.push([output_name, output_node, output_link.target_slot]) 
                     }  
                 }              
             }
 
+            // Remove old node and create a new one.
             app.graph.remove(node)
-            const newNode = app.graph.add(LiteGraph.createNode(nodeType, nodeTitle, options));
+            const newNode = app.graph.add(LiteGraph.createNode(node.constructor.type, nodeTitle, options));
             if (newNode?.constructor?.hasOwnProperty('ttNnodeVersion')) {
                 newNode.properties.ttNnodeVersion = newNode.constructor.ttNnodeVersion;
             }
 
+            // A function to handle reconnection of links to the new node.
             function handleLinks() {
-                // re-convert inputs
-                for (let w of oldNode.widgets) {
-                    if (w.type === 'converted-widget') {
-                        const WidgetToConvert = newNode.widgets.find((nw) => nw.name === w.name);
-                        for (let i of oldNode.inputs) {
-                            if (i.name === w.name) {
-                                convertToInput(newNode, WidgetToConvert, i.widget);
-                            }
-                        }               
+                for (let ow of oldNode.widgets) {
+                    if (ow.type === CONVERTED_TYPE) {
+                        const config = getConfig(ow.name, oldNode)
+                        const WidgetToConvert = newNode.widgets.find((nw) => nw.name === ow.name);
+                        if (WidgetToConvert && !newNode.inputs.find((i) => i.name === ow.name)) {
+                            convertToInput(newNode, WidgetToConvert, config);
+                        }
                     }
                 }
+
                 // replace input and output links
-                for (let input of inputLinks) {
+                for (let input of inputConnections) {
                     const [output_slot, output_node, input_name] = input;
                     output_node.connect(output_slot, newNode.id, input_name)
                 }
-                for (let output of outputLinks) {
+                for (let output of outputConnections) {
                     const [output_name, input_node, input_slot] = output;
                     newNode.connect(output_name, input_node, input_slot)
                 }
@@ -134,63 +137,101 @@ app.registerExtension({
             // fix widget values
             let values = oldNode.widgets_values;
             if (!values) {
+                console.log('NO VALUES')
                 newNode.widgets.forEach((newWidget, index) => {
-                    const oldWidget = oldNode.widgets[index];
-                    if (newWidget.name === oldWidget.name && newWidget.type === oldWidget.type) {
-                        newWidget.value = oldWidget.value;
-                    }
-                });
-                handleLinks();
-                return;
-            }
-            let pass = false
-            const isIterateForwards = values.length <= newNode.widgets.length;
-            let vi = isIterateForwards ? 0 : values.length - 1;
-            function evalWidgetValues(testValue, newWidg) {
-                if (testValue === true || testValue === false) {
-                    if (newWidg.options?.on && newWidg.options?.off) {
-                        return { value: testValue, pass: true };
-                    }
-                } else if (typeof testValue === "number") {
-                    if (newWidg.options?.min <= testValue && testValue <= newWidg.options?.max) {
-                        return { value: testValue, pass: true };
-                    }
-                } else if (newWidg.options?.values?.includes(testValue)) {
-                    return { value: testValue, pass: true };
-                } else if (newWidg.inputEl && typeof testValue === "string") {
-                    return { value: testValue, pass: true };
-                }
-                return { value: newWidg.value, pass: false };
-            }
-            const updateValue = (wi) => {
-                const oldWidget = oldNode.widgets[wi];
-                let newWidget = newNode.widgets[wi];
-                if (newWidget.name === oldWidget.name && newWidget.type === oldWidget.type) {
-                    while ((isIterateForwards ? vi < values.length : vi >= 0) && !pass) {
-                        let { value, pass } = evalWidgetValues(values[vi], newWidget);
-                        if (pass && value !== null) {
-                            newWidget.value = value;
-                            break;
+                    let pass = false
+                    while ((index < oldNode.widgets.length) && !pass) {
+                        const oldWidget = oldNode.widgets[index];
+                        if (newWidget.type === oldWidget.type) {
+                            newWidget.value = oldWidget.value;
+                            pass = true
                         }
-                        vi += isIterateForwards ? 1 : -1;
+                        index++;
                     }
-                    vi++
-                    if (!isIterateForwards) {
-                        vi = values.length - (newNode.widgets.length - 1 - wi);
+                   });
+            }
+            else {
+                let isValid = false
+                const isIterateForwards = values.length <= newNode.widgets.length;
+                let valueIndex = isIterateForwards ? 0 : values.length - 1;
+
+                const parseWidgetValue = (value, widget) => {
+                    if (['', null].includes(value) && (widget.type === "button" || widget.type === "converted-widget")) {
+                        return { value, isValid: true };
                     }
-                }
-            };
-            if (isIterateForwards) {
-                for (let wi = 0; wi < newNode.widgets.length; wi++) {
-                    updateValue(wi);
-                }
-            } else {
-                for (let wi = newNode.widgets.length - 1; wi >= 0; wi--) {
-                    updateValue(wi);
+                    if (typeof value === "boolean" && widget.options?.on && widget.options?.off) {
+                        return { value, isValid: true };
+                    }
+                    if (widget.options?.values?.includes(value)) {
+                        return { value, isValid: true };
+                    }
+                    if (widget.inputEl) {
+                        if (typeof value === "string" || value === widget.value) {
+                            return { value, isValid: true };
+                        }
+                    }
+                    if (!isNaN(value)) {
+                        value = parseFloat(value);
+                        if (widget.options?.min <= value && value <= widget.options?.max) {
+                            return { value, isValid: true };
+                        }
+                    }
+                    return { value: widget.value, isValid: false };
+                };
+
+                function updateValue(widgetIndex) {
+                    const oldWidget = oldNode.widgets[widgetIndex];
+                    let newWidget = newNode.widgets[widgetIndex];
+                    let newValueIndex = valueIndex
+
+                    if (newWidget.name === oldWidget.name && (newWidget.type === oldWidget.type || oldWidget.type === 'ttNhidden' || newWidget.type === 'ttNhidden')) {
+
+                        while ((isIterateForwards ? newValueIndex < values.length : newValueIndex >= 0) && !isValid) {
+                            let { value, isValid } = parseWidgetValue(values[newValueIndex], newWidget);
+                            if (isValid && value !== NaN) {
+                                newWidget.value = value;
+                                break;
+                            }
+                            newValueIndex += isIterateForwards ? 1 : -1;
+                        }
+
+                        if (isIterateForwards) {
+                            if (newValueIndex === valueIndex) {
+                                valueIndex++;
+                            }
+                            if (newValueIndex === valueIndex + 1) {
+                                valueIndex++;
+                                valueIndex++;
+                            }
+                        } else {
+                            if (newValueIndex === valueIndex) {
+                                valueIndex--;
+                            }
+                            if (newValueIndex === valueIndex - 1) {
+                                valueIndex--;
+                                valueIndex--;
+                            }
+                        }
+                        //console.log('\n')
+                    }
+                };
+                if (isIterateForwards) {
+                    for (let widgetIndex = 0; widgetIndex < newNode.widgets.length; widgetIndex++) {
+                        updateValue(widgetIndex);
+                    }
+                } else {
+                    for (let widgetIndex = newNode.widgets.length - 1; widgetIndex >= 0; widgetIndex--) {
+                        updateValue(widgetIndex);
+                    }
                 }
             }
             handleLinks();
+            newNode.setSize(options.size)
+            newNode.onResize([0,0]);
         };
+
+
+
 
         const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
         LGraphCanvas.prototype.getNodeMenuOptions = function (node) {
@@ -271,7 +312,7 @@ app.registerExtension({
                 }
             }
         }
-    },
+    }
 });
 
 
@@ -361,7 +402,7 @@ export function ttN_RemoveDropdown() {
 }
 
 class Dropdown {
-    constructor(inputEl, suggestions, onSelect, isDict = false) {
+    constructor(inputEl, suggestions, onSelect, isDict, manualOffset, hostElement) {
         this.dropdown = document.createElement('ul');
         this.dropdown.setAttribute('role', 'listbox');
         this.dropdown.classList.add('ttN-dropdown');
@@ -370,6 +411,9 @@ class Dropdown {
         this.suggestions = suggestions;
         this.onSelect = onSelect;
         this.isDict = isDict;
+        this.manualOffsetX = manualOffset[0];
+        this.manualOffsetY = manualOffset[1];
+        this.hostElement = hostElement;
 
         this.focusedDropdown = this.dropdown;
 
@@ -392,17 +436,30 @@ class Dropdown {
         }
 
         const inputRect = this.inputEl.getBoundingClientRect();
-        this.dropdown.style.top = (inputRect.top + inputRect.height - 10) + 'px';
-        this.dropdown.style.left = inputRect.left + 'px';
+        if (isNaN(this.manualOffsetX) && this.manualOffsetX.includes('%')) {
+            this.manualOffsetX = (inputRect.height * (parseInt(this.manualOffsetX) / 100))
+        }
+        if (isNaN(this.manualOffsetY) && this.manualOffsetY.includes('%')) {
+            this.manualOffsetY = (inputRect.width * (parseInt(this.manualOffsetY) / 100))
+        }
+        this.dropdown.style.top = (inputRect.top + inputRect.height - this.manualOffsetX) + 'px';
+        this.dropdown.style.left = (inputRect.left + inputRect.width - this.manualOffsetY) + 'px';
 
-        document.body.appendChild(this.dropdown);
+        this.hostElement.appendChild(this.dropdown);
+        
         activeDropdown = this;
     }
 
-    buildNestedDropdown(dictionary, parentElement) {
+    buildNestedDropdown(dictionary, parentElement, currentPath = '') {
         let index = 0;
         Object.keys(dictionary).forEach((key) => {
+            let extra_data;
             const item = dictionary[key];
+            if (typeof item === 'string') { extra_data = item; }
+
+            let fullPath = currentPath ? `${currentPath}/${key}` : key;
+            if (extra_data) { fullPath = `${fullPath}###${extra_data}`; }
+
             if (typeof item === "object" && item !== null) {
                 const nestedDropdown = document.createElement('ul');
                 nestedDropdown.setAttribute('role', 'listbox');
@@ -413,7 +470,7 @@ class Dropdown {
                 parentListItem.appendChild(nestedDropdown);
                 parentListItem.addEventListener('mouseover', this.onMouseOver.bind(this, index, parentElement));
                 parentElement.appendChild(parentListItem);
-                this.buildNestedDropdown(item, nestedDropdown);
+                this.buildNestedDropdown(item, nestedDropdown, fullPath);
                 index = index + 1;
             } else {
                 const listItem = document.createElement('li');
@@ -421,7 +478,7 @@ class Dropdown {
                 listItem.setAttribute('role', 'option');
                 listItem.textContent = key;
                 listItem.addEventListener('mouseover', this.onMouseOver.bind(this, index, parentElement));
-                listItem.addEventListener('mousedown', this.onMouseDown.bind(this, key));
+                listItem.addEventListener('mousedown', (e) => this.onMouseDown(key, e, fullPath));
                 parentElement.appendChild(listItem);
                 index = index + 1;
             }
@@ -432,8 +489,8 @@ class Dropdown {
         const listItem = document.createElement('li');
         listItem.setAttribute('role', 'option');
         listItem.textContent = item;
-        listItem.addEventListener('mouseover', this.onMouseOver.bind(this, index));
-        listItem.addEventListener('mousedown', this.onMouseDown.bind(this, item));
+        listItem.addEventListener('mouseover', (e) => this.onMouseOver(index));
+        listItem.addEventListener('mousedown', (e) => this.onMouseDown(item, e));
         parentElement.appendChild(listItem);
     }
 
@@ -449,7 +506,7 @@ class Dropdown {
         document.removeEventListener('click', this.onClickBound);
     }
 
-    onMouseOver(index, parentElement) {
+    onMouseOver(index, parentElement=null) {
         if (parentElement) {
             this.focusedDropdown = parentElement;
         }
@@ -462,9 +519,9 @@ class Dropdown {
         this.updateSelection();
     }
 
-    onMouseDown(suggestion, event) {
+    onMouseDown(suggestion, event, fullPath='') {
         event.preventDefault();
-        this.onSelect(suggestion);
+        this.onSelect(suggestion, fullPath);
         this.dropdown.remove();
         this.removeEventListeners();
     }
@@ -494,9 +551,9 @@ class Dropdown {
                 this.updateSelection();
             }
 
-            else if (event.keyCode === arrowRightKeyCode) {
+            else if (event.keyCode === arrowRightKeyCode && selectedItem) {
                 event.preventDefault();
-                if (selectedItem && selectedItem.classList.contains('folder')) {
+                if (selectedItem.classList.contains('folder')) {
                     const nestedDropdown = selectedItem.querySelector('.ttN-nested-dropdown');
                     if (nestedDropdown) {
                         this.focusedDropdown = nestedDropdown;
@@ -555,17 +612,21 @@ class Dropdown {
     }
 
     updateSelection() {
-        Array.from(this.focusedDropdown.children).forEach((li, index) => {
-            if (index === this.selectedIndex) {
-                li.classList.add('selected');
-            } else {
-                li.classList.remove('selected');
-            }
-        });
+        if (!this.focusedDropdown.children) {
+            this.dropdown.classList.add('selected');
+        } else {
+            Array.from(this.focusedDropdown.children).forEach((li, index) => {
+                if (index === this.selectedIndex) {
+                    li.classList.add('selected');
+                } else {
+                    li.classList.remove('selected');
+                }
+            });
+        }
     }
 }
 
-export function ttN_CreateDropdown(inputEl, suggestions, onSelect, isDict = false) {
+export function ttN_CreateDropdown(inputEl, suggestions, onSelect, isDict = false, manualOffset = [10,'100%'], hostElement = document.body) {
     ttN_RemoveDropdown();
-    new Dropdown(inputEl, suggestions, onSelect, isDict);
+    new Dropdown(inputEl, suggestions, onSelect, isDict, manualOffset, hostElement);
 }

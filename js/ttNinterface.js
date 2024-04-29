@@ -4,18 +4,20 @@ const customPipeLineLink = "#7737AA"
 const customPipeLineSDXLLink = "#0DC52B"
 const customIntLink = "#29699C"
 const customXYPlotLink = "#74DA5D"
+const customLoraStackLink = "#87C7B7"
+const customStringLink = "#7CBB1A"
 
 var customLinkColors = JSON.parse(localStorage.getItem('Comfy.Settings.ttN.customLinkColors')) || {};
 if (!customLinkColors["PIPE_LINE"] || !LGraphCanvas.link_type_colors["PIPE_LINE"]) {customLinkColors["PIPE_LINE"] = customPipeLineLink;}
 if (!customLinkColors["PIPE_LINE_SDXL"] || !LGraphCanvas.link_type_colors["PIPE_LINE_SDXL"]) {customLinkColors["PIPE_LINE_SDXL"] = customPipeLineSDXLLink;}
 if (!customLinkColors["INT"] || !LGraphCanvas.link_type_colors["INT"]) {customLinkColors["INT"] = customIntLink;}
 if (!customLinkColors["XYPLOT"] || !LGraphCanvas.link_type_colors["XYPLOT"]) {customLinkColors["XYPLOT"] = customXYPlotLink;}
+if (!customLinkColors["ADV_XYPLOT"] || !LGraphCanvas.link_type_colors["ADV_XYPLOT"]) {customLinkColors["ADV_XYPLOT"] = customXYPlotLink;}
+if (!customLinkColors["LORA_STACK"] || !LGraphCanvas.link_type_colors["LORA_STACK"]) {customLinkColors["LORA_STACK"] = customLoraStackLink;}
+if (!customLinkColors["CONTROLNET_STACK"] || !LGraphCanvas.link_type_colors["CONTROLNET_STACK"]) {customLinkColors["CONTROLNET_STACK"] = customLoraStackLink;}
+if (!customLinkColors["STRING"] || !LGraphCanvas.link_type_colors["STRING"]) {customLinkColors["STRING"] = customStringLink;}
 
 localStorage.setItem('Comfy.Settings.ttN.customLinkColors', JSON.stringify(customLinkColors));
-
-let ttNisFullscreen = false;
-let ttNcurrentFullscreenImage = null;
-let ttNcurrentNode = null;
 
 app.registerExtension({
 	name: "comfy.ttN.interface",
@@ -262,6 +264,12 @@ app.registerExtension({
             }, 0);
         };
 
+        LGraphCanvas.prototype.ttNfixNodeSize = function(node){
+            setTimeout(() => {
+                node.onResize(node.size);
+            }, 0);
+        };
+
 		LGraphCanvas.ttNonShowLinkStyles = function(value, options, e, menu, node) {
 			new LiteGraph.ContextMenu(
 				LiteGraph.LINK_RENDER_MODES,
@@ -488,6 +496,7 @@ app.registerExtension({
         LGraphCanvas.prototype.ttNupdateRenderSettings(app);       
 	},
 	nodeCreated(node) {
+        LGraphCanvas.prototype.ttNfixNodeSize(node);
         let defaultBGColor = JSON.parse(localStorage.getItem('Comfy.Settings.ttN.defaultBGColor'));
         if (defaultBGColor) {LGraphCanvas.prototype.ttNdefaultBGcolor(node, defaultBGColor)};
 	},

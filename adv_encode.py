@@ -259,7 +259,7 @@ def advanced_encode(clip, text, token_normalization, weight_interpretation, w_ma
                                                          apply_to_pooled=apply_to_pooled)
         return prepareXL(embs_l, embs_g, pooled, clip_balance)
     else:
-        return advanced_encode_from_tokens(tokenized['l'], 
+        return advanced_encode_from_tokens(tokenized['l'],
                                            token_normalization, 
                                            weight_interpretation, 
                                            lambda x: (clip.encode_from_tokens({'l': x}), None),

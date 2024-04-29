@@ -159,6 +159,7 @@ ttNstyles_JS_file_web = os.path.join(web_extension_path, "ttNstyles.js")
 
 ttN_JS_file = os.path.join(cwd_path, "js", "ttN.js")
 ttNxyPlot_JS_file = os.path.join(cwd_path, "js", "ttNxyPlot.js")
+ttNxyPlotAdv_JS_file = os.path.join(cwd_path, "js", "ttNxyPlotAdv.js")
 ttNembedAC_JS_file = os.path.join(cwd_path, "js", "ttNembedAC.js")
 ttNwidgets_JS_file = os.path.join(cwd_path, "js", "ttNwidgets.js")
 ttNinterface_JS_file = os.path.join(cwd_path, "js", "ttNinterface.js")
@@ -178,6 +179,7 @@ else:
 copy_to_web(ttN_JS_file)
 copy_to_web(ttNwidgets_JS_file)
 copy_to_web(ttNxyPlot_JS_file)
+copy_to_web(ttNxyPlotAdv_JS_file)
 
 # Enable Custom Styles if True
 if config_value_validator("ttNodes", "enable_interface", 'true') == 'true':

@@ -1,13 +1,12 @@
 # tinyterraNodes
 
-A selection of custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI).
+*A selection of custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI).*
 
-[](buymeacoffee.com/tinyterra)                
+**Enjoy my nodes and would like to [help keep me awake](buymeacoffee.com/tinyterra)?**
 
 ![tinyterra_pipeSDXL](workflows/tinyterra_pipeSDXL.png)
 ![tinyterra_trueHRFix](workflows/tinyterra_trueHRFix.png) 
-![tinyterra_trueHRFix](workflows/tinyterra_xyPlot.png) 
-
+![tinyterra_trueHRFix](workflows/tinyterra_xyPlot.png)
 
 ## Installation
 Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
@@ -25,32 +24,71 @@ Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
 <break>
 
 + Slideshow Mode 
-    + Toggled On - Automatically jumps to New images as they are generated (Black Background)
+    + Toggled On - Automatically jumps to New images as they are generated (Black Background) - the UI will auto hide after a set time.
     + Toggled Off - Holds to the current user selected image (Light Background)
 + Fullscreen Overlay
-    + Toggles display of a navigable preview of all the selected nodes images
+    + Toggles display of a navigable preview of all of the selected nodes images
     + Toggles display of the default comfy menu
   
 + *Shortcuts*
-  + 'shift + up arrow' => _Open ttN-Fullscreen using selected node OR default fullscreen node_
+  + 'shift + F11' => _Open ttN-Fullscreen using selected node OR default fullscreen node_
+  + 'shift + down arrow' (Node Selected) => _Set selected node as default fullscreen node_
+  + 'shift + down arrow' (No Node Selected) => _removes default fullscreen node to None_
 
 + *Shortcuts in Fullscreen*
+  + 'shift + F11' => _Close ttN-Fullscreen_
   + 'up arrow' => _Toggle Fullscreen Overlay_
-
   + 'down arrow' => _Toggle Slideshow Mode_
   + 'left arrow' => _Select Image to the left_
   + 'shift + left arrow' => _Select Image 5 to the left_
   + 'ctrl + left arrow' => _Select the first Image_
-  + 'Right arrow' => _Select Image to the right_
+  + 'right arrow' => _Select Image to the right_
   + 'shift + right arrow' => _Select Image 5 to the right_
   + 'ctrl + right arrow' => _Select last Image_
-  + 'mouse scroll' => _Select image to Left/Right_
+  + 'mouse scroll' =>  _Zoom the current image in and out_
+  + 'ctrl + mouse scroll' => _Select image to Left/Right_
+  + 'left click + drag' => _Update the current image's position_
+  + 'double click' => _Reset position of current image_
   + 'esc' => _Close Fullscreen Mode_
+  + Show UI with mouse hover in Slideshow mode
 
-**Embedding Auto Complete**
+**Advanced XYPlot**
++ pipeKSampler/SDXL input to generate xy plots using any previous input nodes.
+    + _(Any values not set by xyPlot will be taken from the corresponding nodes)_
+
++ Advanced xyPlot can take multiple variables for each axis somewhat programmatically. For Example:
+
+```
+<axis number1:label1>           |   <1:v_label>
+[node_ID:widget_Name='value']   |   [2:ckpt_name='model.safetensors']
+                                |
+<axis number2:label2>           |   <2:custom label>
+[node_ID:widget_Name='value2']  |   [2:ckpt_name='checkpoint.xyz']
+[node_ID:widget2_Name='value']  |   [2:vae_name='someVae.xyz']
+[node_ID2:widget_Name='value']  |   [4:text='Summer sunset']
+```
++  labels:
+    + Any custom string for a custom axis label
+    + v_label - for a concatenation of the values being set. In the example above if both were set to v_label:
+        + model.safetensors
+        + checkpoint.xyz, someVae.xyz, Summer sunset
+    + tv_label - for the option title and value concatenated. In the example above if both were set to tv_label:
+        + ckpt_name: model.safetensors
+        + ckpt_name: checkpoint.xyz, vae_name: someVae.xyz, text: Summer sunset
+    + itv_label - for the node ID, option title and value concatenated. In the example above if both were set to itv_label:
+        + [2] ckpt_name: model.safetensors
+        + [2] ckpt_name: checkpoint.xyz, [2] vae_name: someVae.xyz, [4] text: Summer sunset
++ Node ID's:
+    + Suggested to use 'Badge: ID + nickname' in [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) settings to be able to view node IDs.
++ Autocomplete:
+    + ttN Autocomplete will activate when the advanced xyPlot node is connected to a sampler, and will show all the nodes and options available, as well as an 'add axis' option to auto add the code for a new axis number and label.
+
+**Auto Complete**
 
 *Enabled by default*
-+ displays a popup to autocomplete embedding filenames in text widgets - to use, start typing **embedding** and select an option from the list
++ displays a popup to autocomplete embedding filenames in text widgets - to use, start typing **embedding** and select an option from the list.
++ displays a popup to autocomplete noodlesoup categories - to use, start typing **__** and select an option from the list.
++ displays a popup in ttN 'loras' input to autocomplete loras from a list.
 + Option to disable ([ttNodes] enable_embed_autocomplete = True | False)
 
 **Dynamic Widgets**
@@ -68,7 +106,7 @@ Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
 + <details><summary>Adds 'Default BG Color (ttN)' to the node right-click context menu</summary> Allows setting specific default background color for every node added.
 + <details><summary>Adds 'Show Execution Order (ttN)' to the node right-click context menu</summary> Toggles execution order flags on node corners.
 + <details><summary>Adds support for 'ctrl + arrow key' Node movement</summary> This aligns the node(s) to the set ComfyUI grid spacing size and move the node in the direction of the arrow key by the grid spacing value. Holding shift in addition will move the node by the grid spacing size * 10.
-+ <details><summary>Adds 'Reload Node (ttN)' to the node right-click context menu</summary> Creates a new instance of the node with the same position, size, color and title (will disconnect any IO wires). It attempts to retain set widget values which is useful for replacing nodes when a node/widget update occurs </details>
++ <details><summary>Adds 'Reload Node (ttN)' to the node right-click context menu</summary> Creates a new instance of the node with the same position, size, color and title . It attempts to retain set widget values which is useful for replacing nodes when a node/widget update occurs </details>
 + <details><summary>Adds 'Slot Type Color (ttN)' to the Link right-click context menu</summary> Opens a color picker dialog menu to update the color of the selected link type. </details>
 + <details><summary>Adds 'Link Border (ttN)' to the Link right-click context menu</summary> Toggles link line border. </details>
 + <details><summary>Adds 'Link Shadow (ttN)' to the Link right-click context menu</summary> Toggles link line shadow. </details>
@@ -79,7 +117,7 @@ Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
 
 + Add date/time info to filenames or output folder by using: %date:yyyy-MM-dd-hh-mm-ss%
 + Parse any upstream setting into filenames or output folder by using %[widget_name]% (for the current node) <br>
-or %[input_name]>[input_name]>[widget_name]% (for inputting nodes) <br>
+or %input_name>input_name>widget_name% (for inputting nodes) <br>
   <details><summary>Example:
   </summary>
 
@@ -104,23 +142,22 @@ or %[input_name]>[input_name]>[widget_name]% (for inputting nodes) <br>
 ## ttN/pipe
 
 <details>
-  <summary>pipeLoader</summary>
+  <summary>pipeLoader v2</summary>
   
-(Modified from [Efficiency Nodes](https://github.com/LucianoCirino/efficiency-nodes-comfyui) and [ADV_CLIP_emb](https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb))
+(Includes [ADV_CLIP_emb](https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb))
 
-Combination of Efficiency Loader and Advanced CLIP Text Encode with an additional pipe output
-+ _**Inputs -** model, vae, clip skip, (lora1, modelstrength clipstrength), (Lora2, modelstrength clipstrength), (Lora3, modelstrength clipstrength), (positive prompt, token normalization, weight interpretation), (negative prompt, token normalization, weight interpretation), (latent width, height), batch size, seed_
-+ _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, seed_
+![pipeLoader](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/deb74ef1-43a7-4fd5-9cdd-b4487eaee6f0)
+
    </details>
 
 <details>
-  <summary>pipeKSampler</summary>
-  
-(Modified from [Efficiency Nodes](https://github.com/LucianoCirino/efficiency-nodes-comfyui) and [QOLS_Omar92](https://github.com/omar92/ComfyUI-QualityOfLifeSuit_Omar92))
+  <summary>pipeKSampler v2</summary>
 
-Combination of Efficiency Loader and Advanced CLIP Text Encode with an additional pipe output
-+ _**Inputs -** pipe, (optional pipe overrides), xyplot, (Lora, model strength, clip strength), (upscale method, factor, crop), sampler state, steps, cfg, sampler name, scheduler, denoise, (image output [None, Preview, Save]), Save_Prefix, seed_
-+ _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
+
+Embedded with Advanced CLIP Text Encode with an additional pipe output
+
+![pipeKSampler](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/0f33d9aa-65ea-4b4f-88fd-033e7c4f1e2a)
+
 
 Old node layout:
 
@@ -132,28 +169,28 @@ With pipeLoader and pipeKSampler:
   </details>
 
 <details>
-  <summary>pipeKSamplerAdvanced</summary>
+  <summary>pipeKSamplerAdvanced v2</summary>
 
-Combination of Efficiency Loader and Advanced CLIP Text Encode with an additional pipe output
-+ _**Inputs -** pipe, (optional pipe overrides), xyplot, (Lora, model strength, clip strength), (upscale method, factor, crop), sampler state, steps, cfg, sampler name, scheduler, starts_at_step, return_with_leftover_noise, (image output [None, Preview, Save]), Save_Prefix_
-+ _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
+Embedded with Advanced CLIP Text Encode with an additional pipe output
 
+![pipeKSampler Advanced](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/31dd3860-6cb0-417b-9912-f3f5a37df68b)
   </details>
 
   <details>
-  <summary>pipeLoaderSDXL</summary>
+  <summary>pipeLoaderSDXL v2</summary>
 
 SDXL Loader and Advanced CLIP Text Encode with an additional pipe output
-+ _**Inputs -** model, vae, clip skip, (lora1, modelstrength clipstrength), (Lora2, modelstrength clipstrength), model, vae, clip skip, (lora1, modelstrength clipstrength), (Lora2, modelstrength clipstrength), (positive prompt, token normalization, weight interpretation), (negative prompt, token normalization, weight interpretation), (latent width, height), batch size, seed_
-+ _**Outputs -** sdxlpipe, model, conditioning, conditioning, vae, model, conditioning, conditioning, vae, samples, clip, seed_
+
+![pipeLoaderSDXL](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/cb6e43f8-a1c7-47f8-aab7-d403908bf83b)
+
    </details>
 
 <details>
-  <summary>pipeKSamplerSDXL</summary>
+  <summary>pipeKSamplerSDXL v2</summary>
 
 SDXL Sampler (base and refiner in one) and Advanced CLIP Text Encode with an additional pipe output
-+ _**Inputs -** sdxlpipe, (optional pipe overrides), (upscale method, factor, crop), sampler state, base_steps, refiner_steps cfg, sampler name, scheduler, (image output [None, Preview, Save]), Save_Prefix, seed_
-+ _**Outputs -** pipe, model, conditioning, conditioning, vae, model, conditioning, conditioning, vae, samples, clip, image, seed_
+
+![pipeLoaderSDXL](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/cb6e43f8-a1c7-47f8-aab7-d403908bf83b)
 
 Old node layout:
 
@@ -164,21 +201,7 @@ With pipeLoaderSDXL and pipeKSamplerSDXL:
 <img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/faa5c807-c96c-4734-99cd-34e6024c32fb"  width="50%">
   </details>
   
-<details>
-  <summary>pipeIN</summary>
 
-Encode up to 8 frequently used inputs into a single Pipe line.
-+ _**Inputs -** model, conditioning, conditioning, samples, vae, clip, image, seed_
-+ _**Outputs -** pipe_
-   </details>
-
-<details>
-  <summary>pipeOUT</summary>
-
-Decode single Pipe line into the 8 original outputs, AND a Pipe throughput.
-+ _**Inputs -** pipe_
-+ _**Outputs -** model, conditioning, conditioning, samples, vae, clip, image, seed, pipe_
-   </details>
 
 <details>
   <summary>pipeEDIT</summary>
@@ -205,11 +228,11 @@ Convert ttN pipe line to detailer pipe (to be compatible with [ImpactPack](https
    </details>
 
 <details>
-  <summary>pipe > xyPlot</summary>
+  <summary>pipe > adv_xyPlot</summary>
   
-pipeKSampler input to generate xy plots using sampler and loader values. (Any values not set by xyPlot will be taken from the corresponding pipeKSampler or pipeLoader)
-+ _**Inputs -** grid_spacing, latent_id, flip_xy, x_axis, x_values, y_axis, y_values_
-+ _**Outputs -** xyPlot_
+pipeKSampler input to generate xy plots using sampler and loader values. (Any values not set by xyPlot will be taken from the corresponding nodes)
+
+![adv_xyPlot](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/4443f88e-5e95-413b-9eb1-caf643b19ba1)
    </details>
 
 ## ttN/image
@@ -310,3 +333,90 @@ int loader and converter
    </details>
   
  </details>
+
+## ttN/legacy
+
+<details>
+  <summary>pipeLoader v1</summary>
+  
+(Modified from [Efficiency Nodes](https://github.com/LucianoCirino/efficiency-nodes-comfyui) and [ADV_CLIP_emb](https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb))
+
+Combination of Efficiency Loader and Advanced CLIP Text Encode with an additional pipe output
++ _**Inputs -** model, vae, clip skip, (lora1, modelstrength clipstrength), (Lora2, modelstrength clipstrength), (Lora3, modelstrength clipstrength), (positive prompt, token normalization, weight interpretation), (negative prompt, token normalization, weight interpretation), (latent width, height), batch size, seed_
++ _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, seed_
+   </details>
+
+<details>
+  <summary>pipeKSampler v1</summary>
+  
+(Modified from [Efficiency Nodes](https://github.com/LucianoCirino/efficiency-nodes-comfyui) and [QOLS_Omar92](https://github.com/omar92/ComfyUI-QualityOfLifeSuit_Omar92))
+
+Combination of Efficiency Loader and Advanced CLIP Text Encode with an additional pipe output
++ _**Inputs -** pipe, (optional pipe overrides), xyplot, (Lora, model strength, clip strength), (upscale method, factor, crop), sampler state, steps, cfg, sampler name, scheduler, denoise, (image output [None, Preview, Save]), Save_Prefix, seed_
++ _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
+
+Old node layout:
+
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/32b189de-42e3-4464-b3b2-4e0e225e6abe"  width="50%">
+
+With pipeLoader and pipeKSampler:
+
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/c806c2e3-2efb-44cb-bdf0-3fbc20251456"  width="50%">
+  </details>
+
+<details>
+  <summary>pipeKSamplerAdvanced v1</summary>
+
+Combination of Efficiency Loader and Advanced CLIP Text Encode with an additional pipe output
++ _**Inputs -** pipe, (optional pipe overrides), xyplot, (Lora, model strength, clip strength), (upscale method, factor, crop), sampler state, steps, cfg, sampler name, scheduler, starts_at_step, return_with_leftover_noise, (image output [None, Preview, Save]), Save_Prefix_
++ _**Outputs -** pipe, model, conditioning, conditioning, samples, vae, clip, image, seed_
+
+  </details>
+
+  <details>
+  <summary>pipeLoaderSDXL v1</summary>
+
+SDXL Loader and Advanced CLIP Text Encode with an additional pipe output
++ _**Inputs -** model, vae, clip skip, (lora1, modelstrength clipstrength), (Lora2, modelstrength clipstrength), model, vae, clip skip, (lora1, modelstrength clipstrength), (Lora2, modelstrength clipstrength), (positive prompt, token normalization, weight interpretation), (negative prompt, token normalization, weight interpretation), (latent width, height), batch size, seed_
++ _**Outputs -** sdxlpipe, model, conditioning, conditioning, vae, model, conditioning, conditioning, vae, samples, clip, seed_
+   </details>
+
+<details>
+  <summary>pipeKSamplerSDXL v1</summary>
+
+SDXL Sampler (base and refiner in one) and Advanced CLIP Text Encode with an additional pipe output
++ _**Inputs -** sdxlpipe, (optional pipe overrides), (upscale method, factor, crop), sampler state, base_steps, refiner_steps cfg, sampler name, scheduler, (image output [None, Preview, Save]), Save_Prefix, seed_
++ _**Outputs -** pipe, model, conditioning, conditioning, vae, model, conditioning, conditioning, vae, samples, clip, image, seed_
+
+Old node layout:
+
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/6fe28463-6ca4-4d45-818a-bbe91d84f3c4"  width="50%">
+
+With pipeLoaderSDXL and pipeKSamplerSDXL:
+
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/faa5c807-c96c-4734-99cd-34e6024c32fb"  width="50%">
+  </details>
+  
+<details>
+  <summary>pipeIN</summary>
+
+Encode up to 8 frequently used inputs into a single Pipe line.
++ _**Inputs -** model, conditioning, conditioning, samples, vae, clip, image, seed_
++ _**Outputs -** pipe_
+   </details>
+
+<details>
+  <summary>pipeOUT</summary>
+
+Decode single Pipe line into the 8 original outputs, AND a Pipe throughput.
++ _**Inputs -** pipe_
++ _**Outputs -** model, conditioning, conditioning, samples, vae, clip, image, seed, pipe_
+   </details>
+
+<details>
+  <summary>pipe > xyPlot</summary>
+  
+pipeKSampler input to generate xy plots using sampler and loader values. (Any values not set by xyPlot will be taken from the corresponding pipeKSampler or pipeLoader)
++ _**Inputs -** grid_spacing, latent_id, flip_xy, x_axis, x_values, y_axis, y_values_
++ _**Outputs -** xyPlot_
+   </details>

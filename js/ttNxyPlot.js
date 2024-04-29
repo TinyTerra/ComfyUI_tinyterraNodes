@@ -140,7 +140,7 @@ function dropdownCreator(node) {
 			
 
 			const onInput = function () {
-				const nodeId = String(w.parent.id);
+				const nodeId = node.id;
 				const axisWidgetName = w.name[0] + '_axis';
 
 				let optionsList = currentOptionsDict[nodeId]?.[axisWidgetName] || [];

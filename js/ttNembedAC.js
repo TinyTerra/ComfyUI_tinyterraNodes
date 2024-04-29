@@ -1,170 +1,267 @@
-// Imports specific objects from other modules.
 import { app } from "../../scripts/app.js";
 import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttN.js";
 
 // Initialize some global lists and objects.
-let embeddingsList = [];
-let embeddingFiles = [];
-let embeddingsHierarchy = {};
-
-// Convert a list of strings into a hierarchical structure.
-function convertListToHierarchy(list) {
-    const hierarchy = {};  // Initialize an empty hierarchy object.
-
-    // Iterate over each item in the list.
-    for (var item of list) {
-        item = item.replace("embedding:", "");  // Remove any "embedding:" prefix from the item.
-        const parts = item.split(/:\\|\\/);  // Split the item by either ':\' or '\'.
-        let currentNode = hierarchy;  // Start at the root of the hierarchy.
-
-        // For each part of the split item...
-        parts.forEach((part, index) => {
-            // If it's the last part, set its value to null in the hierarchy.
-            if (index === parts.length - 1) {
-                currentNode[part] = null;
-            } else {
-                // Otherwise, initialize the node if it doesn't exist yet and move deeper into the hierarchy.
-                currentNode[part] = currentNode[part] || {};
-                currentNode = currentNode[part];
-            }
-        });
-    }
-
-    return hierarchy;  // Return the filled hierarchy.
-}
-
-// Register an extension to the app.
-app.registerExtension({
-    name: "comfy.ttN.embeddingAC",
-    // Before a node definition is registered...
-    async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        // If the node name matches a specific type...
-        if (nodeData.name === "ttN pipeKSampler") {
-            initializeEmbeddingData(nodeData.input.hidden.embeddingsList[0]);
-        }
-    },
-    // When a node is created...
-    nodeCreated(node) {
-        // If the node has widgets and its title isn't "xyPlot"...
-        if (node.widgets && node.getTitle() !== "xyPlot") {
-            const relevantWidgets = filterRelevantWidgets(node.widgets);  // Filter out the relevant widgets.
-            addInputListenersToWidgets(relevantWidgets);  // Add input listeners to these widgets.
-        }
-    }
-});
-
-// Returns a list of widgets that either have type "customtext" with dynamic prompts or just have dynamic prompts.
-function filterRelevantWidgets(widgets) {
-    return widgets.filter(widget => (widget.type === "customtext" && widget.dynamicPrompts !== false) || widget.dynamicPrompts);
-}
-
-// Adds input listeners to the given widgets.
-function addInputListenersToWidgets(widgets) {
-    widgets.forEach(widget => {
-        const inputHandler = createWidgetInputHandler(widget);  // Create an input handler specific for this widget.
-        setWidgetInputHandler(widget, inputHandler);  // Set this handler to the widget.
-    });
-}
-
-// Returns a function that will handle the widget's input.
-function createWidgetInputHandler(widget) {
-    return function handleInput() {
-        const currentWord = getCurrentWordFromInput(widget);  // Get the word at the current cursor position in the widget's input.
-        // Check if the current word should trigger embedding suggestions...
-        if (shouldProvideEmbeddingSuggestion(currentWord)) {
-            const suggestions = filterEmbeddingsForInput(currentWord);  // Get suggestions for the current word.
-            if (suggestions.length > 0) {  // If there are suggestions...
-                // Convert the suggestions to a hierarchy and create a dropdown with these suggestions.
-                embeddingsHierarchy = convertListToHierarchy(suggestions);
-                ttN_CreateDropdown(widget.inputEl, embeddingsHierarchy, selectedSuggestion => {
-                    // Update the widget's input value with the selected suggestion when one is chosen.
-                    widget.inputEl.value = updateInputWithSuggestion(widget.inputEl.value, selectedSuggestion, widget);
-                }, true);
-                return;
-            }
-        }
-        // If no suggestions, remove any existing dropdown.
-        ttN_RemoveDropdown();
-    };
-}
-
-// Adds or replaces event listeners for the widget's input.
-function setWidgetInputHandler(widget, handler) {
-    ['input', 'mousedown'].forEach(event => {
-        // Remove any existing listeners and then add the new handler.
-        widget.inputEl.removeEventListener(event, handler);
-        widget.inputEl.addEventListener(event, handler);
-    });
-}
-
-// Returns the word at the current cursor position from the widget's input.
-function getCurrentWordFromInput(widget) {
-    const cursorPosition = widget.inputEl.selectionStart;
-    const segments = widget.inputEl.value.split(' ');
-    return segments[widget.inputEl.value.substring(0, cursorPosition).split(' ').length - 1].toLowerCase();
-}
-
-// Determines if the current word should trigger embedding suggestions.
-function shouldProvideEmbeddingSuggestion(word) {
-    const suggestionPrefix = 'embedding:';
-    return suggestionPrefix.startsWith(word) && word.length > 2 || word.startsWith(suggestionPrefix);
-}
-
-// Filters embeddings based on a specific word.
-function filterEmbeddingsForInput(input) {
-    const prefixes = ['embedding', 'embeddin', 'embeddi', 'embedd', 'embed', 'embe', 'emb']
-
-    let inputLowered = input.toLowerCase();
-    let cleanedInput = inputLowered.replace('embedding:', '');
-    
-    prefixes.forEach(prefix => {
-        if (inputLowered.startsWith(prefix)) {
-            cleanedInput = cleanedInput.replace(prefix, '');
-        }
-    })
-
-    cleanedInput = cleanedInput.replace(/\//g, "\\");
-
-    return embeddingsList.filter(embedding => {
-        const embeddingName = getFileName(embedding).toLowerCase();
-        embedding = embedding.replace('embedding:', '').toLowerCase();
-        if (embeddingName.startsWith(cleanedInput) || embedding.startsWith(cleanedInput) || prefixes.includes(cleanedInput)) {
-            return true;
-        }
-        return false
-    });
-}
+let autoCompleteDict = {}; // {prefix: [suggestions]}
+let autoCompleteHierarchy = {};
+let nsp_keys = ['3d-terms', 'adj-architecture', 'adj-beauty', 'adj-general', 'adj-horror', 'album-cover', 'animals', 'artist', 'artist-botanical', 'artist-surreal', 'aspect-ratio', 'band', 'bird', 'body-fit', 'body-heavy', 'body-light', 'body-poor', 'body-shape', 'body-short', 'body-tall', 'bodyshape', 'camera', 'camera-manu', 'celeb', 'color', 'color-palette', 'comic', 'cosmic-galaxy', 'cosmic-nebula', 'cosmic-star', 'cosmic-terms', 'details', 'dinosaur', 'eyecolor', 'f-stop', 'fantasy-creature', 'fantasy-setting', 'fish', 'flower', 'focal-length', 'foods', 'forest-type', 'fruit', 'games', 'gen-modifier', 'gender', 'gender-ext', 'hair', 'hd', 'identity', 'identity-adult', 'identity-young', 'iso-stop', 'landscape-type', 'movement', 'movie', 'movie-director', 'nationality', 'natl-park', 'neg-weight', 'noun-beauty', 'noun-emote', 'noun-fantasy', 'noun-general', 'noun-horror', 'occupation', 'penciller', 'photo-term', 'pop-culture', 'pop-location', 'portrait-type', 'punk', 'quantity', 'rpg-Item', 'scenario-desc', 'site', 'skin-color', 'style', 'tree', 'trippy', 'water', 'wh-site']
 
 function getFileName(path) {
-    const parts = path.split(/[\/:\\]/); // Split the path by '/' or ':'
-    const fileName = parts[parts.length - 1]; // Get the last part (filename with extension)
-    return fileName;
+    return path.split(/[\/:\\]/).pop();
 }
 
-// Updates the widget's input text with a selected suggestion.
-function updateInputWithSuggestion(inputText, selectedSuggestion, widget) {
-    const cursorPosition = widget.inputEl.selectionStart;
-    const inputSegments = inputText.split(' ');
-    const cursorSegmentIndex = inputText.substring(0, cursorPosition).split(' ').length - 1;
+function getCurrentWord(widget) {
+    const formattedInput = widget.inputEl.value.replace(/>\s*/g, '> ').replace(/\s+/g, ' ');
+    const words = formattedInput.split(' ');
 
-    if (inputSegments[cursorSegmentIndex].startsWith('emb')) {
-        inputSegments[cursorSegmentIndex] = 'embedding:' + selectedSuggestion;
+    const adjustedInput = widget.inputEl.value.substring(0, widget.inputEl.selectionStart)
+    .replace(/>\s*/g, '> ').replace(/\s+/g, ' ');
+
+    const currentWordPosition = adjustedInput.split(' ').length - 1;
+
+    return words[currentWordPosition].toLowerCase();
+}
+
+function isTriggerWord(word) {
+    for (let prefix in autoCompleteDict) {
+        if ((prefix.startsWith(word) && word.length > 1) || word.startsWith(prefix)) return true;
+    }
+    return false;
+}
+
+const _generatePrefixes = (str) => {
+    const prefixes = [];
+    while (str.length > 1) {
+        prefixes.push(str);
+        str = str.substring(0, str.length - 1);
+    }
+    return prefixes;
+};
+
+function _cleanInputWord(word) {
+    let prefixesToRemove = [];
+    for (let prefix in autoCompleteDict) {
+        prefixesToRemove = [...prefixesToRemove, ..._generatePrefixes(prefix)];
+    }
+    let cleanedWord = prefixesToRemove.reduce((acc, prefix) => acc.replace(prefix, ''), word.toLowerCase());
+    if (cleanedWord.includes(':')) {
+        const parts = cleanedWord.split(':');
+        cleanedWord = parts[0];
+    }
+    return cleanedWord.replace(/\//g, "\\");
+}
+
+function getSuggestionsForWord(word) {
+    let suggestions = [];
+    for (let prefix in autoCompleteDict) {
+        if ((prefix.startsWith(word) && word.length > 1) || word.startsWith(prefix)) {
+            suggestions = autoCompleteDict['fpath_' + prefix]; // Get suggestions from the dictionary
+            break;
+        }
+    }
+    const cleanedWord = _cleanInputWord(word);
+    // Filter suggestions based on the cleaned word
+    return suggestions.filter(suggestion =>
+        suggestion.toLowerCase().includes(cleanedWord) || getFileName(suggestion).toLowerCase().includes(cleanedWord)
+    );
+}
+
+
+function _convertListToHierarchy(list) {
+    const hierarchy = {};
+    list.forEach(item => {
+        const parts = item.split(/:\\|\\/);
+        let node = hierarchy;
+        parts.forEach((part, idx) => {
+            node = node[part] = (idx === parts.length - 1) ? null : (node[part] || {});
+        });
+    });
+    return hierarchy;
+}
+
+function _insertSuggestion(widget, suggestion) {
+    const formattedInput = widget.inputEl.value.replace(/>\s*/g, '> ').replace(/\s+/g, ' ');
+    const inputSegments = formattedInput.split(' ');
+
+    const adjustedInput = widget.inputEl.value.substring(0, widget.inputEl.selectionStart)
+        .replace(/>\s*/g, '> ').replace(/\s+/g, ' ');
+    const currentSegmentIndex = adjustedInput.split(' ').length - 1;
+
+    let matchedPrefix = '';
+    let currentSegment = inputSegments[currentSegmentIndex].toLowerCase();
+    if (["loras", "refiner_loras"].includes(widget.name) && ['', ' ','<','<l'].includes(currentSegment)) {
+        currentSegment = '<lora:';
     }
 
+    for (let prefix in autoCompleteDict) {
+        const shortPrefix = prefix.substring(0, 1).toLowerCase();
+        if (currentSegment.startsWith(shortPrefix)) {
+            matchedPrefix = prefix;
+            break;
+        }
+    }
+
+    let suffix = '';
+    if (matchedPrefix === '<lora:') {
+        let oldSuffix = currentSegment.replace('<lora:', '').split(':', 2)[1];
+        if (oldSuffix && oldSuffix.includes('>')) {
+            oldSuffix = oldSuffix.split('>')[0] + '>';
+        }
+        suffix = oldSuffix ? ':' + oldSuffix : ':1>';
+    }
+    if (matchedPrefix === '__') {
+        suffix = '__';
+    }
+
+    inputSegments[currentSegmentIndex] = matchedPrefix + suggestion + suffix;
     return inputSegments.join(' ');
 }
 
-// Initializes data related to embeddings.
-function initializeEmbeddingData(initialEmbeddingsList) {
-    embeddingsList = initialEmbeddingsList;
+function showSuggestionsDropdown(widget, suggestions) {
+    const hierarchy = _convertListToHierarchy(suggestions);
+    ttN_CreateDropdown(widget.inputEl, hierarchy, selected => {
+        widget.inputEl.value = _insertSuggestion(widget, selected);
+    }, true);
+}
 
-    embeddingsList.forEach(embedding => {
-        const fileName = embedding.split('\\').slice(-1)[0];
-        embeddingFiles.push(fileName);
+
+function _initializeAutocompleteData(initialList, prefix) {
+    autoCompleteDict['fpath_' + prefix] = initialList
+    autoCompleteDict[prefix] = initialList.map(getFileName).map(item => prefix + item);
+}
+
+function _initializeAutocompleteList(initialList, prefix) {
+    autoCompleteDict['fpath_' + prefix] = initialList
+    autoCompleteDict[prefix] = initialList.map(item => prefix + item);
+}
+
+function _isRelevantWidget(widget) {
+    return (["customtext", "ttNhidden"].includes(widget.type) && (widget.dynamicPrompts !== false) || widget.dynamicPrompts) && !_isLorasWidget(widget);
+}
+
+function _isLorasWidget(widget) {
+    return (["customtext", "ttNhidden"].includes(widget.type) && ["loras", "refiner_loras"].includes(widget.name));
+}
+
+function _attachInputHandler(widget) {
+    if (!widget.ttNhandleInput) {
+        widget.ttNhandleInput = () => {
+            let currentWord = getCurrentWord(widget);
+            if (isTriggerWord(currentWord)) {
+                const suggestions = getSuggestionsForWord(currentWord);
+                if (suggestions.length > 0) {
+                    showSuggestionsDropdown(widget, suggestions);
+                } else {
+                    ttN_RemoveDropdown();
+                }
+            } else {
+                ttN_RemoveDropdown();
+            }
+        };
+    }
+    ['input', 'mousedown'].forEach(event => {
+        widget?.inputEl?.removeEventListener(event, widget.ttNhandleInput);
+        widget?.inputEl?.addEventListener(event, widget.ttNhandleInput);
+    });
+}
+
+function _attachLorasHandler(widget) {
+    if (!widget.ttNhandleLorasInput) {
+        widget.ttNhandleLorasInput = () => {
+            let currentWord = getCurrentWord(widget);
+            if (['',' ','<','<l'].includes(currentWord)) {
+                currentWord = '<lora:';
+            }
+            if (isTriggerWord(currentWord)) {
+                const suggestions = getSuggestionsForWord(currentWord);
+                if (suggestions.length > 0) {
+                    showSuggestionsDropdown(widget, suggestions);
+                } else {
+                    ttN_RemoveDropdown();
+                }
+            } else {
+                ttN_RemoveDropdown();
+            }
+        };
+    }
+
+    ['input', 'mouseup'].forEach(event => {
+        widget?.inputEl?.removeEventListener(event, widget.ttNhandleLorasInput);
+        widget?.inputEl?.addEventListener(event, widget.ttNhandleLorasInput);
     });
 
-    embeddingsList = embeddingsList.map(embedding => {
-        const segments = embedding.split('/');
-        return segments.map((segment, index) => "embedding:" + segments.slice(0, index + 1).join('/'));
-    }).flat();
+    if (!widget.ttNhandleScrollInput) {
+        widget.ttNhandleScrollInput = (event) => {
+            event.preventDefault();
+
+            const step = event.ctrlKey ? 0.1 : 0.01;
+
+            // Determine the scroll direction
+            const direction = Math.sign(event.deltaY); // Will be -1 for scroll up, 1 for scroll down
+
+            // Get the current selection
+            const inputEl = widget.inputEl;
+            let selectionStart = inputEl.selectionStart;
+            let selectionEnd = inputEl.selectionEnd;
+            const selected = inputEl.value.substring(selectionStart, selectionEnd);
+
+            if (selected === 'lora' || selected === 'skip') {
+                const swapWith = selected === 'lora' ? 'skip' : 'lora';
+                inputEl.value = inputEl.value.substring(0, selectionStart) + swapWith + inputEl.value.substring(selectionEnd);
+                inputEl.setSelectionRange(selectionStart, selectionStart + swapWith.length);
+                return
+            }
+
+            // Expand the selection to make sure the whole number is selected
+            while (selectionStart > 0 && /\d|\.|-/.test(inputEl.value.charAt(selectionStart - 1))) {
+                selectionStart--;
+            }
+            while (selectionEnd < inputEl.value.length && /\d|\.|-/.test(inputEl.value.charAt(selectionEnd))) {
+                selectionEnd++;
+            }
+
+            const selectedText = inputEl.value.substring(selectionStart, selectionEnd);
+
+            // Check if the selected text is a number
+            if (!isNaN(selectedText) && selectedText.trim() !== '') {
+                let trail = selectedText.split('.')[1]?.length;
+                if (!trail || trail < 2) {
+                    trail = 2;
+                }
+
+                const currentValue = parseFloat(selectedText);
+                let modifiedValue = currentValue - direction * step;
+
+                // Format the number to avoid floating point precision issues and then convert back to a float
+                modifiedValue = parseFloat(modifiedValue.toFixed(trail));
+
+                // Replace the selected text with the new value, keeping the selection
+                inputEl.value = inputEl.value.substring(0, selectionStart) + modifiedValue + inputEl.value.substring(selectionEnd);
+                const newSelectionEnd = selectionStart + modifiedValue.toString().length;
+                inputEl.setSelectionRange(selectionStart, newSelectionEnd);
+            }
+        };
+    }
+    
+    widget.inputEl.removeEventListener('wheel', widget.ttNhandleScrollInput);
+    widget.inputEl.addEventListener('wheel', widget.ttNhandleScrollInput);
 }
+
+app.registerExtension({
+    name: "comfy.ttN.AutoComplete",
+    async beforeRegisterNodeDef(nodeType, nodeData, app) {
+        if (nodeData.name === "ttN pipeKSampler_v2") {
+            _initializeAutocompleteData(nodeData.input.hidden.embeddingsList[0], 'embedding:');
+            _initializeAutocompleteData(nodeData.input.hidden.lorasList[0], '<lora:');
+            _initializeAutocompleteList(nsp_keys, '__');
+        }
+    },
+    nodeCreated(node) {
+        if (node.widgets && node.getTitle() !== "xyPlot") {
+            const relevantWidgets = node.widgets.filter(_isRelevantWidget);
+            relevantWidgets.forEach(_attachInputHandler);
+            const lorasWidgets = node.widgets.filter(_isLorasWidget);
+            lorasWidgets.forEach(_attachLorasHandler);
+        }
+    }
+});
