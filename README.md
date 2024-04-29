@@ -82,6 +82,9 @@ Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
     + Suggested to use 'Badge: ID + nickname' in [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) settings to be able to view node IDs.
 + Autocomplete:
     + ttN Autocomplete will activate when the advanced xyPlot node is connected to a sampler, and will show all the nodes and options available, as well as an 'add axis' option to auto add the code for a new axis number and label.
++ Search and Replace:
+    + if you include %search;replace% as the value it will use the current nodes value and do a search and replace using these values.
+    + you can include more than one to replace different strings
 
 **Auto Complete**
 

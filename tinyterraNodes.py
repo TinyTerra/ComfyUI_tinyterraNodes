@@ -1015,6 +1015,12 @@ class ttNadv_xyPlot:
                 if node_id == 'label':
                     continue
                 for input_name, value in inputs.items():
+                    matches = re.findall(r'%(.*?);(.*?)%', value)
+                    if matches:
+                        value = x_prompt[node_id]["inputs"][input_name]
+                        for search, replace in matches:
+                            pattern = re.compile(re.escape(search), re.IGNORECASE)
+                            value = pattern.sub(replace, value)
                     x_prompt[node_id]["inputs"][input_name] = value
                     
             if self.y_points:
@@ -1026,6 +1032,12 @@ class ttNadv_xyPlot:
                         if node_id == 'label':
                             continue
                         for input_name, value in inputs.items():
+                            matches = re.findall(r'%(.*?);(.*?)%', value)
+                            if matches:
+                                value = x_prompt[node_id]["inputs"][input_name]
+                                for search, replace in matches:
+                                    pattern = re.compile(re.escape(search), re.IGNORECASE)
+                                    value = pattern.sub(replace, value)
                             y_prompt[node_id]["inputs"][input_name] = value
 
                     self.execute_prompt(y_prompt, self.extra_pnginfo, xpoint, ypoint, x_label, y_label)
