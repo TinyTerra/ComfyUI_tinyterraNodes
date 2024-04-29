@@ -1893,7 +1893,7 @@ class ttN_pipeLoaderSDXL_v2:
                                     "empty_samples": samples,}
         }
 
-        return (sdxl_pipe, model, positive_embedding, negative_embedding, vae, clip, refiner_model, refiner_positive_embedding, refiner_negative_embedding, refiner_clip, samples, seed, empty_latent_width, empty_latent_height, positive_l, negative_l)
+        return (sdxl_pipe, model, positive_embedding, negative_embedding, vae, clip, refiner_model, refiner_positive_embedding, refiner_negative_embedding, refiner_clip, samples, seed, empty_latent_width, empty_latent_height, positive_g + positive_l, negative_g + negative_l)
 
 class ttN_pipeKSamplerSDXL_v2:
     version = '2.0.0'
