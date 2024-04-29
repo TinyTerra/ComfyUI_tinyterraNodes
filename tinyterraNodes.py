@@ -809,11 +809,18 @@ class ttNadv_xyPlot:
             lines = []
             current_line = words[0]
             for word in words[1:]:
-                if d.textsize(f"{current_line} {word}", font=font)[0] <= label_width:
-                    current_line += " " + word
-                else:
-                    lines.append(current_line)
-                    current_line = word
+                try:
+                    if d.textsize(f"{current_line} {word}", font=font)[0] <= label_width:
+                        current_line += " " + word
+                    else:
+                        lines.append(current_line)
+                        current_line = word
+                except:
+                    if d.textlength(f"{current_line} {word}", font=font) <= label_width:
+                        current_line += " " + word
+                    else:
+                        lines.append(current_line)
+                        current_line = word
             lines.append(current_line)
             return lines
 
@@ -827,7 +834,10 @@ class ttNadv_xyPlot:
 
         current_y = 0
         for line in lines:
-            text_width, _ = d.textsize(line, font=font)
+            try:
+                text_width, _ = d.textsize(line, font=font)
+            except:
+                text_width = d.textlength(line, font=font)
             text_x = (label_width - text_width) // 2
             text_y = current_y
             current_y += line_height
