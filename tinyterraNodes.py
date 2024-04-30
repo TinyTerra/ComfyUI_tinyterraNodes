@@ -1029,7 +1029,22 @@ class ttNadv_xyPlot:
                         for search, replace in matches:
                             pattern = re.compile(re.escape(search), re.IGNORECASE)
                             value = pattern.sub(replace, value)
- 
+
+                    # set value to correct type                        
+                    class_type = x_prompt[str(node_id)]["class_type"]
+                    class_def = COMFY_CLASS_MAPPINGS[class_type]
+                    input_types = class_def.INPUT_TYPES()
+                    for itype in ['required', 'optional']:
+                        for iname in input_types[itype]:
+                            if iname == input_name:
+                                ivalues = input_types[itype][iname]
+                                if ivalues[0] == 'INT':
+                                    value = int(value)
+                                elif ivalues[0] == 'FLOAT':
+                                    value = float(value)
+                                elif ivalues[0] == 'BOOL':
+                                    value = bool(value)
+                                    
                     x_prompt[node_id]["inputs"][input_name] = value
                     
             if self.y_points:
@@ -1054,7 +1069,22 @@ class ttNadv_xyPlot:
                                 for search, replace in matches:
                                     pattern = re.compile(re.escape(search), re.IGNORECASE)
                                     value = pattern.sub(replace, value)
-                                    
+
+                            # set value to correct type                        
+                            class_type = y_prompt[str(node_id)]["class_type"]
+                            class_def = COMFY_CLASS_MAPPINGS[class_type]
+                            input_types = class_def.INPUT_TYPES()
+                            for itype in ['required', 'optional']:
+                                for iname in input_types[itype]:
+                                    if iname == input_name:
+                                        ivalues = input_types[itype][iname]
+                                        if ivalues[0] == 'INT':
+                                            value = int(value)
+                                        elif ivalues[0] == 'FLOAT':
+                                            value = float(value)
+                                        elif ivalues[0] == 'BOOL':
+                                            value = bool(value)
+                                            
                             y_prompt[node_id]["inputs"][input_name] = value
 
                     self.execute_prompt(y_prompt, self.extra_pnginfo, xpoint, ypoint, x_label, y_label)
@@ -2368,7 +2398,7 @@ class ttN_advanced_XYPlot:
                         line = line.split('>', 1)
                         num, label = line[0].split(':', 1)
                         axis_dict[num] = {"label": label}
-                        for point in line[1].split('[', 1):
+                        for point in line[1].split('['):
                             if point.strip() != '':
                                 node_id = point.split(':', 1)[0]
                                 axis_dict[num][node_id] = {}
