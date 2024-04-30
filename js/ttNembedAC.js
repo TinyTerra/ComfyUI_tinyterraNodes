@@ -143,9 +143,21 @@ function _isLorasWidget(widget) {
     return (["customtext", "ttNhidden"].includes(widget.type) && ["loras", "refiner_loras"].includes(widget.name));
 }
 
+function findPysssss(lora=false) {
+    const found = JSON.parse(localStorage.getItem("Comfy.Settings.pysssss.AutoCompleter")) || false;
+    if (found && lora) {
+        return JSON.parse(localStorage.getItem("pysssss.AutoCompleter.ShowLoras")) || false;
+    }
+    return found;
+}
+
 function _attachInputHandler(widget) {
     if (!widget.ttNhandleInput) {
         widget.ttNhandleInput = () => {
+            if (findPysssss()) {
+                return
+            }
+
             let currentWord = getCurrentWord(widget);
             if (isTriggerWord(currentWord)) {
                 const suggestions = getSuggestionsForWord(currentWord);
@@ -161,6 +173,9 @@ function _attachInputHandler(widget) {
     }
     ['input', 'mousedown'].forEach(event => {
         widget?.inputEl?.removeEventListener(event, widget.ttNhandleInput);
+        if (findPysssss()) {
+            return
+        }
         widget?.inputEl?.addEventListener(event, widget.ttNhandleInput);
     });
 }
@@ -168,6 +183,9 @@ function _attachInputHandler(widget) {
 function _attachLorasHandler(widget) {
     if (!widget.ttNhandleLorasInput) {
         widget.ttNhandleLorasInput = () => {
+            if (findPysssss(true)) {
+                return
+            }
             let currentWord = getCurrentWord(widget);
             if (['',' ','<','<l'].includes(currentWord)) {
                 currentWord = '<lora:';
@@ -187,6 +205,9 @@ function _attachLorasHandler(widget) {
 
     ['input', 'mouseup'].forEach(event => {
         widget?.inputEl?.removeEventListener(event, widget.ttNhandleLorasInput);
+        if (findPysssss(true)) {
+            return
+        }
         widget?.inputEl?.addEventListener(event, widget.ttNhandleLorasInput);
     });
 

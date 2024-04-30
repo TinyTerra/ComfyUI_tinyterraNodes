@@ -1306,7 +1306,7 @@ class ttN_pipeLoader_v2:
                         "vae_name": (["Baked VAE"] + folder_paths.get_filename_list("vae"),),
                         "clip_skip": ("INT", {"default": -1, "min": -24, "max": 0, "step": 1}),
 
-                        "loras": ("STRING", {"placeholder": "<lora:loraName:weight:optClipWeight>", "multiline": True, "pysssss.autocomplete": False}),
+                        "loras": ("STRING", {"placeholder": "<lora:loraName:weight:optClipWeight>", "multiline": True}),
 
                         "positive": ("STRING", {"default": "Positive","multiline": True, "dynamicPrompts": True}),
                         "positive_token_normalization": (["none", "mean", "length", "length+mean"],),
@@ -1757,12 +1757,10 @@ class ttN_pipeLoaderSDXL_v2:
                         "vae_name": (["Baked VAE"] + folder_paths.get_filename_list("vae"),),
                         "clip_skip": ("INT", {"default": -2, "min": -24, "max": 0, "step": 1}),
 
-                        "loras": ("STRING", {"placeholder": "Loras - <lora:loraName:weight:optClipWeight>", "multiline": True, "pysssss.autocomplete": False}),
+                        "loras": ("STRING", {"placeholder": "Loras - <lora:loraName:weight:optClipWeight>", "multiline": True}),
 
                         "refiner_ckpt_name": (["None"] + folder_paths.get_filename_list("checkpoints"), ),
                         "refiner_config_name": (["Default",] + folder_paths.get_filename_list("configs"), {"default": "Default"} ),
-
-                        #"refiner_loras": ("STRING", {"placeholder": "Refiner Loras - <lora:loraName:weight:optClipWeight>", "multiline": True, "pysssss.autocomplete": False}),
 
                         "positive_g": ("STRING", {"placeholder": "Linguistic Positive (positive_g)","multiline": True, "dynamicPrompts": True}),
                         "positive_l": ("STRING", {"placeholder": "Supporting Terms (positive_l)", "multiline": True, "dynamicPrompts": True}),
