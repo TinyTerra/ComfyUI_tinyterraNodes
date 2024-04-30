@@ -385,7 +385,7 @@ class ttNloader:
         if strength_model == 0 and strength_clip == 0:
             return (model, clip)
 
-        print('LORA NAME', lora_name)
+        #print('LORA NAME', lora_name)
 
         lora_path = folder_paths.get_full_path("loras", lora_name)
         if lora_path is None or not os.path.exists(lora_path):
@@ -1750,7 +1750,7 @@ class ttN_pipeKSamplerAdvanced_v2:
     def adv_sample(self, pipe,
                lora_name, lora_strength,
                sampler_state, add_noise, steps, cfg, sampler_name, scheduler, image_output, save_prefix, noise, 
-               noise_seed=None, optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, input_image_override=None, xyPlot=None, upscale_method=None, upscale_model_name=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_at_step=None, end_at_step=None, return_with_leftover_noise=False):
+               noise_seed=None, optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, input_image_override=None, adv_xyPlot=None, upscale_method=None, upscale_model_name=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_at_step=None, end_at_step=None, return_with_leftover_noise=False):
 
         force_full_denoise = True
         if return_with_leftover_noise == "enable":
@@ -1760,8 +1760,92 @@ class ttN_pipeKSamplerAdvanced_v2:
         if add_noise == "disable":
             disable_noise = True
 
-        return ttN_pipeKSampler_v2.sample(self, pipe, lora_name, lora_strength, lora_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, noise, 
-                optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, input_image_override, noise_seed, xyPlot, upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, force_full_denoise, disable_noise)
+        return ttN_pipeKSampler_v2.sample(self, pipe, lora_name, lora_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, noise, 
+                optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, input_image_override, noise_seed, adv_xyPlot, upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, force_full_denoise, disable_noise)
+
+class ttN_KSampler_v2:
+    version = '2.0.0'
+    upscale_methods = ["None",
+                       "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
+                       "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
+    crop_methods = ["disabled", "center"]
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required":
+                {
+                "model": ("MODEL",),
+                "positive": ("CONDITIONING",),
+                "negative": ("CONDITIONING",),
+                "latent": ("LATENT",),
+                "vae": ("VAE",),
+                "clip": ("CLIP",),
+
+                "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
+                "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+
+                "upscale_method": (cls.upscale_methods, {"default": "None"}),
+                "upscale_model_name": (folder_paths.get_filename_list("upscale_models"),),
+                "factor": ("FLOAT", {"default": 2, "min": 0.0, "max": 10.0, "step": 0.25}),
+                "rescale": (["by percentage", "to Width/Height", 'to longer side - maintain aspect', 'None'],),
+                "percent": ("INT", {"default": 50, "min": 0, "max": 1000, "step": 1}),
+                "width": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
+                "height": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
+                "longer_side": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
+                "crop": (cls.crop_methods,),
+
+                "sampler_state": (["Sample", "Hold"], ),
+                "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
+                "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
+                "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
+                "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
+                "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
+                "save_prefix": ("STRING", {"default": "ComfyUI"})
+                },
+                "optional": 
+                {"seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "input_image_override": ("IMAGE",),
+                "adv_xyPlot": ("ADV_XYPLOT",),
+                },
+                "hidden":
+                {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
+                 "embeddingsList": (folder_paths.get_filename_list("embeddings"),),
+                 "lorasList": (folder_paths.get_filename_list("loras"),),
+                 "ttNnodeVersion": ttN_pipeKSampler_v2.version},
+        }
+
+    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
+    RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
+    OUTPUT_NODE = True
+    FUNCTION = "sample"
+    CATEGORY = "ttN"
+
+    def sample( self, model, positive, negative, latent, vae, clip,
+                lora_name, lora_strength,
+                sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
+                input_image_override=None,
+                seed=None, adv_xyPlot=None, upscale_model_name=None, upscale_method=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None,
+                prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False, disable_noise=False):
+
+        pipe = {"model": model,
+                "positive": positive,
+                "negative": negative,
+                "vae": vae,
+                "clip": clip,
+
+                "samples": latent,
+                "images": input_image_override,
+                "seed": seed,
+
+                "loader_settings": None
+                }
+
+        return ttN_pipeKSampler_v2.sample(self, pipe, lora_name, lora_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise, 
+                None, None, None, None, None, None, input_image_override, seed, adv_xyPlot, upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop, prompt, extra_pnginfo, my_unique_id, None, None, force_full_denoise, disable_noise)
 
 class ttN_pipeLoaderSDXL_v2:
     version = '2.0.0'

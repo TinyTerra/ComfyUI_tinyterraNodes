@@ -83,7 +83,7 @@ class SeedControl {
 app.registerExtension({
     name: "comfy.ttN.widgets",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        if (nodeData.name.startsWith("ttN ") && ["ttN pipeLoader_v2", "ttN pipeKSampler_v2", "ttN pipeKSamplerAdvanced_v2", "ttN pipeLoaderSDXL_v2", "ttN pipeKSamplerSDXL_v2"].includes(nodeData.name)) {
+        if (nodeData.name.startsWith("ttN ") && ["ttN pipeLoader_v2", "ttN pipeKSampler_v2", "ttN pipeKSamplerAdvanced_v2", "ttN pipeLoaderSDXL_v2", "ttN pipeKSamplerSDXL_v2", "ttN KSampler_v2"].includes(nodeData.name)) {
             if (nodeData.output_name.includes('seed')) {
                 const onNodeCreated = nodeType.prototype.onNodeCreated;
                 nodeType.prototype.onNodeCreated = function () {

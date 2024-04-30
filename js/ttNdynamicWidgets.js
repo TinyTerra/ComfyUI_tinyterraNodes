@@ -414,7 +414,8 @@ app.registerExtension({
 			"imageOutput",
 			"multiModelMerge",
 			"pipeLoraStack",
-			"pipeEncodeConcat"
+			"pipeEncodeConcat",
+            "ttN KSampler",
 		];
 	
 		if (titles.includes(nodeTitle)) {
