@@ -1416,7 +1416,10 @@ class ttN_pipeLoader_v2:
                                     "empty_samples": samples,}
         }
 
-        return (pipe, model, positive_embedding, negative_embedding, samples, vae, clip, seed, empty_latent_width, empty_latent_height, positive, negative)
+        final_positive = (prepend_positive + ' ' if prepend_positive else '') + (positive + ' ' if positive else '')
+        final_negative = (prepend_negative + ' ' if prepend_negative else '') + (negative + ' ' if negative else '')
+
+        return (pipe, model, positive_embedding, negative_embedding, samples, vae, clip, seed, empty_latent_width, empty_latent_height, final_positive, final_negative)
 
 class ttN_pipeKSampler_v2:
     version = '2.0.0'
@@ -1915,7 +1918,10 @@ class ttN_pipeLoaderSDXL_v2:
                                     "empty_samples": samples,}
         }
 
-        return (sdxl_pipe, model, positive_embedding, negative_embedding, vae, clip, refiner_model, refiner_positive_embedding, refiner_negative_embedding, refiner_clip, samples, seed, empty_latent_width, empty_latent_height, positive_g + positive_l, negative_g + negative_l)
+        final_positive = (prepend_positive_g + ' ' if prepend_positive_g else '') + (positive_g + ' ' if positive_g else '') + (prepend_positive_l + ' ' if prepend_positive_l else '') + (positive_l + ' ' if positive_l else '')
+        final_negative = (prepend_negative_g + ' ' if prepend_negative_g else '') + (negative_g + ' ' if negative_g else '') + (prepend_negative_l + ' ' if prepend_negative_l else '') + (negative_l + ' ' if negative_l else '')
+
+        return (sdxl_pipe, model, positive_embedding, negative_embedding, vae, clip, refiner_model, refiner_positive_embedding, refiner_negative_embedding, refiner_clip, samples, seed, empty_latent_width, empty_latent_height, final_positive, final_negative)
 
 class ttN_pipeKSamplerSDXL_v2:
     version = '2.0.0'
