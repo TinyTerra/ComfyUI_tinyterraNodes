@@ -342,6 +342,12 @@ function widgetLogic(node, widget) {
                 toggleWidget(node, findWidgetByName(node, 'refiner_denoise'), true)
             }
             break;
+        
+        case 'sampler_state':
+            if (widget.value == 'Hold') {
+                findWidgetByName(node, 'control_after_generate').value = 'fixed'
+            }
+
 	}
 }
 
@@ -350,7 +356,7 @@ const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output',
 						'refiner_lora1_name', 'refiner_lora2_name', 'refiner_steps', 'upscale_method', 
 						'image_output', 'add_noise', 
 						'ckpt_B_name', 'ckpt_C_name', 'save_model', 'refiner_ckpt_name',
-						'num_loras', 'mode', 'toggle', 'empty_latent_aspect', 'conditioning_aspect', 'target_aspect']
+						'num_loras', 'mode', 'toggle', 'empty_latent_aspect', 'conditioning_aspect', 'target_aspect', 'sampler_state']
 
 function getSetters(node) {
 	if (node.widgets)
