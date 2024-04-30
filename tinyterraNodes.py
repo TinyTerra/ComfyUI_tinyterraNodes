@@ -1035,7 +1035,7 @@ class ttNadv_xyPlot:
                     class_def = COMFY_CLASS_MAPPINGS[class_type]
                     input_types = class_def.INPUT_TYPES()
                     for itype in ['required', 'optional']:
-                        for iname in input_types[itype]:
+                        for iname in input_types.get(itype) or []:
                             if iname == input_name:
                                 ivalues = input_types[itype][iname]
                                 if ivalues[0] == 'INT':
@@ -1075,7 +1075,7 @@ class ttNadv_xyPlot:
                             class_def = COMFY_CLASS_MAPPINGS[class_type]
                             input_types = class_def.INPUT_TYPES()
                             for itype in ['required', 'optional']:
-                                for iname in input_types[itype]:
+                                for iname in input_types.get(itype) or []:
                                     if iname == input_name:
                                         ivalues = input_types[itype][iname]
                                         if ivalues[0] == 'INT':
