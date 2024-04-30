@@ -247,6 +247,7 @@ class ttNloader:
         desired_vae_names.add(self.get_input_value(entry, f"{suffix}vae_name"))
 
     def update_loaded_objects(self, prompt):
+        return
         desired_ckpt_names, desired_vae_names, desired_lora_names, desired_lora_settings = set(), set(), set(), set()
 
         for entry in prompt.values():
@@ -345,11 +346,11 @@ class ttNloader:
         else:
             loaded_ckpt = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
 
-        self.add_to_cache("ckpt", cache_name, loaded_ckpt[0])
-        self.add_to_cache("clip", cache_name, loaded_ckpt[1])
-        self.add_to_cache("bvae", cache_name, loaded_ckpt[2])
+        #self.add_to_cache("ckpt", cache_name, loaded_ckpt[0])
+        #self.add_to_cache("clip", cache_name, loaded_ckpt[1])
+        #self.add_to_cache("bvae", cache_name, loaded_ckpt[2])
 
-        self.eviction_based_on_memory()
+        #self.eviction_based_on_memory()
 
         return loaded_ckpt[0], loaded_ckpt[1], loaded_ckpt[2]
 
@@ -365,8 +366,8 @@ class ttNloader:
         vae_path = folder_paths.get_full_path("vae", vae_name)
         sd = comfy.utils.load_torch_file(vae_path)
         loaded_vae = comfy.sd.VAE(sd=sd)
-        self.add_to_cache("vae", vae_name, loaded_vae)
-        self.eviction_based_on_memory()
+        #self.add_to_cache("vae", vae_name, loaded_vae)
+        #self.eviction_based_on_memory()
 
         return loaded_vae
 
@@ -405,7 +406,7 @@ class ttNloader:
         model_lora, clip_lora = comfy.sd.load_lora_for_models(model, clip, lora, strength_model, strength_clip)
 
         #self.loaded_objects["lora"][lora_name][unique_id] = ttNcacheEntry((model_lora, clip_lora))
-        self.eviction_based_on_memory()
+        #self.eviction_based_on_memory()
 
         return model_lora, clip_lora
 
