@@ -4840,6 +4840,7 @@ TTN_VERSIONS = {
     "tinyterraNodes": ttN_version,
     "pipeLoader": ttN_TSC_pipeLoader.version,
     "pipeLoader_v2": ttN_pipeLoader_v2.version,
+    "ttN KSampler": ttN_KSampler_v2.version,
     "pipeKSampler": ttN_TSC_pipeKSampler.version,
     "pipeKSampler_v2": ttN_pipeKSampler_v2.version,
     "pipeKSamplerAdvanced": ttN_pipeKSamplerAdvanced.version,
@@ -4874,6 +4875,7 @@ NODE_CLASS_MAPPINGS = {
     #ttN/pipe
     "ttN pipeLoader_v2": ttN_pipeLoader_v2,
     "ttN pipeKSampler_v2": ttN_pipeKSampler_v2,
+    "ttN KSampler_v2": ttN_KSampler_v2,
     "ttN pipeKSamplerAdvanced_v2": ttN_pipeKSamplerAdvanced_v2,
     "ttN pipeLoaderSDXL_v2": ttN_pipeLoaderSDXL_v2,
     "ttN pipeKSamplerSDXL_v2": ttN_pipeKSamplerSDXL_v2,
@@ -4918,6 +4920,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     #ttN/pipe    
     "ttN pipeLoader_v2": "pipeLoader",
     "ttN pipeKSampler_v2": "pipeKSampler",
+    "ttN KSampler_v2": "ttN KSampler",
     "ttN pipeKSamplerAdvanced_v2": "pipeKSamplerAdvanced",
     "ttN pipeLoaderSDXL_v2": "pipeLoaderSDXL",
     "ttN pipeKSamplerSDXL_v2": "pipeKSamplerSDXL",
