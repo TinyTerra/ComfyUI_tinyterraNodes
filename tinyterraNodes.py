@@ -265,28 +265,28 @@ class ttNloader:
                 self.process_pipe_loader(entry, num_loras=2, suffix="refiner_", desired_ckpt_names=desired_ckpt_names, desired_vae_names=desired_vae_names, desired_lora_names=desired_lora_names, desired_lora_settings=desired_lora_settings)
                 self.process_pipe_loader(entry, num_loras=2, desired_ckpt_names=desired_ckpt_names, desired_vae_names=desired_vae_names, desired_lora_names=desired_lora_names, desired_lora_settings=desired_lora_settings)
 
-            elif class_type in ["ttN pipeKSampler", "ttN pipeKSamplerAdvanced", "ttN pipeKSampler_v2", "ttN pipeKSamplerAdvanced_v2"]:
-                lora_name = self.get_input_value(entry, "lora_name")
-                desired_lora_names.add(lora_name)
-                setting = f'{lora_name};{entry["inputs"]["lora_model_strength"]};{entry["inputs"]["lora_clip_strength"]}'
-                desired_lora_settings.add(setting)
+            # elif class_type in ["ttN pipeKSampler", "ttN pipeKSamplerAdvanced", "ttN pipeKSampler_v2", "ttN pipeKSamplerAdvanced_v2"]:
+            #     lora_name = self.get_input_value(entry, "lora_name")
+            #     desired_lora_names.add(lora_name)
+            #     setting = f'{lora_name};{entry["inputs"]["lora_model_strength"]};{entry["inputs"]["lora_clip_strength"]}'
+            #     desired_lora_settings.add(setting)
 
-            elif class_type == "ttN xyPlot":
-                for axis in ["x", "y"]:
-                    axis_key = f"{axis}_axis"
-                    if entry["inputs"][axis_key] != "None":
-                        axis_entry = entry["inputs"][axis_key].split(": ")[1]
-                        vals = self.clean_values(entry["inputs"][f"{axis}_values"])
-                        desired_names_set = {
-                            "vae_name": desired_vae_names,
-                            "ckpt_name": desired_ckpt_names,
-                            "lora_name": desired_lora_names,
-                            "lora1_name": desired_lora_names,
-                            "lora2_name": desired_lora_names,
-                            "lora3_name": desired_lora_names,
-                        }
-                        if axis_entry in desired_names_set:
-                            desired_names_set[axis_entry].update(vals)
+            # elif class_type == "ttN xyPlot":
+            #     for axis in ["x", "y"]:
+            #         axis_key = f"{axis}_axis"
+            #         if entry["inputs"][axis_key] != "None":
+            #             axis_entry = entry["inputs"][axis_key].split(": ")[1]
+            #             vals = self.clean_values(entry["inputs"][f"{axis}_values"])
+            #             desired_names_set = {
+            #                 "vae_name": desired_vae_names,
+            #                 "ckpt_name": desired_ckpt_names,
+            #                 "lora_name": desired_lora_names,
+            #                 "lora1_name": desired_lora_names,
+            #                 "lora2_name": desired_lora_names,
+            #                 "lora3_name": desired_lora_names,
+            #             }
+            #             if axis_entry in desired_names_set:
+            #                 desired_names_set[axis_entry].update(vals)
 
             # elif class_type == "ttN multiModelMerge":
             #     for letter in "ABC":
@@ -990,7 +990,7 @@ class ttNadv_xyPlot:
 
 
 
-        self.results[xpoint][ypoint] = self.outputs[self.unique_id]
+        #self.results[xpoint][ypoint] = self.outputs[self.unique_id]
 
         self.latent_list.append(self.outputs[self.unique_id][-5][0]["samples"])
 
