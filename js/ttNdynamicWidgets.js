@@ -33,9 +33,11 @@ function widgetLogic(node, widget) {
 			if (widget.value === "None") {
 				toggleWidget(node, findWidgetByName(node, 'lora_model_strength'))
 				toggleWidget(node, findWidgetByName(node, 'lora_clip_strength'))
+                toggleWidget(node, findWidgetByName(node, 'lora_strength'))
 			} else {
 				toggleWidget(node, findWidgetByName(node, 'lora_model_strength'), true)
 				toggleWidget(node, findWidgetByName(node, 'lora_clip_strength'), true)
+                toggleWidget(node, findWidgetByName(node, 'lora_strength'), true)
 			}
 			break;
 

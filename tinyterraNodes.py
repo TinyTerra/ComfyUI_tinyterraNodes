@@ -1469,7 +1469,7 @@ class ttN_pipeLoader_v2:
         return (pipe, model, positive_embedding, negative_embedding, samples, vae, clip, seed, empty_latent_width, empty_latent_height, final_positive, final_negative)
 
 class ttN_pipeKSampler_v2:
-    version = '2.0.0'
+    version = '2.1.0'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -1484,8 +1484,7 @@ class ttN_pipeKSampler_v2:
                 {"pipe": ("PIPE_LINE",),
 
                 "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
-                "lora_model_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
-                "lora_clip_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+                "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
 
                 "upscale_method": (cls.upscale_methods, {"default": "None"}),
                 "upscale_model_name": (folder_paths.get_filename_list("upscale_models"),),
@@ -1531,7 +1530,7 @@ class ttN_pipeKSampler_v2:
     CATEGORY = "ttN/pipe"
 
     def sample(self, pipe,
-               lora_name, lora_model_strength, lora_clip_strength,
+               lora_name, lora_strength,
                sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
                optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, input_image_override=None,
                seed=None, adv_xyPlot=None, upscale_model_name=None, upscale_method=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None,
@@ -1667,18 +1666,18 @@ class ttN_pipeKSampler_v2:
             preview_latent = False
 
         if sampler_state == "Sample" and adv_xyPlot is None:
-            return process_sample_state(pipe, samp_model, samp_images, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
+            return process_sample_state(pipe, samp_model, samp_images, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_strength, lora_strength,
                                         upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
                                         steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent)
 
         elif sampler_state == "Sample" and adv_xyPlot is not None:
-            return process_xyPlot(pipe, samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength, steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot)
+            return process_xyPlot(pipe, samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_strength, lora_strength, steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot)
 
         elif sampler_state == "Hold":
             return sampler.process_hold_state(pipe, image_output, my_unique_id)
 
 class ttN_pipeKSamplerAdvanced_v2:
-    version = '2.0.0'
+    version = '2.1.0'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -1694,8 +1693,7 @@ class ttN_pipeKSamplerAdvanced_v2:
                 "pipe": ("PIPE_LINE",),
                 
                 "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
-                "lora_model_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
-                "lora_clip_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+                "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
 
                 "upscale_method": (cls.upscale_methods, {"default": "None"}),
                 "upscale_model_name": (folder_paths.get_filename_list("upscale_models"),),
@@ -1750,7 +1748,7 @@ class ttN_pipeKSamplerAdvanced_v2:
     CATEGORY = "ttN/pipe"
 
     def adv_sample(self, pipe,
-               lora_name, lora_model_strength, lora_clip_strength,
+               lora_name, lora_strength,
                sampler_state, add_noise, steps, cfg, sampler_name, scheduler, image_output, save_prefix, noise, 
                noise_seed=None, optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, input_image_override=None, xyPlot=None, upscale_method=None, upscale_model_name=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_at_step=None, end_at_step=None, return_with_leftover_noise=False):
 
@@ -1762,7 +1760,7 @@ class ttN_pipeKSamplerAdvanced_v2:
         if add_noise == "disable":
             disable_noise = True
 
-        return ttN_pipeKSampler_v2.sample(self, pipe, lora_name, lora_model_strength, lora_clip_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, noise, 
+        return ttN_pipeKSampler_v2.sample(self, pipe, lora_name, lora_strength, lora_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, noise, 
                 optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, input_image_override, noise_seed, xyPlot, upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, force_full_denoise, disable_noise)
 
 class ttN_pipeLoaderSDXL_v2:
@@ -1969,7 +1967,7 @@ class ttN_pipeLoaderSDXL_v2:
         return (sdxl_pipe, model, positive_embedding, negative_embedding, vae, clip, refiner_model, refiner_positive_embedding, refiner_negative_embedding, refiner_clip, samples, seed, empty_latent_width, empty_latent_height, final_positive, final_negative)
 
 class ttN_pipeKSamplerSDXL_v2:
-    version = '2.0.0'
+    version = '2.1.0'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -1984,8 +1982,7 @@ class ttN_pipeKSamplerSDXL_v2:
                 {"sdxl_pipe": ("PIPE_LINE_SDXL",),
 
                 "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
-                "lora_model_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
-                "lora_clip_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+                "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
 
                 "upscale_method": (cls.upscale_methods, {"default": "None"}),
                 "upscale_model_name": (folder_paths.get_filename_list("upscale_models"),),
@@ -2038,7 +2035,7 @@ class ttN_pipeKSamplerSDXL_v2:
     CATEGORY = "ttN/pipe"
 
     def sample(self, sdxl_pipe,
-               lora_name, lora_model_strength, lora_clip_strength,
+               lora_name, lora_strength,
                sampler_state, base_steps, refiner_steps, cfg, denoise, refiner_cfg, refiner_denoise, sampler_name, scheduler, image_output, save_prefix, 
                optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, input_image_override=None, adv_xyPlot=None,
                seed=None, upscale_model_name=None, upscale_method=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None,
@@ -2235,13 +2232,13 @@ class ttN_pipeKSamplerSDXL_v2:
 
         if sampler_state == "Sample" and adv_xyPlot is None:
             return process_sample_state(sdxl_pipe, sdxl_model, sdxl_images, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative,
-                                        lora_name, lora_model_strength, lora_clip_strength,
+                                        lora_name, lora_strength, lora_strength,
                                         sdxl_refiner_model, sdxl_refiner_positive, sdxl_refiner_negative, sdxl_refiner_clip,
                                         upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
                                         base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise, refiner_denoise, image_output, save_prefix, prompt, my_unique_id, preview_latent)
 
         elif sampler_state == "Sample" and adv_xyPlot is not None:
-            return process_xyPlot(sdxl_pipe, sdxl_model, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_model_strength, lora_clip_strength,
+            return process_xyPlot(sdxl_pipe, sdxl_model, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_strength, lora_strength,
                            base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise,
                            image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot)
 
