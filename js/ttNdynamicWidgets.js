@@ -137,7 +137,12 @@ function widgetLogic(node, widget) {
 
 		case 'rescale':
 			let rescale_after_model = findWidgetByName(node, 'rescale_after_model')?.value
-			let hiresfix = findWidgetByName(node, 'upscale_method')?.value?.split(" ")[0] === '[hiresFix]'
+			let hiresfix = findWidgetByName(node, 'upscale_method')
+            if (typeof(hiresfix.value) == 'string' && hiresfix.value.includes('hiresFix')) {
+                hiresfix = true
+            } else {
+                hiresfix = false
+            }
 			if (widget.value === 'by percentage' && (rescale_after_model || hiresfix)) {
 				toggleWidget(node, findWidgetByName(node, 'width'))
 				toggleWidget(node, findWidgetByName(node, 'height'))
@@ -177,7 +182,7 @@ function widgetLogic(node, widget) {
 				toggleWidget(node, findWidgetByName(node, 'height'))
 				toggleWidget(node, findWidgetByName(node, 'longer_side'))
 			} else {
-				if (widget.value?.split(" ")[0] === '[hiresFix]') {
+				if (typeof(widget.value) === 'string' && widget.value.includes('[hiresFix]')) {
 					let rescale = findWidgetByName(node, 'rescale')
 					toggleWidget(node, rescale, true)
 					if (rescale?.value === 'by percentage') {
