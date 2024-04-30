@@ -287,10 +287,10 @@ class ttNloader:
                         if axis_entry in desired_names_set:
                             desired_names_set[axis_entry].update(vals)
 
-            elif class_type == "ttN multiModelMerge":
-                for letter in "ABC":
-                    ckpt_name = self.get_input_value(entry, f"ckpt_{letter}_name")
-                    desired_ckpt_names.add(ckpt_name)
+            # elif class_type == "ttN multiModelMerge":
+            #     for letter in "ABC":
+            #         ckpt_name = self.get_input_value(entry, f"ckpt_{letter}_name")
+            #         desired_ckpt_names.add(ckpt_name)
 
         self.clear_unused_objects(desired_ckpt_names, "ckpt")
         self.clear_unused_objects(desired_ckpt_names, "clip")
