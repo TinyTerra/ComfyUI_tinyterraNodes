@@ -151,7 +151,12 @@ function widgetLogic(node, widget) {
 				toggleWidget(node, findWidgetByName(node, 'longer_side'), true)
 				toggleWidget(node, findWidgetByName(node, 'height'))
 				toggleWidget(node, findWidgetByName(node, 'percent'))
-			} else {
+			} else if (widget.value === 'None' && (rescale_after_model || hiresfix)) {
+				toggleWidget(node, findWidgetByName(node, 'width'))
+				toggleWidget(node, findWidgetByName(node, 'longer_side'))
+				toggleWidget(node, findWidgetByName(node, 'height'))
+				toggleWidget(node, findWidgetByName(node, 'percent'))
+            } else {
 				toggleWidget(node, findWidgetByName(node, 'width'))
 				toggleWidget(node, findWidgetByName(node, 'height'))
 				toggleWidget(node, findWidgetByName(node, 'longer_side'))
