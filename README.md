@@ -85,6 +85,9 @@ Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
 + Search and Replace:
     + if you include %search;replace% as the value it will use the current nodes value and do a search and replace using these values.
     + you can include more than one to replace different strings
++ Append to original value
+    + if you include .append to the widget name it will append the xyPlot value to the original instead of overwriting it.
+    + For example: [1:loras.append='<lora:add_detail.safetensors:0.8>']
 
 **Auto Complete**
 

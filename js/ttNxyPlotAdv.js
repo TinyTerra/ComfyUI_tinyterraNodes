@@ -168,8 +168,23 @@ function dropdownCreator(node) {
                                 label = 'idtv_label';
                                 break;
                         }
-                        const lastOpeningAxisBracket = inputText.lastIndexOf('<');
-                        const lastClosingAxisBracket = inputText.lastIndexOf('>');
+                        
+                        let lastOpeningAxisBracket = -1;
+                        let lastClosingAxisBracket = -1;
+
+                        let bracketCount = 0;
+                        for (let i = 0; i < inputText.length; i++) {
+                            if (inputText[i] === '[') {
+                                bracketCount++;
+                            } else if (inputText[i] === ']') {
+                                bracketCount--;
+                            } else if (inputText[i] === '<' && bracketCount === 0) {
+                                lastOpeningAxisBracket = i;
+                            } else if (inputText[i] === '>' && bracketCount === 0) {
+                                lastClosingAxisBracket = i;
+                            }
+                        }                        
+
                         const lastAxisBracket = inputText.substring(lastOpeningAxisBracket + 1, lastClosingAxisBracket).split(':')[0];
                         let nextAxisBracketNumber;
 
@@ -204,6 +219,10 @@ function dropdownCreator(node) {
                     }
                     
                     output = `[${parts[0]}:${parts[1]}='${selectedOption}']`;
+                    
+                    if (inputText.trim() === '') {
+                        output = `<1:v_label>\n` + output;
+                    }
             
                     if (lines[cursorLineIndex].trim() === '') {
                         lines[cursorLineIndex] = output;

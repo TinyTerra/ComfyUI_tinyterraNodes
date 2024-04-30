@@ -1016,12 +1016,20 @@ class ttNadv_xyPlot:
                 if node_id == 'label':
                     continue
                 for input_name, value in inputs.items():
+
+                    # append mode
+                    if '.append' in input_name:
+                        input_name = input_name.replace('.append', '')
+                        value = x_prompt[node_id]["inputs"][input_name] + ' ' + value
+                    
+                    # Search and Replace
                     matches = re.findall(r'%(.*?);(.*?)%', value)
                     if matches:
                         value = x_prompt[node_id]["inputs"][input_name]
                         for search, replace in matches:
                             pattern = re.compile(re.escape(search), re.IGNORECASE)
                             value = pattern.sub(replace, value)
+ 
                     x_prompt[node_id]["inputs"][input_name] = value
                     
             if self.y_points:
@@ -1033,12 +1041,20 @@ class ttNadv_xyPlot:
                         if node_id == 'label':
                             continue
                         for input_name, value in inputs.items():
+                            
+                            # append mode
+                            if '.append' in input_name:
+                                input_name = input_name.replace('.append', '')
+                                value = x_prompt[node_id]["inputs"][input_name] + ' ' + value
+                        
+                            # Search and Replace
                             matches = re.findall(r'%(.*?);(.*?)%', value)
                             if matches:
                                 value = x_prompt[node_id]["inputs"][input_name]
                                 for search, replace in matches:
                                     pattern = re.compile(re.escape(search), re.IGNORECASE)
                                     value = pattern.sub(replace, value)
+                                    
                             y_prompt[node_id]["inputs"][input_name] = value
 
                     self.execute_prompt(y_prompt, self.extra_pnginfo, xpoint, ypoint, x_label, y_label)
@@ -2334,17 +2350,29 @@ class ttN_advanced_XYPlot:
         else:
             try:
                 axis_dict = {}
-                for line in plot_data.split('<'):
+                lines = plot_data.split('<')
+                new_lines = []
+                temp_line = ''
+
+                for line in lines:
+                    if line.startswith('lora'):
+                        temp_line += '<' + line
+                        new_lines[-1] = temp_line
+                    else:
+                        new_lines.append(line)
+                        temp_line = line
+                        
+                for line in new_lines:
                     if line:
                         values_label = []
-                        line = line.split('>')
+                        line = line.split('>', 1)
                         num, label = line[0].split(':', 1)
                         axis_dict[num] = {"label": label}
                         for point in line[1].split('[', 1):
                             if point.strip() != '':
-                                node_id = point.split(':')[0]
+                                node_id = point.split(':', 1)[0]
                                 axis_dict[num][node_id] = {}
-                                input_name = point.split(':')[1].split('=')[0]
+                                input_name = point.split(':', 1)[1].split('=')[0]
                                 value = point.split("'")[1].split("'")[0]
                                 values_label.append((value, input_name, node_id))
                                 
