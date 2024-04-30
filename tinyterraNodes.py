@@ -49,7 +49,8 @@ from comfy.cli_args import args
 from .adv_encode import advanced_encode
 from comfy.model_patcher import ModelPatcher
 from comfy_extras.chainner_models import model_loading
-from nodes import MAX_RESOLUTION, ControlNetApplyAdvanced, NODE_CLASS_MAPPINGS
+from nodes import MAX_RESOLUTION, ControlNetApplyAdvanced
+from nodes import NODE_CLASS_MAPPINGS as COMFY_CLASS_MAPPINGS
 
 class CC:
     CLEAN = '\33[0m'
@@ -914,7 +915,7 @@ class ttNadv_xyPlot:
         if class_type == "ttN advanced xyPlot":
             class_def = ttN_Plotting    #Fake class to avoid recursive execute of xy_plot node
         else:
-            class_def = NODE_CLASS_MAPPINGS[class_type]
+            class_def = COMFY_CLASS_MAPPINGS[class_type]
 
         for x in inputs:
             input_data = inputs[x]
