@@ -34,35 +34,39 @@ function _generateNumDict({min = 0, max = 2048, step = 1}) {
 function getWidgetsOptions(node) {
     const widgetsOptions = {}
     const widgets = node.widgets
+
     for (const w of widgets) {
+        const current_value = w.value
         if (widgets_to_ignore.includes(w.name)) continue
         //console.log(`WIDGET ${w.name}, ${w.type}, ${w.options}`) 
-        if (w.name === 'seed') {
-            
+        if (w.name === 'seed' || (w.name === 'value' && node.getTitle().toLowerCase() == 'seed')) {
             widgetsOptions[w.name] = {'Random Seed': `${w.options.max}/${w.options.min}/${w.options.step}`}
             continue
         }
         if (w.type === 'ttNhidden') {
             if (w.options['max']) {
-                widgetsOptions[w.name] = _generateNumDict(w.options)
+                widgetsOptions[w.name] = {[current_value]: null}
                 continue
             } else if (!w.options['values']) {
                 widgetsOptions[w.name] = {'string': null}
                 continue
             }
         }
-        if (w.type.startsWith('converted') || ['button', 'toggle'].includes(w.type)) {
+        if (w.type.startsWith('converted') || w.type === 'button') {
             continue
         }
-        if (w.type === 'customtext') {
+        if (w.type === 'toggle') {
+            widgetsOptions[w.name] = {'True': null, 'False': null}
+            continue
+        }
+        if (['customtext', 'text', 'string'].includes(w.type)) {
             widgetsOptions[w.name] = {'string': null}
             continue
         } 
         if (w.type === 'number') {
-            widgetsOptions[w.name] = _generateNumDict(w.options)
+            widgetsOptions[w.name] = {[current_value]: null}
             continue
         }
-        //console.log('VALUES', w.options.values)
         let valueDict = {}
         if (w.options.values) {
             for (const v of w.options.values) {
@@ -71,7 +75,11 @@ function getWidgetsOptions(node) {
         }
         widgetsOptions[w.name] = valueDict
     }
+
     //console.log('WIDGETS OPTIONS', widgetsOptions)
+    if (Object.keys(widgetsOptions).length === 0) {
+        return null
+    }
     return widgetsOptions;
 }
 
@@ -107,17 +115,24 @@ function getNodesWidgetsDict(node) {
     nodeWidgets = {'Add Plot Line': {'Only Values Label': null, 'Title and Values Label': null, 'ID, Title and Values Label': null}};
     const plotNodeLink = node.outputs[0].links[0]
     const plotNodeID = node.graph.links[plotNodeLink].target_id
+    const plotNodeTitle = node.graph._nodes_by_id[plotNodeID].getTitle()
     const plotNode = app.graph._nodes_by_id[plotNodeID]
 
-    nodeWidgets[plotNodeID] = getWidgetsOptions(plotNode)
+    const options = getWidgetsOptions(plotNode)
+    if (options) {
+        nodeWidgets[`[${plotNodeID}] - ${plotNodeTitle}`] = options
+    }
 
     const inputIDS = _recursiveGetInputIDs(plotNode)
     for (const iID of inputIDS) {
         const iNode = app.graph._nodes_by_id[iID];
-        if (iNode.getTitle() === 'advanced xyPlot') {
+        const iNodeTitle = iNode.getTitle()
+        if (iNodeTitle === 'advanced xyPlot') {
             continue
         }
-        nodeWidgets[iID] = getWidgetsOptions(iNode)
+        const options = getWidgetsOptions(iNode)
+        if (!options) continue
+        nodeWidgets[`[${iID}] - ${iNodeTitle}`] = getWidgetsOptions(iNode)
     }
 }
 
@@ -217,8 +232,9 @@ function dropdownCreator(node) {
                         const randomRange = (randMax - Math.max(0, randMin)) / (Number(step) / 10);
                         selectedOption = Math.floor(Math.random() * randomRange) * (Number(step) / 10) + randMin;
                     }
-                    
-                    output = `[${parts[0]}:${parts[1]}='${selectedOption}']`;
+                    const nodeID = data[0].split(' - ')[0].replace('[', '').replace(']', '');
+
+                    output = `[${nodeID}:${parts[1]}='${selectedOption}']`;
                     
                     if (inputText.trim() === '') {
                         output = `<1:v_label>\n` + output;

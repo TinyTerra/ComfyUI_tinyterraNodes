@@ -348,7 +348,7 @@ const cssCode = `
 .ttN-dropdown li.folder, .ttN-nested-dropdown li.folder {
     cursor: default;
     position: relative;
-    border-right: 3px solid cyan;
+    border-right: 3px solid #005757;
 }
 
 .ttN-dropdown li.folder::after, .ttN-nested-dropdown li.folder::after {
@@ -384,7 +384,7 @@ const cssCode = `
   
 .ttN-dropdown li.selected,
 .ttN-nested-dropdown li.selected {
-    background-color: #e5e5e5;
+    background-color: #222222;
     border: none;
 }
 `
