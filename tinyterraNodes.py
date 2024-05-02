@@ -836,96 +836,81 @@ class ttNadv_xyPlot:
 
         self.max_width = max(self.max_width, pil_image.width)
         self.max_height = max(self.max_height, pil_image.height)
+
+    @staticmethod
+    def _parse_value(input_name, value, node_inputs, input_types, regex):
+        # append mode
+        if '.append' in input_name:
+            input_name = input_name.replace('.append', '')
+            value = node_inputs[input_name] + ' ' + value
+        
+        # Search and Replace
+        matches = regex.findall(value)
+        if matches:
+            value = node_inputs[input_name]
+            for search, replace in matches:
+                pattern = re.compile(re.escape(search), re.IGNORECASE)
+                value = pattern.sub(replace, value)
+
+        # set value to correct type                        
+        for itype in ['required', 'optional']:
+            for iname in input_types.get(itype) or []:
+                if iname == input_name:
+                    ivalues = input_types[itype][iname]
+                    if ivalues[0] == 'INT':
+                        value = int(value)
+                    elif ivalues[0] == 'FLOAT':
+                        value = float(value)
+                    elif ivalues[0] in ['BOOL', 'BOOLEAN']:
+                        if value.lower() == 'true':
+                            value = True
+                        elif value.lower() == 'false':
+                            value = False
+                        value = bool(value)
+        return input_name, value
         
     def xy_plot_process(self):
         if self.x_points is None and self.y_points is None:
             return None, None
+
+        regex = re.compile(r'%(.*?);(.*?)%')
         
         base_prompt = self.getRelevantPrompt()    
 
         for xpoint, nodes in self.x_points.items():
             x_label = nodes["label"]
             self.x_labels.append(x_label)
-            self.results[xpoint] = {}
             x_prompt = copy.deepcopy(base_prompt)
+            
             for node_id, inputs in nodes.items():
                 if node_id == 'label':
                     continue
+                x_node_inputs = x_prompt[node_id]["inputs"]
+                x_class_type = x_prompt[node_id]["class_type"]
+                x_class_def = COMFY_CLASS_MAPPINGS[x_class_type]
+                x_input_types = x_class_def.INPUT_TYPES()
+                
                 for input_name, value in inputs.items():
-
-                    # append mode
-                    if '.append' in input_name:
-                        input_name = input_name.replace('.append', '')
-                        value = x_prompt[node_id]["inputs"][input_name] + ' ' + value
-                    
-                    # Search and Replace
-                    matches = re.findall(r'%(.*?);(.*?)%', value)
-                    if matches:
-                        value = x_prompt[node_id]["inputs"][input_name]
-                        for search, replace in matches:
-                            pattern = re.compile(re.escape(search), re.IGNORECASE)
-                            value = pattern.sub(replace, value)
-
-                    # set value to correct type                        
-                    class_type = x_prompt[str(node_id)]["class_type"]
-                    class_def = COMFY_CLASS_MAPPINGS[class_type]
-                    input_types = class_def.INPUT_TYPES()
-                    for itype in ['required', 'optional']:
-                        for iname in input_types.get(itype) or []:
-                            if iname == input_name:
-                                ivalues = input_types[itype][iname]
-                                if ivalues[0] == 'INT':
-                                    value = int(value)
-                                elif ivalues[0] == 'FLOAT':
-                                    value = float(value)
-                                elif ivalues[0] in ['BOOL', 'BOOLEAN']:
-                                    if value.lower() == 'true':
-                                        value = True
-                                    elif value.lower() == 'false':
-                                        value = False
-                                    value = bool(value)
-                                    
-                    x_prompt[node_id]["inputs"][input_name] = value
+                    input_name, value = self._parse_value(input_name, value, x_node_inputs, x_input_types, regex)               
+                    x_node_inputs[input_name] = value
                     
             if self.y_points:
                 for ypoint, nodes in self.y_points.items():
                     y_label = nodes["label"]
                     self.y_labels.append(y_label)
                     y_prompt = copy.deepcopy(x_prompt)
+                    
                     for node_id, inputs in nodes.items():
                         if node_id == 'label':
                             continue
-                        for input_name, value in inputs.items():
-                            
-                            # append mode
-                            if '.append' in input_name:
-                                input_name = input_name.replace('.append', '')
-                                value = x_prompt[node_id]["inputs"][input_name] + ' ' + value
+                        y_node_inputs = y_prompt[node_id]["inputs"]
+                        y_class_type = y_prompt[node_id]["class_type"]
+                        y_class_def = COMFY_CLASS_MAPPINGS[y_class_type]
+                        y_input_types = y_class_def.INPUT_TYPES()
                         
-                            # Search and Replace
-                            matches = re.findall(r'%(.*?);(.*?)%', value)
-                            if matches:
-                                value = x_prompt[node_id]["inputs"][input_name]
-                                for search, replace in matches:
-                                    pattern = re.compile(re.escape(search), re.IGNORECASE)
-                                    value = pattern.sub(replace, value)
-
-                            # set value to correct type                        
-                            class_type = y_prompt[str(node_id)]["class_type"]
-                            class_def = COMFY_CLASS_MAPPINGS[class_type]
-                            input_types = class_def.INPUT_TYPES()
-                            for itype in ['required', 'optional']:
-                                for iname in input_types.get(itype) or []:
-                                    if iname == input_name:
-                                        ivalues = input_types[itype][iname]
-                                        if ivalues[0] == 'INT':
-                                            value = int(value)
-                                        elif ivalues[0] == 'FLOAT':
-                                            value = float(value)
-                                        elif ivalues[0] == 'BOOL':
-                                            value = bool(value)
-                                            
-                            y_prompt[node_id]["inputs"][input_name] = value
+                        for input_name, value in inputs.items():
+                            input_name, value = self._parse_value(input_name, value, y_node_inputs, y_input_types, regex)
+                            y_node_inputs[input_name] = value
 
                     self.execute_prompt(y_prompt, self.extra_pnginfo, xpoint, ypoint, x_label, y_label)
             else:
