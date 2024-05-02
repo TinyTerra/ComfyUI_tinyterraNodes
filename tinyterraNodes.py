@@ -130,14 +130,6 @@ class ttNcacheEntry:
 
 class ttNloader:
     def __init__(self):
-        self.loaded_objects = {
-            "ckpt": WeakValueDictionary(), # {ckpt_name: (model, ...)}
-            "clip": WeakValueDictionary(),
-            "bvae": WeakValueDictionary(),
-            "vae": WeakValueDictionary(),
-            "lora": defaultdict(lambda: WeakValueDictionary()), # {lora_name: {UID: (model_lora, clip_lora)}}
-        }
-        self.memory_threshold = self.determine_memory_threshold(0.7)
         self.loraDict = {lora.split('\\')[-1]: lora for lora in folder_paths.get_filename_list("loras")}
 
     @staticmethod
@@ -207,150 +199,13 @@ class ttNloader:
             cleaned_values.append(cleaned_value)
         return cleaned_values
 
-    @staticmethod
-    def get_input_value(entry, key):
-        val = entry["inputs"][key]
-        return val if isinstance(val, str) else val[0]
-
-    @staticmethod
-    def determine_memory_threshold(percentage=0.8):
-        total_memory = psutil.virtual_memory().total
-        return total_memory * percentage
-
-    @staticmethod
-    def get_memory_usage():
-        """
-        Returns the memory usage of the current process in bytes.
-        """
-        process = psutil.Process(os.getpid())
-        return process.memory_info().rss
-
-    def clear_unused_objects(self, desired_names: set, object_type: str):
-        keys_to_remove = set(self.loaded_objects[object_type].keys()) - desired_names
-        for key in keys_to_remove:
-            obj = self.loaded_objects[object_type].pop(key, None)
-            if obj and hasattr(obj.model, 'close'):
-                print(f"TTN - Closing {object_type}, {obj}")
-                obj.model.close()
-
-    def process_pipe_loader(self, entry,
-                            desired_ckpt_names, desired_vae_names,
-                            desired_lora_names, desired_lora_settings, num_loras=3, suffix=""):
-        if num_loras != 0:
-            for idx in range(1, num_loras + 1):
-                lora_name_key = f"{suffix}lora{idx}_name"
-                desired_lora_names.add(self.get_input_value(entry, lora_name_key))
-                setting = f'{self.get_input_value(entry, lora_name_key)};{entry["inputs"][f"{suffix}lora{idx}_model_strength"]};{entry["inputs"][f"{suffix}lora{idx}_clip_strength"]}'
-                desired_lora_settings.add(setting)
-
-        desired_ckpt_names.add(self.get_input_value(entry, f"{suffix}ckpt_name"))
-        desired_vae_names.add(self.get_input_value(entry, f"{suffix}vae_name"))
-
-    def update_loaded_objects(self, prompt):
-        return
-        desired_ckpt_names, desired_vae_names, desired_lora_names, desired_lora_settings = set(), set(), set(), set()
-
-        for entry in prompt.values():
-            if entry.get('last_node_id'):
-                continue
-            class_type = entry["class_type"] or None
-
-            if class_type in ["ttN pipeLoader", "ttN pipeLoader_v2"]:
-                self.process_pipe_loader(entry, desired_ckpt_names=desired_ckpt_names,
-                                        desired_vae_names=desired_vae_names,
-                                        desired_lora_names=desired_lora_names,
-                                        desired_lora_settings=desired_lora_settings,
-                                        num_loras=0 if class_type == "ttN pipeLoader_v2" else 3)
-
-            elif class_type == "ttN pipeLoaderSDXL":
-                self.process_pipe_loader(entry, num_loras=2, suffix="refiner_", desired_ckpt_names=desired_ckpt_names, desired_vae_names=desired_vae_names, desired_lora_names=desired_lora_names, desired_lora_settings=desired_lora_settings)
-                self.process_pipe_loader(entry, num_loras=2, desired_ckpt_names=desired_ckpt_names, desired_vae_names=desired_vae_names, desired_lora_names=desired_lora_names, desired_lora_settings=desired_lora_settings)
-
-            # elif class_type in ["ttN pipeKSampler", "ttN pipeKSamplerAdvanced", "ttN pipeKSampler_v2", "ttN pipeKSamplerAdvanced_v2"]:
-            #     lora_name = self.get_input_value(entry, "lora_name")
-            #     desired_lora_names.add(lora_name)
-            #     setting = f'{lora_name};{entry["inputs"]["lora_model_strength"]};{entry["inputs"]["lora_clip_strength"]}'
-            #     desired_lora_settings.add(setting)
-
-            # elif class_type == "ttN xyPlot":
-            #     for axis in ["x", "y"]:
-            #         axis_key = f"{axis}_axis"
-            #         if entry["inputs"][axis_key] != "None":
-            #             axis_entry = entry["inputs"][axis_key].split(": ")[1]
-            #             vals = self.clean_values(entry["inputs"][f"{axis}_values"])
-            #             desired_names_set = {
-            #                 "vae_name": desired_vae_names,
-            #                 "ckpt_name": desired_ckpt_names,
-            #                 "lora_name": desired_lora_names,
-            #                 "lora1_name": desired_lora_names,
-            #                 "lora2_name": desired_lora_names,
-            #                 "lora3_name": desired_lora_names,
-            #             }
-            #             if axis_entry in desired_names_set:
-            #                 desired_names_set[axis_entry].update(vals)
-
-            # elif class_type == "ttN multiModelMerge":
-            #     for letter in "ABC":
-            #         ckpt_name = self.get_input_value(entry, f"ckpt_{letter}_name")
-            #         desired_ckpt_names.add(ckpt_name)
-
-        self.clear_unused_objects(desired_ckpt_names, "ckpt")
-        self.clear_unused_objects(desired_ckpt_names, "clip")
-        self.clear_unused_objects(desired_ckpt_names, "bvae")
-        self.clear_unused_objects(desired_vae_names, "vae")
-        for lora_name, weak_dict in self.loaded_objects["lora"].items():
-            if lora_name not in desired_lora_names:
-                self.loaded_objects["lora"][lora_name] = WeakValueDictionary()
-
-    def add_to_cache(self, obj_type, key, value, additional_info=None):
-        """
-        Add an item to the cache with the current timestamp.
-        """
-        timestamped_value = ttNcacheEntry(value, additional_info)
-        self.loaded_objects[obj_type][key] = timestamped_value
-
-    def eviction_based_on_memory(self):
-        current_memory = self.get_memory_usage()
-        if current_memory < self.memory_threshold:
-            return
-
-        eviction_order = ["lora", "vae", "bvae", "clip", "ckpt"]
-        for obj_type in eviction_order:
-            if current_memory < self.memory_threshold:
-                break
-
-            # Sort items based on age (using the timestamp)
-            items = list(self.loaded_objects[obj_type].items())
-            items.sort(key=lambda x: x[1].timestamp)  # Sorting by timestamp
-
-            for key, value in items:
-                if current_memory < self.memory_threshold:
-                    break
-
-                obj = self.loaded_objects[obj_type].pop(key, None)
-                if obj and hasattr(obj, 'close'):
-                    print(f"TTN - Closing {obj_type}, {obj}")
-                    obj.close()
-                current_memory = self.get_memory_usage()
-
     def load_checkpoint(self, ckpt_name, config_name=None):
-        cache_name = ckpt_name + ("_" + config_name if config_name else "")
-        if cache_name in self.loaded_objects["ckpt"]:
-            cache_entry = self.loaded_objects["ckpt"][cache_name]
-            return cache_entry.model, self.loaded_objects["clip"][cache_name].model, self.loaded_objects["bvae"][cache_name].model
-
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
         if config_name not in [None, "Default"]:
             config_path = folder_paths.get_full_path("configs", config_name)
             loaded_ckpt = comfy.sd.load_checkpoint(config_path, ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
         else:
             loaded_ckpt = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
-
-        #self.add_to_cache("ckpt", cache_name, loaded_ckpt[0])
-        #self.add_to_cache("clip", cache_name, loaded_ckpt[1])
-        #self.add_to_cache("bvae", cache_name, loaded_ckpt[2])
-
-        #self.eviction_based_on_memory()
 
         return loaded_ckpt[0], loaded_ckpt[1], loaded_ckpt[2]
 
@@ -360,14 +215,9 @@ class ttNloader:
         return out
 
     def load_vae(self, vae_name):
-        if vae_name in self.loaded_objects["vae"]:
-            return self.loaded_objects["vae"][vae_name].model
-
         vae_path = folder_paths.get_full_path("vae", vae_name)
         sd = comfy.utils.load_torch_file(vae_path)
         loaded_vae = comfy.sd.VAE(sd=sd)
-        #self.add_to_cache("vae", vae_name, loaded_vae)
-        #self.eviction_based_on_memory()
 
         return loaded_vae
 
@@ -393,20 +243,8 @@ class ttNloader:
             ttNl(f'{lora_path}').t("Skipping missing lora").error().p()
             return (model, clip)
         
-        #model_hash = hash(model)
-        #clip_hash = hash(clip)
-
-        #unique_id = f'{model_hash};{clip_hash};{lora_name};{strength_model};{strength_clip}'
-
-        #if unique_id in self.loaded_objects["lora"][lora_name]:
-        #    cache_entry = self.loaded_objects["lora"][lora_name][unique_id]
-        #    return cache_entry.model
-        
         lora = comfy.utils.load_torch_file(lora_path, safe_load=True)
         model_lora, clip_lora = comfy.sd.load_lora_for_models(model, clip, lora, strength_model, strength_clip)
-
-        #self.loaded_objects["lora"][lora_name][unique_id] = ttNcacheEntry((model_lora, clip_lora))
-        #self.eviction_based_on_memory()
 
         return model_lora, clip_lora
 
@@ -1401,8 +1239,6 @@ class ttN_pipeLoader_v2:
         latent = sampler.emptyLatent(empty_latent_aspect, 1, empty_latent_width, empty_latent_height)
         samples = {"samples":latent}
 
-        # Clean models from loaded_objects
-        loader.update_loaded_objects(prompt)
 
         model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, model_override, clip_override, optional_lora_stack)
 
@@ -1538,9 +1374,6 @@ class ttN_pipeKSampler_v2:
                seed=None, adv_xyPlot=None, upscale_model_name=None, upscale_method=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None,
                prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False, disable_noise=False):
 
-        # Clean Loader Models from Global
-        loader.update_loaded_objects(prompt)
-
         my_unique_id = int(my_unique_id)
 
         ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo)
@@ -1590,9 +1423,6 @@ class ttN_pipeKSampler_v2:
 
             sampler.update_value_by_id("results", my_unique_id, results)
 
-            # Clean loaded_objects
-            loader.update_loaded_objects(prompt)
-
             new_pipe = {
                 "model": samp_model,
                 "positive": samp_positive,
@@ -1636,9 +1466,6 @@ class ttN_pipeKSampler_v2:
             results = ttN_save.images(images[0], save_prefix, image_output)
 
             sampler.update_value_by_id("results", my_unique_id, results)
-
-            # Clean loaded_objects
-            loader.update_loaded_objects(prompt)
 
             new_pipe = {
                 "model": samp_model,
@@ -1956,9 +1783,6 @@ class ttN_pipeLoaderSDXL_v2:
         latent = sampler.emptyLatent(empty_latent_aspect, 1, empty_latent_width, empty_latent_height)
         samples = {"samples":latent}
 
-        # Clean models from loaded_objects
-        loader.update_loaded_objects(prompt)
-
         model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, model_override, clip_override, optional_lora_stack)
 
         if refiner_ckpt_name not in ["None", None]:
@@ -2128,9 +1952,6 @@ class ttN_pipeKSamplerSDXL_v2:
                prompt=None, extra_pnginfo=None, my_unique_id=None, force_full_denoise=False, disable_noise=False,
                optional_refiner_model=None, optional_refiner_positive=None, optional_refiner_negative=None):
 
-        # Clean Loader Models from Global
-        loader.update_loaded_objects(prompt)
-
         my_unique_id = int(my_unique_id)
 
         ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo)
@@ -2201,9 +2022,6 @@ class ttN_pipeKSamplerSDXL_v2:
 
             sampler.update_value_by_id("results", my_unique_id, results)
 
-            # Clean loaded_objects
-            loader.update_loaded_objects(prompt)
-
             new_sdxl_pipe = {
                 "model": sdxl_model,
                 "positive": sdxl_positive,
@@ -2266,9 +2084,6 @@ class ttN_pipeKSamplerSDXL_v2:
             results = ttN_save.images(images[0], save_prefix, image_output)
 
             sampler.update_value_by_id("results", my_unique_id, results)
-
-            # Clean loaded_objects
-            loader.update_loaded_objects(prompt)
 
             new_sdxl_pipe = {
                 "model": sdxl_model,
@@ -3318,43 +3133,43 @@ except:
             return None
 
 class ttN_imageOUPUT:
-        version = '1.1.0'
-        def __init__(self):
-            pass
-        
-        @classmethod
-        def INPUT_TYPES(s):
-            return {"required": { 
-                    "image": ("IMAGE",),
-                    "image_output": (["Hide", "Preview", "Save", "Hide/Save"],{"default": "Preview"}),
-                    "output_path": ("STRING", {"default": folder_paths.get_output_directory(), "multiline": False}),
-                    "save_prefix": ("STRING", {"default": "ComfyUI"}),
-                    "number_padding": (["None", 2, 3, 4, 5, 6, 7, 8, 9],{"default": 5}),
-                    "file_type": (["PNG", "JPG", "JPEG", "BMP", "TIFF", "TIF"],{"default": "PNG"}),
-                    "overwrite_existing": (["True", "False"],{"default": "False"}),
-                    "embed_workflow": (["True", "False"],),
+    version = '1.1.0'
+    def __init__(self):
+        pass
+    
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { 
+                "image": ("IMAGE",),
+                "image_output": (["Hide", "Preview", "Save", "Hide/Save"],{"default": "Preview"}),
+                "output_path": ("STRING", {"default": folder_paths.get_output_directory(), "multiline": False}),
+                "save_prefix": ("STRING", {"default": "ComfyUI"}),
+                "number_padding": (["None", 2, 3, 4, 5, 6, 7, 8, 9],{"default": 5}),
+                "file_type": (["PNG", "JPG", "JPEG", "BMP", "TIFF", "TIF"],{"default": "PNG"}),
+                "overwrite_existing": (["True", "False"],{"default": "False"}),
+                "embed_workflow": (["True", "False"],),
 
-                    },
-                    "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
-                               "ttNnodeVersion": ttN_imageOUPUT.version},
-                }
+                },
+                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
+                            "ttNnodeVersion": ttN_imageOUPUT.version},
+            }
 
-        RETURN_TYPES = ("IMAGE",)
-        RETURN_NAMES = ("image",)
-        FUNCTION = "output"
-        CATEGORY = "ttN/image"
-        OUTPUT_NODE = True
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "output"
+    CATEGORY = "ttN/image"
+    OUTPUT_NODE = True
 
-        def output(self, image, image_output, output_path, save_prefix, number_padding, file_type, overwrite_existing, embed_workflow, prompt, extra_pnginfo, my_unique_id):
-            ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo, number_padding, overwrite_existing, output_path)
-            results = ttN_save.images(image, save_prefix, image_output, embed_workflow, file_type.lower())
+    def output(self, image, image_output, output_path, save_prefix, number_padding, file_type, overwrite_existing, embed_workflow, prompt, extra_pnginfo, my_unique_id):
+        ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo, number_padding, overwrite_existing, output_path)
+        results = ttN_save.images(image, save_prefix, image_output, embed_workflow, file_type.lower())
 
-            if image_output in ("Hide", "Hide/Save"):
-                return (image,)
+        if image_output in ("Hide", "Hide/Save"):
+            return (image,)
 
-            # Output image results to ui and node outputs
-            return {"ui": {"images": results},
-                    "result": (image,)}
+        # Output image results to ui and node outputs
+        return {"ui": {"images": results},
+                "result": (image,)}
 
 class ttN_modelScale:
     version = '1.0.3'
@@ -4074,9 +3889,6 @@ class ttN_TSC_pipeLoader:
         latent = sampler.emptyLatent(None, batch_size, empty_latent_width, empty_latent_height)
         samples = {"samples":latent}
 
-        # Clean models from loaded_objects
-        loader.update_loaded_objects(prompt)
-
         # Load models
         model, clip, vae = loader.load_checkpoint(ckpt_name, config_name)
 
@@ -4230,8 +4042,6 @@ class ttN_TSC_pipeKSampler:
 
     def sample(self, pipe, lora_name, lora_model_strength, lora_clip_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
                optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, seed=None, xyPlot=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False, disable_noise=False):
-        # Clean Loader Models from Global
-        loader.update_loaded_objects(prompt)
 
         my_unique_id = int(my_unique_id)
 
@@ -4268,9 +4078,6 @@ class ttN_TSC_pipeKSampler:
             results = ttN_save.images(samp_images, save_prefix, image_output)
 
             sampler.update_value_by_id("results", my_unique_id, results)
-
-            # Clean loaded_objects
-            loader.update_loaded_objects(prompt)
 
             new_pipe = {
                 "model": samp_model,
@@ -4358,9 +4165,6 @@ class ttN_TSC_pipeKSampler:
                 
 
             sampler.update_value_by_id("results", my_unique_id, results)
-
-            # Clean loaded_objects
-            loader.update_loaded_objects(prompt)
 
             new_pipe = {
                 "model": samp_model,
@@ -4598,9 +4402,6 @@ class ttN_pipeLoaderSDXL:
         else:
             refiner_model, refiner_positive_embeddings, refiner_negative_embeddings, refiner_vae, refiner_clip = None, None, None, None, None
 
-        # Clean models from loaded_objects
-        loader.update_loaded_objects(prompt)
-
         image = ttNsampler.pil2tensor(Image.new('RGB', (1, 1), (0, 0, 0)))
 
         pipe = {"model": model,
@@ -4725,9 +4526,6 @@ class ttN_pipeKSamplerSDXL:
         
         sdxl_pipe = {**sdxl_pipe}
 
-        # Clean Loader Models from Global
-        loader.update_loaded_objects(prompt)
-
         my_unique_id = int(my_unique_id)
 
         ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo)
@@ -4784,9 +4582,6 @@ class ttN_pipeKSamplerSDXL:
             results = ttN_save.images(sdxl_images, save_prefix, image_output)
 
             sampler.update_value_by_id("results", my_unique_id, results)
-
-            # Clean loaded_objects
-            loader.update_loaded_objects(prompt)
 
             new_sdxl_pipe = {"model": sdxl_model,
                 "positive": sdxl_positive,
