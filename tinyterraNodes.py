@@ -1040,7 +1040,11 @@ class ttNadv_xyPlot:
                                     value = int(value)
                                 elif ivalues[0] == 'FLOAT':
                                     value = float(value)
-                                elif ivalues[0] == 'BOOL':
+                                elif ivalues[0] in ['BOOL', 'BOOLEAN']:
+                                    if value.lower() == 'true':
+                                        value = True
+                                    elif value.lower() == 'false':
+                                        value = False
                                     value = bool(value)
                                     
                     x_prompt[node_id]["inputs"][input_name] = value

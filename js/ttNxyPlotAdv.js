@@ -36,6 +36,7 @@ function getWidgetsOptions(node) {
     const widgets = node.widgets
 
     for (const w of widgets) {
+        if (!w.type || !w.options) continue
         const current_value = w.value
         if (widgets_to_ignore.includes(w.name)) continue
         //console.log(`WIDGET ${w.name}, ${w.type}, ${w.options}`) 
