@@ -3042,9 +3042,6 @@ class ttN_SEED:
 
 
 #---------------------------------------------------------------ttN/image START---------------------------------------------------------------------#
-#class ttN_imageREMBG:
-try:
-    from rembg import remove
 class ttN_imageREMBG:
     version = '1.0.0'
     def __init__(self):
