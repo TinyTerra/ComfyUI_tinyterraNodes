@@ -1169,6 +1169,7 @@ class ttN_pipeLoader_v2:
                         
                         "512 x 1024 [P] 1:2",
                         "1024 x 512 [L] 2:1",
+                        "1024 x 1024 [S] 1:1",
                         ]
 
         return {"required": { 
