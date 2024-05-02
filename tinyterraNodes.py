@@ -898,11 +898,8 @@ class ttNadv_xyPlot:
 
     def adjust_font_size(self, text, initial_font_size, label_width):
         font = self.get_font(initial_font_size)
-        try:
-            text_width, _ = font.getsize(text)
-        except AttributeError:
-            left, top, right, bottom = font.getbbox(text)
-            text_width = right - left
+        left, top, right, bottom = font.getbbox(text)
+        text_width = right - left
 
         scaling_factor = 0.9
         if text_width > (label_width * scaling_factor):
@@ -3573,11 +3570,9 @@ class ttNxyPlot:
     
     def adjust_font_size(self, text, initial_font_size, label_width):
         font = self.get_font(initial_font_size)
-        try:
-            text_width, _ = font.getsize(text)
-        except AttributeError:
-            left, top, right, bottom = font.getbbox(text)
-            text_width = right - left
+        
+        left, _, right, _ = font.getbbox(text)
+        text_width = right - left
 
         scaling_factor = 0.9
         if text_width > (label_width * scaling_factor):
@@ -3601,14 +3596,23 @@ class ttNxyPlot:
         font = self.get_font(font_size)
 
         # Check if text will fit, if not insert ellipsis and reduce text
-        if d.textsize(text, font=font)[0] > label_width:
-            while d.textsize(text+'...', font=font)[0] > label_width and len(text) > 0:
-                text = text[:-1]
-            text = text + '...'
+        try:
+            if d.textsize(text, font=font)[0] > label_width:
+                while d.textsize(text+'...', font=font)[0] > label_width and len(text) > 0:
+                    text = text[:-1]
+                text = text + '...'
+        except:
+            if d.textlength(text, font=font) > label_width:
+                while d.textlength(text+'...', font=font) > label_width and len(text) > 0:
+                    text = text[:-1]
+                text = text + '...'
 
         # Compute text width and height for multi-line text
         text_lines = text.split('\n')
-        text_widths, text_heights = zip(*[d.textsize(line, font=font) for line in text_lines])
+        try:
+            text_widths, text_heights = zip(*[d.textsize(line, font=font) for line in text_lines])
+        except:
+            text_widths, text_heights = zip(*[(d.textlength(line, font=font), font_size) for line in text_lines])
         max_text_width = max(text_widths)
         total_text_height = sum(text_heights)
 
