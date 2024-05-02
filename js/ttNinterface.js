@@ -382,7 +382,7 @@ app.registerExtension({
             return false;
         };
 
-        LGraphCanvas.ttNshowExecutionOrder = function(value, options, e, menu, node) {
+        /*LGraphCanvas.ttNshowExecutionOrder = function(value, options, e, menu, node) {
             var values = [];
             values.push({
                 value: true,
@@ -414,7 +414,7 @@ app.registerExtension({
             }
     
             return false;
-        };
+        };*/
 
         const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
 		LGraphCanvas.prototype.getNodeMenuOptions = function (node) {

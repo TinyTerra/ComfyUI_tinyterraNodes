@@ -575,7 +575,7 @@ function _handleKeyPress_doc(e) {
 
 function _handleExecutedEvent(e) {
     setTimeout(updateImageTLDE, 500);
-    setTimeout(updateImageTLDE, 500);
+    setTimeout(updateImageTLDE, 1000);
 }
 
 function _handleReconnectingEvent(e) {

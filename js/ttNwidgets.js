@@ -1,52 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { ComfyWidgets } from "../../scripts/widgets.js";
 
-var styleElement = document.createElement("style");
-const cssCode = `
-.ttN-info_widget {
-	background-color: var(--comfy-input-bg);
-	color: var(--input-text);
-	overflow: hidden;
-	padding: 2px;
-	resize: none;
-	border: none;
-	box-sizing: border-box;
-	font-size: 10px;
-	border-radius: 7px;
-	text-align: center;
-	text-wrap: balance;
-	text-transform: uppercase;
-}
-.hideInfo-dropdown {
-	position: absolute;
-	box-sizing: border-box;
-	background-color: #121212;
-	border-radius: 7px;
-	box-shadow: 0 2px 4px rgba(255, 255, 255, .25);
-	padding: 0;
-	margin: 0;
-	list-style: none;
-	z-index: 1000;
-	overflow: auto;
-	max-height: 200px;
-}
-	
-.hideInfo-dropdown li {
-	padding: 4px 10px;
-	cursor: pointer;
-	font-family: system-ui;
-	font-size: 0.7rem;
-}
-	
-.hideInfo-dropdown li:hover,
-.hideInfo-dropdown li.selected {
-	background-color: #e5e5e5;
-	border-radius: 7px;
-}
-`
-styleElement.innerHTML = cssCode
-document.head.appendChild(styleElement);
-
 class SeedControl {
     constructor(node) {
         this.lastSeed = undefined;
