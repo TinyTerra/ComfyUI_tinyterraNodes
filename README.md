@@ -2,7 +2,7 @@
 
 *A selection of custom nodes for [ComfyUI](https://github.com/comfyanonymous/ComfyUI).*
 
-**Enjoy my nodes and would like to [help keep me awake](buymeacoffee.com/tinyterra)?**
+**Enjoy my nodes and would like to [help keep me awake](https://buymeacoffee.com/tinyterra)?**
 
 ![tinyterra_pipeSDXL](workflows/tinyterra_pipeSDXL.png)
 ![tinyterra_trueHRFix](workflows/tinyterra_trueHRFix.png) 
