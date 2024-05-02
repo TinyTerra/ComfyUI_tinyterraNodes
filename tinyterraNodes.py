@@ -3045,78 +3045,61 @@ class ttN_SEED:
 #class ttN_imageREMBG:
 try:
     from rembg import remove
-    class ttN_imageREMBG:
-        version = '1.0.0'
-        def __init__(self):
-            pass
+class ttN_imageREMBG:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+                "image": ("IMAGE",),
+                "image_output": (["Hide", "Preview", "Save", "Hide/Save"],{"default": "Preview"}),
+                               "save_prefix": ("STRING", {"default": "ComfyUI"}),
+                },
+                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
+                           "ttNnodeVersion": ttN_imageREMBG.version},
+            }
+
+
+    RETURN_TYPES = ("IMAGE", "MASK")
+    RETURN_NAMES = ("image", "mask")
+    FUNCTION = "remove_background"
+    CATEGORY = "ttN/image"
+    OUTPUT_NODE = True
+
+    def remove_background(self, image, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id):
+        try:
+            from rembg import remove
+        except ImportError:
+            raise ImportError("REMBG is not installed.\nPlease install it with `pip install rembg` or from https://github.com/danielgatis/rembg.")
         
-        @classmethod
-        def INPUT_TYPES(s):
-            return {"required": { 
-                    "image": ("IMAGE",),
-                    "image_output": (["Hide", "Preview", "Save", "Hide/Save"],{"default": "Preview"}),
-                    "save_prefix": ("STRING", {"default": "ComfyUI"}),
-                    },
-                    "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
-                               "ttNnodeVersion": ttN_imageREMBG.version},
-                }
-            
+        image = remove(ttNsampler.tensor2pil(image))
+        tensor = ttNsampler.pil2tensor(image)
 
-        RETURN_TYPES = ("IMAGE", "MASK")
-        RETURN_NAMES = ("image", "mask")
-        FUNCTION = "remove_background"
-        CATEGORY = "ttN/image"
-        OUTPUT_NODE = True
+        #Get alpha mask
+        if image.getbands() != ("R", "G", "B", "A"):
+            image = image.convert("RGBA")
+        mask = None
+        if "A" in image.getbands():
+            mask = np.array(image.getchannel("A")).astype(np.float32) / 255.0
+            mask = torch.from_numpy(mask)
+            mask = 1. - mask
+        else:
+            mask = torch.zeros((64,64), dtype=torch.float32, device=sampler.device)
 
-        def remove_background(self, image, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id):
-            image = remove(ttNsampler.tensor2pil(image))
-            tensor = ttNsampler.pil2tensor(image)
-            
-            #Get alpha mask
-            if image.getbands() != ("R", "G", "B", "A"):
-                image = image.convert("RGBA")
-            mask = None
-            if "A" in image.getbands():
-                mask = np.array(image.getchannel("A")).astype(np.float32) / 255.0
-                mask = torch.from_numpy(mask)
-                mask = 1. - mask
-            else:
-                mask = torch.zeros((64,64), dtype=torch.float32, device=sampler.device)
+        if image_output == "Disabled":
+            results = []
+        else:
+            ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo)
+            results = ttN_save.images(tensor, save_prefix, image_output)
 
-            if image_output == "Disabled":
-                results = []
-            else:
-                ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo)
-                results = ttN_save.images(tensor, save_prefix, image_output)
+        if image_output in ("Hide", "Hide/Save"):
+            return (tensor, mask)
 
-            if image_output in ("Hide", "Hide/Save"):
-                return (tensor, mask)
-
-            # Output image results to ui and node outputs
-            return {"ui": {"images": results},
-                    "result": (tensor, mask)}
-except:
-    class ttN_imageREMBG:
-        version = '0.0.0'
-        def __init__(self):
-            pass
-        
-        @classmethod
-        def INPUT_TYPES(s):
-            return {"required": { 
-                        "error": ("STRING",{"default": "RemBG is not installed", "multiline": False, 'readonly': True}),
-                        "link": ("STRING",{"default": "https://github.com/danielgatis/rembg", "multiline": False}),
-                    },
-                    "hidden": {"ttNnodeVersion": ttN_imageREMBG.version},
-                }
-            
-
-        RETURN_TYPES = ("")
-        FUNCTION = "remove_background"
-        CATEGORY = "ttN/image"
-
-        def remove_background(error):
-            return None
+        # Output image results to ui and node outputs
+        return {"ui": {"images": results},
+                "result": (tensor, mask)}
 
 class ttN_imageOUPUT:
     version = '1.1.0'
