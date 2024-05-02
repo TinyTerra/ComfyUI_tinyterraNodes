@@ -34,7 +34,7 @@ function _generateNumDict({min = 0, max = 2048, step = 1}) {
 function getWidgetsOptions(node) {
     const widgetsOptions = {}
     const widgets = node.widgets
-
+    if (!widgets) return
     for (const w of widgets) {
         if (!w.type || !w.options) continue
         const current_value = w.value
@@ -265,7 +265,6 @@ app.registerExtension({
 	name: "comfy.ttN.xyPlotAdv",
 	nodeCreated(node) {
 		if (node.getTitle() === "advanced xyPlot") {
-			//addGetSetters(node);
 			dropdownCreator(node);
 		}
 	}
