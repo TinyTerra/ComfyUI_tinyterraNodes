@@ -858,7 +858,7 @@ class ttNadv_xyPlot:
                 if iname == input_name:
                     ivalues = input_types[itype][iname]
                     if ivalues[0] == 'INT':
-                        value = int(value)
+                        value = int(float(value))
                     elif ivalues[0] == 'FLOAT':
                         value = float(value)
                     elif ivalues[0] in ['BOOL', 'BOOLEAN']:
@@ -1146,6 +1146,15 @@ class ttNsave:
         else:
             ttNl(f"File {file_path} already exists... Skipping").error().p()   
 
+class AnyType(str):
+    """A special class that is always equal in not equal comparisons. Credit to pythongosssss"""
+
+    def __eq__(self, _) -> bool:
+        return True
+
+    def __ne__(self, __value: object) -> bool:
+        return False
+
 loader = ttNloader()
 sampler = ttNsampler()
 
@@ -1207,7 +1216,7 @@ class ttN_pipeLoader_v2:
     RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed", "width", "height", "pos_string", "neg_string")
 
     FUNCTION = "adv_pipeloader"
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN 🌏/pipe"
 
     def adv_pipeloader(self, ckpt_name, config_name, vae_name, clip_skip,
                        loras,
@@ -1351,7 +1360,7 @@ class ttN_pipeKSampler_v2:
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN 🌏/pipe"
 
     def sample(self, pipe,
                lora_name, lora_strength,
@@ -1560,7 +1569,7 @@ class ttN_pipeKSamplerAdvanced_v2:
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "adv_sample"
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN 🌏/pipe"
 
     def adv_sample(self, pipe,
                lora_name, lora_strength,
@@ -1637,7 +1646,7 @@ class ttN_KSampler_v2:
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN"
+    CATEGORY = "ttN 🌏"
 
     def sample( self, model, positive, negative, latent, vae, clip,
                 lora_name, lora_strength,
@@ -1748,7 +1757,7 @@ class ttN_pipeLoaderSDXL_v2:
 
 
     FUNCTION = "sdxl_pipeloader"
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN 🌏/pipe"
 
     def sdxl_pipeloader(self, ckpt_name, config_name, vae_name, clip_skip, loras,
                         refiner_ckpt_name, refiner_config_name,
@@ -1928,7 +1937,7 @@ class ttN_pipeKSamplerSDXL_v2:
     RETURN_NAMES = ("sdxl_pipe", "pipe","model", "positive", "negative" , "refiner_model", "refiner_positive", "refiner_negative", "latent", "vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN 🌏/pipe"
 
     def sample(self, sdxl_pipe,
                lora_name, lora_strength,
@@ -2158,7 +2167,7 @@ class ttN_pipe_EDIT:
     RETURN_NAMES = ("pipe", "model", "pos", "neg", "latent", "vae", "clip", "image", "seed")
     FUNCTION = "flush"
 
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN 🌏/pipe"
 
     def flush(self, pipe=None, model=None, pos=None, neg=None, latent=None, vae=None, clip=None, image=None, seed=None, my_unique_id=None):
 
@@ -2222,7 +2231,7 @@ class ttN_pipe_2BASIC:
     RETURN_NAMES = ("basic_pipe", "pipe",)
     FUNCTION = "flush"
 
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN 🌏/pipe"
     
     def flush(self, pipe):
         basic_pipe = (pipe.get('model'), pipe.get('clip'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'))
@@ -2247,119 +2256,12 @@ class ttN_pipe_2DETAILER:
     RETURN_NAMES = ("detailer_pipe", "pipe")
     FUNCTION = "flush"
 
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN 🌏/pipe"
 
     def flush(self, pipe, bbox_detector, wildcard, sam_model_opt=None, segm_detector_opt=None, detailer_hook=None):
         detailer_pipe = (pipe.get('model'), pipe.get('clip'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'), wildcard,
                          bbox_detector, segm_detector_opt, sam_model_opt, detailer_hook, None, None, None, None)
         return (detailer_pipe, pipe, )
-    
-class ttN_advanced_XYPlot:
-    version = '1.0.0'
-    plotPlaceholder = "_PLOT\nExample:\n\n<axis number:label1>\n[node_ID:widget_Name='value']\n\n<axis number2:label2>\n[node_ID:widget_Name='value2']\n[node_ID:widget2_Name='value']\n[node_ID2:widget_Name='value']\n\netc..."
-
-    def get_plot_points(plot_data, unique_id):
-        if plot_data is None or plot_data.strip() == '':
-            return None
-        else:
-            try:
-                axis_dict = {}
-                lines = plot_data.split('<')
-                new_lines = []
-                temp_line = ''
-
-                for line in lines:
-                    if line.startswith('lora'):
-                        temp_line += '<' + line
-                        new_lines[-1] = temp_line
-                    else:
-                        new_lines.append(line)
-                        temp_line = line
-                        
-                for line in new_lines:
-                    if line:
-                        values_label = []
-                        line = line.split('>', 1)
-                        num, label = line[0].split(':', 1)
-                        axis_dict[num] = {"label": label}
-                        for point in line[1].split('['):
-                            if point.strip() != '':
-                                node_id = point.split(':', 1)[0]
-                                axis_dict[num][node_id] = {}
-                                input_name = point.split(':', 1)[1].split('=')[0]
-                                value = point.split("'")[1].split("'")[0]
-                                values_label.append((value, input_name, node_id))
-                                
-                                axis_dict[num][node_id][input_name] = value
-                                
-                        if label in ['v_label', 'tv_label', 'idtv_label']:
-                            new_label = []
-                            for value, input_name, node_id in values_label:
-                                if label == 'v_label':
-                                    new_label.append(value)
-                                elif label == 'tv_label':
-                                    new_label.append(f'{input_name}: {value}')
-                                elif label == 'idtv_label':
-                                    new_label.append(f'[{node_id}] {input_name}: {value}')
-                            axis_dict[num]['label'] = ', '.join(new_label)
-                        
-            except ValueError:
-                ttNl('Invalid Plot - defaulting to None...').t(f'advanced_XYPlot[{unique_id}]').warn().p()
-                return None
-            return axis_dict
-
-    def __init__(self):
-        pass
-
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "grid_spacing": ("INT",{"min": 0, "max": 500, "step": 5, "default": 0,}),
-                "latent_index": ("INT",{"min": 0, "max": 100, "step": 1, "default": 0, }),
-                "output_individuals": (["False", "True"],{"default": "False"}),
-                "flip_xy": (["False", "True"],{"default": "False"}),
-                "x_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'X' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
-                "y_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'Y' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
-            },
-            "hidden": {
-                "prompt": ("PROMPT",),
-                "extra_pnginfo": ("EXTRA_PNGINFO",),
-                "my_unique_id": ("MY_UNIQUE_ID",),
-                "ttNnodeVersion": ttN_XYPlot.version,
-            },
-        }
-
-    RETURN_TYPES = ("ADV_XYPLOT", )
-    RETURN_NAMES = ("adv_xyPlot", )
-    FUNCTION = "plot"
-
-    CATEGORY = "ttN/pipe"
-    
-    def plot(self, grid_spacing, latent_index, output_individuals, flip_xy, x_plot, y_plot, prompt=None, extra_pnginfo=None, my_unique_id=None):
-        x_plot = ttN_advanced_XYPlot.get_plot_points(x_plot, my_unique_id)
-        y_plot = ttN_advanced_XYPlot.get_plot_points(y_plot, my_unique_id)
-
-        if x_plot == {}:
-            x_plot = None
-        if y_plot == {}:
-            y_plot = None
-
-        if flip_xy == "True":
-            x_plot, y_plot = y_plot, x_plot
-
-        xy_plot = {"x_plot": x_plot,
-                   "y_plot": y_plot,
-                   "grid_spacing": grid_spacing,
-                   "latent_index": latent_index,
-                   "output_individuals": output_individuals,}
-        
-        return (xy_plot, )
-
-class ttN_Plotting(ttN_advanced_XYPlot):
-    def plot(self, grid_spacing, latent_index, output_individuals, flip_xy, x_plot, y_plot, prompt=None, extra_pnginfo=None, my_unique_id=None):
-        xy_plot = {"x_plot": None, "y_plot": None, "grid_spacing": None, "latent_index": None, "output_individuals": None,}
-        return (xy_plot, )
     
 class ttN_pipeEncodeConcat:
     version = '1.0.2'
@@ -2390,7 +2292,7 @@ class ttN_pipeEncodeConcat:
     RETURN_NAMES = ("pipe", "positive", "negative", "clip")
     FUNCTION = "concat"
 
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN 🌏/pipe"
 
     def concat(self, toggle, positive_token_normalization, positive_weight_interpretation,
                negative_token_normalization, negative_weight_interpretation,
@@ -2490,7 +2392,7 @@ class ttN_pipeLoraStack:
     RETURN_NAMES = ("optional_pipe","lora_stack",)
     FUNCTION = "stack"
 
-    CATEGORY = "ttN/pipe"
+    CATEGORY = "ttN 🌏/pipe"
 
     def stack(self, toggle, mode, num_loras, optional_pipe=None, lora_stack=None, model_override=None, clip_override=None, **kwargs):
         if (toggle in [False, None, "False"]) or not kwargs:
@@ -2552,6 +2454,182 @@ class ttN_pipeLoraStack:
         return new_pipe, loras
 #---------------------------------------------------------------ttN/pipe END------------------------------------------------------------------------#
 
+
+#-------------------------------------------------------------ttN/xyPlot START----------------------------------------------------------------------#
+
+class ttN_advanced_XYPlot:
+    version = '1.0.0'
+    plotPlaceholder = "_PLOT\nExample:\n\n<axis number:label1>\n[node_ID:widget_Name='value']\n\n<axis number2:label2>\n[node_ID:widget_Name='value2']\n[node_ID:widget2_Name='value']\n[node_ID2:widget_Name='value']\n\netc..."
+
+    def get_plot_points(plot_data, unique_id):
+        if plot_data is None or plot_data.strip() == '':
+            return None
+        else:
+            try:
+                axis_dict = {}
+                lines = plot_data.split('<')
+                new_lines = []
+                temp_line = ''
+
+                for line in lines:
+                    if line.startswith('lora'):
+                        temp_line += '<' + line
+                        new_lines[-1] = temp_line
+                    else:
+                        new_lines.append(line)
+                        temp_line = line
+                        
+                for line in new_lines:
+                    if line:
+                        values_label = []
+                        line = line.split('>', 1)
+                        num, label = line[0].split(':', 1)
+                        axis_dict[num] = {"label": label}
+                        for point in line[1].split('['):
+                            if point.strip() != '':
+                                node_id = point.split(':', 1)[0]
+                                axis_dict[num][node_id] = {}
+                                input_name = point.split(':', 1)[1].split('=')[0]
+                                value = point.split("'")[1].split("'")[0]
+                                values_label.append((value, input_name, node_id))
+                                
+                                axis_dict[num][node_id][input_name] = value
+                                
+                        if label in ['v_label', 'tv_label', 'idtv_label']:
+                            new_label = []
+                            for value, input_name, node_id in values_label:
+                                if label == 'v_label':
+                                    new_label.append(value)
+                                elif label == 'tv_label':
+                                    new_label.append(f'{input_name}: {value}')
+                                elif label == 'idtv_label':
+                                    new_label.append(f'[{node_id}] {input_name}: {value}')
+                            axis_dict[num]['label'] = ', '.join(new_label)
+                        
+            except ValueError:
+                ttNl('Invalid Plot - defaulting to None...').t(f'advanced_XYPlot[{unique_id}]').warn().p()
+                return None
+            return axis_dict
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "grid_spacing": ("INT",{"min": 0, "max": 500, "step": 5, "default": 0,}),
+                "latent_index": ("INT",{"min": 0, "max": 100, "step": 1, "default": 0, }),
+                "output_individuals": (["False", "True"],{"default": "False"}),
+                "flip_xy": (["False", "True"],{"default": "False"}),
+                "x_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'X' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
+                "y_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'Y' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
+            },
+            "hidden": {
+                "prompt": ("PROMPT",),
+                "extra_pnginfo": ("EXTRA_PNGINFO",),
+                "my_unique_id": ("MY_UNIQUE_ID",),
+                "ttNnodeVersion": ttN_XYPlot.version,
+            },
+        }
+
+    RETURN_TYPES = ("ADV_XYPLOT", )
+    RETURN_NAMES = ("adv_xyPlot", )
+    FUNCTION = "plot"
+
+    CATEGORY = "ttN 🌏/xyPlot"
+    
+    def plot(self, grid_spacing, latent_index, output_individuals, flip_xy, x_plot=None, y_plot=None, prompt=None, extra_pnginfo=None, my_unique_id=None):
+        x_plot = ttN_advanced_XYPlot.get_plot_points(x_plot, my_unique_id)
+        y_plot = ttN_advanced_XYPlot.get_plot_points(y_plot, my_unique_id)
+
+        if x_plot == {}:
+            x_plot = None
+        if y_plot == {}:
+            y_plot = None
+
+        if flip_xy == "True":
+            x_plot, y_plot = y_plot, x_plot
+
+        xy_plot = {"x_plot": x_plot,
+                   "y_plot": y_plot,
+                   "grid_spacing": grid_spacing,
+                   "latent_index": latent_index,
+                   "output_individuals": output_individuals,}
+        
+        return (xy_plot, )
+
+class ttN_Plotting(ttN_advanced_XYPlot):
+    def plot(self, grid_spacing, latent_index, output_individuals, flip_xy, x_plot, y_plot, prompt=None, extra_pnginfo=None, my_unique_id=None):
+        xy_plot = {"x_plot": None, "y_plot": None, "grid_spacing": None, "latent_index": None, "output_individuals": None,}
+        return (xy_plot, )
+
+class ttN_advPlot_range:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "node": ([AnyType("Connect to xyPlot for options"),],{}),
+                "widget": ([AnyType("Select node for options"),],{}),
+
+                #"mode": (['step',],{}),
+                "start": ("FLOAT", {"min": -0xffffffffffffffff, "max": 0xffffffffffffffff, "step": 0.01, "default": 1,}),
+                "step": ("FLOAT", {"min": -0xffffffffffffffff, "max": 0xffffffffffffffff, "step": 0.01, "default": 1,}),
+                "num_steps": ("INT", {"min": 1, "max": 1000, "step": 1, "default": 5,}),
+                
+                "label_type": (['Values', 'Title and Values', 'ID, Title and Values'],{"default": "Values"}),
+
+            },
+            "hidden": {
+                "ttNnodeVersion": ttN_XYPlot.version,
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("plot_text",)
+    FUNCTION = "plot"
+    OUTPUT_NODE = True
+
+    CATEGORY = "ttN 🌏/xyPlot"
+
+    def plot(self, node, widget, start, step, num_steps, label_type):
+        label_map = {
+            'Values': 'v_label',
+            'Title and Values': 'tv_label',
+            'ID, Title and Values': 'idtv_label',
+        }
+        label = label_map[label_type]
+
+        plot_text = []
+        
+        start_decimals = len(str(start).split('.')[1].rstrip('0')) if '.' in str(start) else 0
+        step_decimals = len(str(step).split('.')[1].rstrip('0')) if '.' in str(step) else 0
+        decimal_places = max(start_decimals, step_decimals)
+
+        if '[' in node and ']' in node:
+            nodeid = node.split('[', 1)[1].split(']', 1)[0]
+        else:
+            return {"ui": {"text": ''}, "result": ('',)}
+        
+        for num in range(1, num_steps + 1):
+            rounded = round(start+step*(num-1), decimal_places)
+            if decimal_places == 0:
+                rounded = int(rounded)
+            line = f"[{nodeid}:{widget}='{rounded}']"
+            plot_text.append(f"<{num}:{label}>")
+            plot_text.append(line)
+
+        out = '\n'.join(plot_text)
+
+        return {"ui": {"text": out}, "result": (out,)}
+
+#--------------------------------------------------------------ttN/xyPlot END-----------------------------------------------------------------------#
+
+
 #----------------------------------------------------------------misc START------------------------------------------------------------------------#
 WEIGHTED_SUM = "Weighted sum = (  A*(1-M) + B*M  )"
 ADD_DIFFERENCE = "Add difference = (  A + (B-C)*M  )"
@@ -2603,7 +2681,7 @@ class ttN_multiModelMerge:
     RETURN_NAMES = ("model", "clip", "vae",)
     FUNCTION = "mergificate"
 
-    CATEGORY = "ttN"
+    CATEGORY = "ttN 🌏"
 
     def mergificate(self, ckpt_A_name, config_A_name, ckpt_B_name, config_B_name, ckpt_C_name, config_C_name,
                 model_interpolation, model_multiplier, clip_interpolation, clip_multiplier, save_model, save_prefix,
@@ -2815,7 +2893,7 @@ class ttN_text:
     RETURN_NAMES = ("text",)
     FUNCTION = "conmeow"
 
-    CATEGORY = "ttN/text"
+    CATEGORY = "ttN 🌏/text"
 
     @staticmethod
     def conmeow(text):
@@ -2843,7 +2921,7 @@ class ttN_textDebug:
     FUNCTION = "write"
     OUTPUT_NODE = True
 
-    CATEGORY = "ttN/text"
+    CATEGORY = "ttN 🌏/text"
 
     def write(self, print_to_console, console_title, execute, text, prompt, extra_pnginfo, my_unique_id):
         if execute == "Always":
@@ -2897,7 +2975,7 @@ class ttN_concat:
     RETURN_NAMES = ("concat",)
     FUNCTION = "conmeow"
 
-    CATEGORY = "ttN/text"
+    CATEGORY = "ttN 🌏/text"
 
     def conmeow(self, text1='', text2='', text3='', delimiter=''):
         text1 = '' if text1 == 'undefined' else text1
@@ -2933,7 +3011,7 @@ class ttN_text3BOX_3WAYconcat:
     RETURN_NAMES = ("text1", "text2", "text3", "1 & 2", "1 & 3", "2 & 3", "concat",)
     FUNCTION = "conmeow"
 
-    CATEGORY = "ttN/text"
+    CATEGORY = "ttN 🌏/text"
 
     def conmeow(self, text1='', text2='', text3='', delimiter=''):
         text1 = '' if text1 == 'undefined' else text1
@@ -2976,7 +3054,7 @@ class ttN_text7BOX_concat:
     RETURN_NAMES = ("text1", "text2", "text3", "text4", "text5", "text6", "text7", "concat",)
     FUNCTION = "conmeow"
 
-    CATEGORY = "ttN/text"
+    CATEGORY = "ttN 🌏/text"
 
     def conmeow(self, text1, text2, text3, text4, text5, text6, text7, delimiter):
         text1 = '' if text1 == 'undefined' else text1
@@ -3014,7 +3092,7 @@ class ttN_INT:
     RETURN_NAMES = ("int", "float", "text",)
     FUNCTION = "convert"
 
-    CATEGORY = "ttN/util"
+    CATEGORY = "ttN 🌏/util"
 
     @staticmethod
     def convert(int):
@@ -3037,7 +3115,7 @@ class ttN_FLOAT:
     RETURN_NAMES = ("float", "int", "text",)
     FUNCTION = "convert"
 
-    CATEGORY = "ttN/util"
+    CATEGORY = "ttN 🌏/util"
 
     @staticmethod
     def convert(float):
@@ -3061,7 +3139,7 @@ class ttN_SEED:
     FUNCTION = "plant"
     OUTPUT_NODE = True
 
-    CATEGORY = "ttN/util"
+    CATEGORY = "ttN 🌏/util"
 
     @staticmethod
     def plant(seed):
@@ -3090,7 +3168,7 @@ class ttN_imageREMBG:
     RETURN_TYPES = ("IMAGE", "MASK")
     RETURN_NAMES = ("image", "mask")
     FUNCTION = "remove_background"
-    CATEGORY = "ttN/image"
+    CATEGORY = "ttN 🌏/image"
     OUTPUT_NODE = True
 
     def remove_background(self, image, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id):
@@ -3151,7 +3229,7 @@ class ttN_imageOUPUT:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "output"
-    CATEGORY = "ttN/image"
+    CATEGORY = "ttN 🌏/image"
     OUTPUT_NODE = True
 
     def output(self, image, image_output, output_path, save_prefix, number_padding, file_type, overwrite_existing, embed_workflow, prompt, extra_pnginfo, my_unique_id):
@@ -3194,7 +3272,7 @@ class ttN_modelScale:
     RETURN_NAMES = ("latent", 'image',)
 
     FUNCTION = "upscale"
-    CATEGORY = "ttN/image"
+    CATEGORY = "ttN 🌏/image"
     OUTPUT_NODE = True
 
     def vae_encode_crop_pixels(self, pixels):
@@ -3688,7 +3766,7 @@ class ttN_XYPlot:
     RETURN_NAMES = ("xyPlot", )
     FUNCTION = "plot"
 
-    CATEGORY = "ttN/legacy"
+    CATEGORY = "ttN 🌏/legacy"
     
     def plot(self, grid_spacing, latent_id, output_individuals, flip_xy, x_axis, x_values, y_axis, y_values):
         def clean_values(values):
@@ -3768,7 +3846,7 @@ class ttN_pipe_IN:
     RETURN_NAMES = ("pipe", )
     FUNCTION = "flush"
 
-    CATEGORY = "ttN/legacy"
+    CATEGORY = "ttN 🌏/legacy"
 
     def flush(self, model, pos=0, neg=0, latent=0, vae=0, clip=0, image=0, seed=0):
         pipe = {"model": model,
@@ -3809,7 +3887,7 @@ class ttN_pipe_OUT:
     RETURN_NAMES = ("model", "pos", "neg", "latent", "vae", "clip", "image", "seed", "pipe")
     FUNCTION = "flush"
 
-    CATEGORY = "ttN/legacy"
+    CATEGORY = "ttN 🌏/legacy"
     
     def flush(self, pipe):
         model = pipe.get("model")
@@ -3865,7 +3943,7 @@ class ttN_TSC_pipeLoader:
     RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed",)
 
     FUNCTION = "adv_pipeloader"
-    CATEGORY = "ttN/legacy"
+    CATEGORY = "ttN 🌏/legacy"
 
     def adv_pipeloader(self, ckpt_name, config_name, vae_name, clip_skip,
                        lora1_name, lora1_model_strength, lora1_clip_strength,
@@ -4032,7 +4110,7 @@ class ttN_TSC_pipeKSampler:
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN/legacy"
+    CATEGORY = "ttN 🌏/legacy"
 
     def sample(self, pipe, lora_name, lora_model_strength, lora_clip_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
                optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, seed=None, xyPlot=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False, disable_noise=False):
@@ -4253,7 +4331,7 @@ class ttN_pipeKSamplerAdvanced:
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN/legacy"
+    CATEGORY = "ttN 🌏/legacy"
 
     def sample(self, pipe,
                lora_name, lora_model_strength, lora_clip_strength,
@@ -4321,7 +4399,7 @@ class ttN_pipeLoaderSDXL:
     RETURN_NAMES = ("sdxl_pipe","model", "positive", "negative", "vae", "clip", "refiner_model", "refiner_positive", "refiner_negative", "refiner_vae", "refiner_clip", "latent", "seed",)
 
     FUNCTION = "adv_pipeloader"
-    CATEGORY = "ttN/legacy"
+    CATEGORY = "ttN 🌏/legacy"
 
     def adv_pipeloader(self, ckpt_name, vae_name,
                        lora1_name, lora1_model_strength, lora1_clip_strength,
@@ -4509,7 +4587,7 @@ class ttN_pipeKSamplerSDXL:
     RETURN_NAMES = ("sdxl_pipe", "model", "positive", "negative" ,"vae", "refiner_model", "refiner_positive", "refiner_negative" ,"refiner_vae", "latent", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN/legacy"
+    CATEGORY = "ttN 🌏/legacy"
 
     def sample(self, sdxl_pipe, sampler_state,
                base_steps, refiner_steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
@@ -4654,6 +4732,7 @@ TTN_VERSIONS = {
     "pipe2DETAILER": ttN_pipe_2DETAILER.version,
     "xyPlot": ttN_XYPlot.version,
     "advanced xyPlot": ttN_advanced_XYPlot.version,
+    "ttN advPlot range": ttN_advPlot_range.version,
     "pipeEncodeConcat": ttN_pipeEncodeConcat.version,
     "multiLoraStack": ttN_pipeLoraStack.version,
     "multiModelMerge": ttN_multiModelMerge.version,
@@ -4680,6 +4759,7 @@ NODE_CLASS_MAPPINGS = {
     "ttN pipeKSamplerSDXL_v2": ttN_pipeKSamplerSDXL_v2,
     "ttN xyPlot": ttN_XYPlot,
     "ttN advanced xyPlot": ttN_advanced_XYPlot,
+    "ttN advPlot range": ttN_advPlot_range,
     "ttN pipeEDIT": ttN_pipe_EDIT,
     "ttN pipe2BASIC": ttN_pipe_2BASIC,
     "ttN pipe2DETAILER": ttN_pipe_2DETAILER,
@@ -4724,14 +4804,16 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN pipeKSamplerAdvanced_v2": "pipeKSamplerAdvanced",
     "ttN pipeLoaderSDXL_v2": "pipeLoaderSDXL",
     "ttN pipeKSamplerSDXL_v2": "pipeKSamplerSDXL",
-    "ttN xyPlot": "xyPlot",
-    "ttN advanced xyPlot": "advanced xyPlot",
     "ttN pipeEDIT": "pipeEDIT",
     "ttN pipe2BASIC": "pipe > basic_pipe",
     "ttN pipe2DETAILER": "pipe > detailer_pipe",
     "ttN pipeEncodeConcat": "pipeEncodeConcat",
     "ttN pipeLoraStack": "pipeLoraStack",
 
+    #ttN/xyPlot
+    "ttN advanced xyPlot": "advanced xyPlot",
+    "ttN advPlot range": "advPlot range",
+    
     #ttN/misc
     "ttN multiModelMerge": "multiModelMerge",
     "ttN debugInput": "debugInput",
@@ -4754,6 +4836,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN seed": "seed",
 
     #DEPRECATED
+    "ttN xyPlot": "xyPlot",
     "ttN pipeIN": "pipeIN (Legacy)",
     "ttN pipeOUT": "pipeOUT (Legacy)",
     "ttN pipeLoader": "pipeLoader v1 (Legacy)",
@@ -4766,8 +4849,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 ttNl('Loaded').full().p()
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
-# (KSampler Modified from TSC Efficiency Nodes) -           https://github.com/LucianoCirino/efficiency-nodes-comfyui                               #
 # (upscale from QualityOfLifeSuite_Omar92) -                https://github.com/omar92/ComfyUI-QualityOfLifeSuit_Omar92                              #
 # (Node weights from BlenderNeko/ComfyUI_ADV_CLIP_emb) -    https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb                                     #
-# (misc. from WAS node Suite) -                             https://github.com/WASasquatch/was-node-suite-comfyui                                   #
 #---------------------------------------------------------------------------------------------------------------------------------------------------#

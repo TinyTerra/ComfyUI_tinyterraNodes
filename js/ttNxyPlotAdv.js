@@ -1,35 +1,7 @@
 import { app } from "../../scripts/app.js";
 import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttN.js";
 
-let nodeWidgets = {};
 const widgets_to_ignore = ['control_after_generate', 'empty_latent_aspect', 'empty_latent_width', 'empty_latent_height']
-
-function _formatFloatingPointKey(value) {
-    let formattedValue = value.toFixed(3);
-    // Handle edge case for -0.000 to ensure it's represented as "0.000"
-    if (formattedValue === "-0.000") formattedValue = "0.000";
-    // Ensure that the string has exactly three decimal places
-    if (!/\.\d{3}$/.test(formattedValue)) formattedValue += "0";
-    return formattedValue;
-}
-
-function _generateNumDict({min = 0, max = 2048, step = 1}) {
-    step = step / 10;
-  
-    if (step === 0) throw new Error("Step cannot be 0.");
-    max = Math.min(max, 2048);
-  
-    const resultDict = {};
-    let currentValue = min;
-  
-    while (currentValue <= max) {
-      const key = Number.isInteger(step) ? Math.round(currentValue) : _formatFloatingPointKey(currentValue);
-      resultDict[key] = null;
-      currentValue += step;
-    }
-  
-    return resultDict;
-}
 
 function getWidgetsOptions(node) {
     const widgetsOptions = {}
@@ -88,10 +60,10 @@ function _addInputIDs(node, inputIDs, IDsToCheck) {
     if (node.inputs) {
         for (const input of node.inputs) {
             if (input.link) {
-                let origin_id = node.graph.links[input.link].origin_id
-                inputIDs.push(origin_id);
-                if (!IDsToCheck.includes(origin_id)) {
-                    IDsToCheck.push(origin_id);
+                let originID = node.graph.links[input.link].origin_id
+                inputIDs.push(originID);
+                if (!IDsToCheck.includes(originID)) {
+                    IDsToCheck.push(originID);
                 }
             }
         }
@@ -114,11 +86,21 @@ function _recursiveGetInputIDs(node) {
     return inputIDs;
 }
 
-function getNodesWidgetsDict(node) {
-    nodeWidgets = {'Add Plot Line': {'Only Values Label': null, 'Title and Values Label': null, 'ID, Title and Values Label': null}};
-    const plotNodeLink = node.outputs[0].links[0]
-    const plotNodeID = node.graph.links[plotNodeLink].target_id
-    const plotNodeTitle = node.graph._nodes_by_id[plotNodeID].getTitle()
+function getNodesWidgetsDict(xyNode, plotLines=false) {
+    const nodeWidgets = {};
+    if (plotLines) {
+        nodeWidgets['Add Plot Line'] = {'Only Values Label': null, 'Title and Values Label': null, 'ID, Title and Values Label': null};
+    }
+
+    const xyNodeLinks = xyNode.outputs[0]?.links
+    if (!xyNodeLinks || xyNodeLinks.length == 0) {
+        nodeWidgets['Connect to advanced xyPlot for options'] = null
+        return nodeWidgets
+    }
+
+    const plotNodeLink = xyNodeLinks[0]
+    const plotNodeID = xyNode.graph.links[plotNodeLink].target_id
+    const plotNodeTitle = xyNode.graph._nodes_by_id[plotNodeID].getTitle()
     const plotNode = app.graph._nodes_by_id[plotNodeID]
 
     const options = getWidgetsOptions(plotNode)
@@ -137,8 +119,8 @@ function getNodesWidgetsDict(node) {
         if (!options) continue
         nodeWidgets[`[${iID}] - ${iNodeTitle}`] = getWidgetsOptions(iNode)
     }
+    return nodeWidgets
 }
-
 
 function dropdownCreator(node) {
 	if (node.widgets) {
@@ -149,7 +131,7 @@ function dropdownCreator(node) {
 		for (const w of widgets) {
 
 			const onInput = function () {
-                getNodesWidgetsDict(node);
+                const nodeWidgets = getNodesWidgetsDict(node, true);
                 const inputText = w.inputEl.value;
                 const cursorPosition = w.inputEl.selectionStart;
 
@@ -173,9 +155,9 @@ function dropdownCreator(node) {
                     const parts = data[0].split('/');
                     let output;
                     if (parts[0] === 'Add Plot Line') {
-                        const label_type = parts[1];
+                        const labelType = parts[1];
                         let label;
-                        switch (label_type) {
+                        switch (labelType) {
                             case 'Only Values Label':
                                 label = 'v_label';
                                 break;
@@ -226,6 +208,9 @@ function dropdownCreator(node) {
                         }
                         return   
                     }
+                    if (parts[0] === 'Connect to advanced xyPlot for options') {
+                        return
+                    }
 
                     if (selectedOption === 'Random Seed') {
                         const [max, min, step] = data[1].split('/');
@@ -262,12 +247,151 @@ function dropdownCreator(node) {
 	}
 }
 
+function findUpstreamXYPlot(targetID) {
+    const currentNode = app.graph._nodes_by_id[targetID];
+    if (!currentNode) {
+        return
+    }
+    if (currentNode.getTitle() === 'advanced xyPlot') {
+        return currentNode;
+    } else {
+        if (!currentNode.outputs) {
+            return
+        }
+        for (const output of currentNode.outputs) {
+            if (output.links?.length > 0) {
+                for (const link of output.links) {
+                    const xyPlotNode = findUpstreamXYPlot(app.graph.links[link].target_id)
+                    if (xyPlotNode) {
+                        return xyPlotNode
+                    }
+                }
+            }
+        }
+    }
+}
+
+function setPlotNodeOptions(currentNode, targetID=null) {
+    if (!targetID) {
+        for (const output of currentNode.outputs) {
+            if (output.links?.length > 0) {
+                for (const link of output.links) {
+                    targetID = app.graph.links[link].target_id
+                }
+            }
+        }
+    }
+    const xyPlotNode = findUpstreamXYPlot(targetID)
+    if (!xyPlotNode) {
+        return
+    }
+    const widgets_dict = getNodesWidgetsDict(xyPlotNode)
+    for (const w of currentNode.widgets) {
+        if (w.name === 'node') {
+            w.options.values = Object.keys(widgets_dict)
+        }
+    }
+}
+
+function setPlotWidgetOptions(currentNode) {
+    const { value } = currentNode.widgets.find(w => w.name === 'node');
+    const nodeIdRegex = /\[(\d+)\]/;
+    const match = value.match(nodeIdRegex);
+    const nodeId = match ? parseInt(match[1], 10) : null;
+    if (!nodeId) return;
+
+    const optionNode = app.graph._nodes_by_id[nodeId];
+    const widgetsList = Object.values(optionNode.widgets)
+        .filter(w => w.type === 'number')
+        .map((w) => w.name);
+        
+    if (widgetsList) {
+        for (const w of currentNode.widgets) {
+            if (w.name === 'widget') {
+                w.options.values = widgetsList
+            }
+        }
+    }
+}
+
+const getSetWidgets = [
+    "node",
+    "widget",
+]
+
+const getSetNodes = [
+    "advPlot range",
+]
+
+function getSetters(node) {
+	if (node.widgets) {
+		for (const w of node.widgets) {
+			if (getSetWidgets.includes(w.name)) {
+				setPlotWidgetOptions(node);
+				let widgetValue = w.value;
+
+				// Define getters and setters for widget values
+				Object.defineProperty(w, 'value', {
+					get() {
+						return widgetValue;
+					},
+					set(newVal) {
+						if (newVal !== widgetValue) {
+							widgetValue = newVal;
+							setPlotWidgetOptions(node);
+						}
+					}
+				});
+			}
+		}
+    }
+    let mouseOver = node.mouseOver;
+    Object.defineProperty(node, 'mouseOver', {
+        get() {
+            return mouseOver;
+        },
+        set(newVal) {
+            if (newVal !== mouseOver) {
+                mouseOver = newVal;
+                if (mouseOver) {
+                    //console.log('im over this', node)
+                    setPlotNodeOptions(node);
+                }
+            }
+        }
+    })
+
+}
+
 
 app.registerExtension({
 	name: "comfy.ttN.xyPlotAdv",
+    beforeRegisterNodeDef(nodeType, nodeData, app) {
+
+        if (nodeData.name === "ttN advPlot range") {
+            const origOnConnectionsChange = nodeType.prototype.onConnectionsChange;
+            nodeType.prototype.onConnectionsChange = function (type, slotIndex, isConnected, link_info, _ioSlot) {
+                const r = origOnConnectionsChange ? origOnConnectionsChange.apply(this, arguments) : undefined;
+                if (link_info && (slotIndex == 0 || slotIndex == 1)) {
+                    const originID = link_info?.origin_id
+                    const targetID = link_info?.target_id
+                    
+                    const currentNode = app.graph._nodes_by_id[originID];
+
+                    setPlotNodeOptions(currentNode, targetID)
+                }
+                return r;
+            };
+        }
+    },
 	nodeCreated(node) {
-		if (node.getTitle() === "advanced xyPlot") {
+        const node_title = node.getTitle();
+
+		if (node_title === "advanced xyPlot") {
 			dropdownCreator(node);
 		}
-	}
+        if (getSetNodes.includes(node_title)) {
+            getSetters(node);
+        }
+	},
 });
