@@ -105,7 +105,9 @@ function _recursiveGetInputIDs(node) {
     while (IDsToCheck.length > 0) {
         const currentID = IDsToCheck.pop();
         const currentNode = node.graph._nodes_by_id[currentID];
-
+        if (currentNode.getTitle() === 'advanced xyPlot') {
+            continue
+        }
         _addInputIDs(currentNode, inputIDs, IDsToCheck);
     }
 
@@ -141,7 +143,7 @@ function getNodesWidgetsDict(node) {
 function dropdownCreator(node) {
 	if (node.widgets) {
 		const widgets = node.widgets.filter(
-			(n) => (n.type === "customtext" && n.dynamicPrompts !== false) || n.dynamicPrompts
+			(n) => (n.type === "customtext")
 		);
 
 		for (const w of widgets) {
