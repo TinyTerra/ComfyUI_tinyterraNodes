@@ -869,15 +869,15 @@ app.registerExtension({
 
             options.splice(options.length - 1, 0,
                 {
-                    content: "Fullscreen (ttN)",
+                    content: "Fullscreen 🌏",
                     callback: () => { openFullscreenApp(node) }
                 },
                 {
-                    content: "Set Default Fullscreen Node (ttN)",
+                    content: "Set Default Fullscreen Node 🌏",
                     callback: _setDefaultFullscreenNode
                 },
                 {
-                    content: "Clear Default Fullscreen Node (ttN)",
+                    content: "Clear Default Fullscreen Node 🌏",
                     callback: function () {
                         sessionStorage.removeItem('Comfy.Settings.ttN.default_fullscreen_node');
                     }

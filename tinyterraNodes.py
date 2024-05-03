@@ -1,7 +1,7 @@
 """
 @author: tinyterra
 @title: tinyterraNodes
-@nickname: ttNodes
+@nickname: 🌏
 @description: This extension offers various pipe nodes, fullscreen image viewer based on node history, dynamic widgets, interface customization, and more.
 """
 

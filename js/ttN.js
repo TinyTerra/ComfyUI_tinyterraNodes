@@ -240,7 +240,7 @@ app.registerExtension({
 
             options.splice(options.length - 1, 0,
                 {
-                    content: "Reload Node (ttN)",
+                    content: "Reload Node 🌏",
                     callback: () => {
                         var graphcanvas = LGraphCanvas.active_canvas;
                         if (!graphcanvas.selected_nodes || Object.keys(graphcanvas.selected_nodes).length <= 1) {

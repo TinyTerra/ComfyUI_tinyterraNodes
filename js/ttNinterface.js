@@ -423,11 +423,11 @@ app.registerExtension({
             
             options.splice(options.length - 1, 0, 
 				{
-					content: "Node Dimensions (ttN)",
+					content: "Node Dimensions 🌏",
 					callback: () => { LGraphCanvas.prototype.ttNsetNodeDimension(node); }
 				},
                 {
-                    content: "Default BG Color (ttN)",
+                    content: "Default BG Color 🌏",
                     has_submenu: true,
                     callback: LGraphCanvas.ttNsetDefaultBGColor
                 },
@@ -483,10 +483,10 @@ app.registerExtension({
                 menu_info.push({ content: "Rename Slot", slot: slot });
             }
 
-            menu_info.push({ content: "Slot Type Color (ttN)", slot: slot, callback: () => { LGraphCanvas.prototype.ttNsetSlotTypeColor(slot) } });
-            menu_info.push({ content: "Show Link Border (ttN)", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNlinkStyleBorder });
-            menu_info.push({ content: "Show Link Shadow (ttN)", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNlinkStyleShadow });
-            menu_info.push({ content: "Link Style (ttN)", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNonShowLinkStyles });
+            menu_info.push({ content: "Slot Type Color 🌏", slot: slot, callback: () => { LGraphCanvas.prototype.ttNsetSlotTypeColor(slot) } });
+            menu_info.push({ content: "Show Link Border 🌏", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNlinkStyleBorder });
+            menu_info.push({ content: "Show Link Shadow 🌏", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNlinkStyleShadow });
+            menu_info.push({ content: "Link Style 🌏", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNonShowLinkStyles });
 
             return menu_info;
         }
