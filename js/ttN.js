@@ -82,6 +82,7 @@ app.registerExtension({
 
             // Track connections to re-establish later.
             const inputConnections = [], outputConnections = [];
+            if (node.inputs) {
             for (const input of node.inputs ?? []) {
                 if (input.link) { 
                     const input_name = input.name
@@ -92,6 +93,8 @@ app.registerExtension({
                     inputConnections.push([input_link.origin_slot, input_node, input_name])
                 }
             }
+            }
+            if (node.outputs) {
             for (const output of node.outputs) {
                 if (output.links) { 
                     const output_name = output.name
@@ -103,7 +106,7 @@ app.registerExtension({
                     }  
                 }              
             }
-
+            }
             // Remove old node and create a new one.
             app.graph.remove(node)
             const newNode = app.graph.add(LiteGraph.createNode(node.constructor.type, nodeTitle, options));
