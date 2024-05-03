@@ -359,6 +359,19 @@ function widgetLogic(node, widget) {
             if (widget.value == 'Hold') {
                 findWidgetByName(node, 'control_after_generate').value = 'fixed'
             }
+            break;
+
+        case 'print_to_console':
+            if (widget.value == false) {
+                toggleWidget(node, findWidgetByName(node, 'console_title'))
+                toggleWidget(node, findWidgetByName(node, 'console_color'))
+            } else {
+                toggleWidget(node, findWidgetByName(node, 'console_title'), true)
+                toggleWidget(node, findWidgetByName(node, 'console_color'), true)
+            }
+            break;
+        
+
 
 	}
 }
@@ -368,7 +381,8 @@ const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output',
 						'refiner_lora1_name', 'refiner_lora2_name', 'refiner_steps', 'upscale_method', 
 						'image_output', 'add_noise', 
 						'ckpt_B_name', 'ckpt_C_name', 'save_model', 'refiner_ckpt_name',
-						'num_loras', 'mode', 'toggle', 'empty_latent_aspect', 'conditioning_aspect', 'target_aspect', 'sampler_state']
+						'num_loras', 'mode', 'toggle', 'empty_latent_aspect', 'conditioning_aspect', 'target_aspect', 'sampler_state',
+                        'print_to_console']
 
 function getSetters(node) {
 	if (node.widgets)
@@ -416,6 +430,7 @@ app.registerExtension({
 			"pipeLoraStack",
 			"pipeEncodeConcat",
             "ttN KSampler",
+            "debugInput"
 		];
 	
 		if (titles.includes(nodeTitle)) {

@@ -2767,6 +2767,34 @@ class ttN_multiModelMerge:
             comfy.utils.save_torch_file(sd, output_checkpoint, metadata=metadata)
 
         return (model, clip, vae)
+
+class ttN_debugInput:
+    version = '1.0.0'
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+                    "print_to_console": ("BOOLEAN",),
+                    "console_title": ("STRING", {"default": "ttN debug:"}),
+                    "console_color": (["Black", "Red", "Green", "Yellow", "Blue", "Violet", "Cyan", "White", "Grey", "LightRed", "LightGreen", "LightYellow", "LightBlue", "LightViolet", "LightCyan", "LightWhite"], {"default": "Red"}),
+                    },
+                "optional": {
+                    "debug": ("", {"default": None}),
+                    }
+        }
+
+    RETURN_TYPES = tuple()
+    RETURN_NAMES = tuple()
+    FUNCTION = "debug"
+    CATEGORY = "ttN 🌏"
+    OUTPUT_NODE = True
+
+    def debug(_, print_to_console, console_title, console_color, debug=None):
+
+        text = str(debug)
+        if print_to_console:
+            print(f"{getattr(CC, console_color.upper())}{console_title}\n{text}{CC.CLEAN}")
+
+        return {"ui": {"text": text}, "return": tuple()}
 #-----------------------------------------------------------------misc END-------------------------------------------------------------------------#
 
 #---------------------------------------------------------------ttN/text START----------------------------------------------------------------------#
@@ -4629,6 +4657,7 @@ TTN_VERSIONS = {
     "pipeEncodeConcat": ttN_pipeEncodeConcat.version,
     "multiLoraStack": ttN_pipeLoraStack.version,
     "multiModelMerge": ttN_multiModelMerge.version,
+    "debugInput": ttN_debugInput.version,
     "text": ttN_text.version,
     "textDebug": ttN_textDebug.version,
     "concat": ttN_concat.version,
@@ -4657,8 +4686,9 @@ NODE_CLASS_MAPPINGS = {
     "ttN pipeEncodeConcat": ttN_pipeEncodeConcat,
     "ttN pipeLoraStack": ttN_pipeLoraStack,
 
-    #ttN/encode
+    #ttN/misc
     "ttN multiModelMerge": ttN_multiModelMerge,
+    "ttN debugInput": ttN_debugInput,
 
     #ttN/text
     "ttN text": ttN_text,
@@ -4704,6 +4734,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 
     #ttN/misc
     "ttN multiModelMerge": "multiModelMerge",
+    "ttN debugInput": "debugInput",
 
     #ttN/text
     "ttN text": "text",
