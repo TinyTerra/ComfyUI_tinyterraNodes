@@ -33,18 +33,49 @@ class SeedControl {
     }
 }
 
+function addTextDisplay(nodeType) {
+    const onNodeCreated = nodeType.prototype.onNodeCreated;
+    nodeType.prototype.onNodeCreated = function () {
+        const r = onNodeCreated?.apply(this, arguments);
+        const w = ComfyWidgets["STRING"](this, "text", ["STRING", { multiline: true, placeholder: " " }], app).widget;
+        w.inputEl.readOnly = true;
+        w.inputEl.style.opacity = 0.7;
+        w.inputEl.style.cursor = "auto";
+        return r;
+    };
+
+    const onExecuted = nodeType.prototype.onExecuted;
+    nodeType.prototype.onExecuted = function (message) {
+        onExecuted?.apply(this, arguments);
+
+        for (const widget of this.widgets) {
+            if (widget.type === "customtext"){
+                widget.value = message.text.join('');
+            }
+        }
+        
+        this.onResize?.(this.size);
+    };
+}
+
+function overwriteSeedControl(nodeType) {
+    const onNodeCreated = nodeType.prototype.onNodeCreated;
+    nodeType.prototype.onNodeCreated = function () {
+        onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
+        this.seedControl = new SeedControl(this);
+    }
+}
 
 app.registerExtension({
     name: "comfy.ttN.widgets",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (nodeData.name.startsWith("ttN ") && ["ttN pipeLoader_v2", "ttN pipeKSampler_v2", "ttN pipeKSamplerAdvanced_v2", "ttN pipeLoaderSDXL_v2", "ttN pipeKSamplerSDXL_v2", "ttN KSampler_v2"].includes(nodeData.name)) {
             if (nodeData.output_name.includes('seed')) {
-                const onNodeCreated = nodeType.prototype.onNodeCreated;
-                nodeType.prototype.onNodeCreated = function () {
-                    onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
-                    this.seedControl = new SeedControl(this);
-                }
+                overwriteSeedControl(nodeType)
             }
+        }
+        if (["ttN textDebug", "ttN advPlot range", "ttN debugInput"].includes(nodeData.name)) {
+            addTextDisplay(nodeType)
         }
     }
 }); 

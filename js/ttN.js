@@ -280,29 +280,6 @@ app.registerExtension({
                 return r;
             };
         }
-        if (nodeData.name === "ttN textDebug") {
-            const onNodeCreated = nodeType.prototype.onNodeCreated;
-            nodeType.prototype.onNodeCreated = function () {
-                const r = onNodeCreated?.apply(this, arguments);
-                const w = ComfyWidgets["STRING"](this, "text", ["STRING", { multiline: true }], app).widget;
-                w.inputEl.readOnly = true;
-                w.inputEl.style.opacity = 0.7;
-                return r;
-            };
-
-            const onExecuted = nodeType.prototype.onExecuted;
-            nodeType.prototype.onExecuted = function (message) {
-                onExecuted?.apply(this, arguments);
-
-                for (const widget of this.widgets) {
-                    if (widget.type === "customtext"){
-                        widget.value = message.text.join('');
-                    }
-                }
-                
-                this.onResize?.(this.size);
-            };
-        }
     },
     nodeCreated(node) {
         if (node.getTitle() === "pipeLoader") {
