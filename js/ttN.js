@@ -1,5 +1,4 @@
 import { app } from "../../scripts/app.js";
-import { ComfyWidgets } from "../../scripts/widgets.js";
 
 const CONVERTED_TYPE = "converted-widget";
 const GET_CONFIG = Symbol();
@@ -83,29 +82,29 @@ app.registerExtension({
             // Track connections to re-establish later.
             const inputConnections = [], outputConnections = [];
             if (node.inputs) {
-            for (const input of node.inputs ?? []) {
-                if (input.link) { 
-                    const input_name = input.name
-                    const input_slot = node.findInputSlot(input_name)
-                    const input_node = node.getInputNode(input_slot)
-                    const input_link = node.getInputLink(input_slot)
+                for (const input of node.inputs ?? []) {
+                    if (input.link) { 
+                        const input_name = input.name
+                        const input_slot = node.findInputSlot(input_name)
+                        const input_node = node.getInputNode(input_slot)
+                        const input_link = node.getInputLink(input_slot)
 
-                    inputConnections.push([input_link.origin_slot, input_node, input_name])
+                        inputConnections.push([input_link.origin_slot, input_node, input_name])
+                    }
                 }
             }
-            }
             if (node.outputs) {
-            for (const output of node.outputs) {
-                if (output.links) { 
-                    const output_name = output.name
+                for (const output of node.outputs) {
+                    if (output.links) { 
+                        const output_name = output.name
 
-                    for (const linkID of output.links) {
-                        const output_link = graph.links[linkID]
-                        const output_node = graph._nodes_by_id[output_link.target_id]
-                        outputConnections.push([output_name, output_node, output_link.target_slot]) 
-                    }  
-                }              
-            }
+                        for (const linkID of output.links) {
+                            const output_link = graph.links[linkID]
+                            const output_node = graph._nodes_by_id[output_link.target_id]
+                            outputConnections.push([output_name, output_node, output_link.target_slot]) 
+                        }  
+                    }              
+                }
             }
             // Remove old node and create a new one.
             app.graph.remove(node)
