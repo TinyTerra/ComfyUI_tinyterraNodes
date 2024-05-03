@@ -382,40 +382,6 @@ app.registerExtension({
             return false;
         };
 
-        /*LGraphCanvas.ttNshowExecutionOrder = function(value, options, e, menu, node) {
-            var values = [];
-            values.push({
-                value: true,
-                content:
-                    "<span style='display: block; padding-left: 4px;'>True</span>"
-            },
-            {
-                value: false,
-                content:
-                    "<span style='display: block; padding-left: 4px;'>False</span>"
-            }
-            );
-
-            new LiteGraph.ContextMenu(values, {
-                event: e,
-                callback: inner_clicked,
-                parentMenu: menu,
-                node: node
-            });
-
-            function inner_clicked(v) {
-                var showExecOrder = v.value ? v.value : false;
-
-                localStorage.setItem('Comfy.Settings.ttN.showExecutionOrder', JSON.stringify(showExecOrder));
-                
-                LGraphCanvas.active_canvas.render_execution_order = showExecOrder;
-
-                node.setDirtyCanvas(true, true);
-            }
-    
-            return false;
-        };*/
-
         const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
 		LGraphCanvas.prototype.getNodeMenuOptions = function (node) {
 			const options = getNodeMenuOptions.apply(this, arguments);
@@ -430,12 +396,6 @@ app.registerExtension({
                     content: "Default BG Color 🌏",
                     has_submenu: true,
                     callback: LGraphCanvas.ttNsetDefaultBGColor
-                },
-                {
-                    content: "Show Execution Order (ttN)",
-                    has_submenu: true,
-                    callback: LGraphCanvas.ttNshowExecutionOrder
-                    
                 },
                 null
             )
