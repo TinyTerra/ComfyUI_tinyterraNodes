@@ -2320,6 +2320,8 @@ class ttN_tinyLoader:
                         "config_name": (["Default",] + folder_paths.get_filename_list("configs"), {"default": "Default"} ),
                         "sampling": (["Default", "eps", "v_prediction", "lcm", "x0"], {"default": "Default"}),
                         "zsnr": ("BOOLEAN", {"default": False}),
+                        "cfg_rescale_mult": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+
                         "vae_name": (["Baked VAE"] + folder_paths.get_filename_list("vae"),),
                         "clip_skip": ("INT", {"default": -1, "min": -24, "max": 0, "step": 1}),
                         
@@ -2336,7 +2338,7 @@ class ttN_tinyLoader:
     FUNCTION = "miniloader"
     CATEGORY = "ttN 🌏/base"
 
-    def miniloader(self, ckpt_name, config_name, sampling, zsnr, vae_name, clip_skip,
+    def miniloader(self, ckpt_name, config_name, sampling, zsnr, cfg_rescale_mult, vae_name, clip_skip,
                        empty_latent_aspect, empty_latent_width, empty_latent_height,
                        prompt=None, my_unique_id=None):
 
@@ -2355,6 +2357,10 @@ class ttN_tinyLoader:
         if sampling != "Default":
             MSD = comfy_extras.nodes_model_advanced.ModelSamplingDiscrete()
             model = MSD.patch(model, sampling, zsnr)[0]
+
+        if cfg_rescale_mult > 0:
+            CFGR = comfy_extras.nodes_model_advanced.RescaleCFG()
+            model = CFGR.patch(model, cfg_rescale_mult)
 
         return (model, samples, vae, clip, empty_latent_width, empty_latent_height)
 
