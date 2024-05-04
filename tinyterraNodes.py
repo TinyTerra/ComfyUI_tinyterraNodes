@@ -2360,7 +2360,7 @@ class ttN_tinyLoader:
 
         if cfg_rescale_mult > 0:
             CFGR = comfy_extras.nodes_model_advanced.RescaleCFG()
-            model = CFGR.patch(model, cfg_rescale_mult)
+            model = CFGR.patch(model, cfg_rescale_mult)[0]
 
         return (model, samples, vae, clip, empty_latent_width, empty_latent_height)
 
