@@ -199,14 +199,21 @@ function widgetLogic(node, widget) {
 						toggleWidget(node, findWidgetByName(node, 'height'), true)
 						toggleWidget(node, findWidgetByName(node, 'factor'))
 						toggleWidget(node, findWidgetByName(node, 'crop'))
-					} else {
+					} else if (rescale?.value === 'to Width/Height') {
 						toggleWidget(node, findWidgetByName(node, 'percent'))
 						toggleWidget(node, findWidgetByName(node, 'longer_side'), true)
 						toggleWidget(node, findWidgetByName(node, 'width'))
 						toggleWidget(node, findWidgetByName(node, 'height'))
 						toggleWidget(node, findWidgetByName(node, 'factor'))
 						toggleWidget(node, findWidgetByName(node, 'crop'))
-					}
+                    } else {
+						toggleWidget(node, findWidgetByName(node, 'percent'))
+						toggleWidget(node, findWidgetByName(node, 'longer_side'))
+						toggleWidget(node, findWidgetByName(node, 'width'))
+						toggleWidget(node, findWidgetByName(node, 'height'))
+						toggleWidget(node, findWidgetByName(node, 'factor'))
+						toggleWidget(node, findWidgetByName(node, 'crop'))                        
+                    }
 					toggleWidget(node, findWidgetByName(node, 'upscale_model_name'), true)
 				} else {
 					toggleWidget(node, findWidgetByName(node, 'upscale_model_name'))
