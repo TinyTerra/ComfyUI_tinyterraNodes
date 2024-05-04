@@ -156,6 +156,19 @@ or %input_name>input_name>widget_name% (for inputting nodes) <br>
 <details open>
 	<summary>$\Large\color{white}{Nodes}$</summary>
 
+## ttN/base
+<details>
+  <summary>tinyLoader</summary>
+   </details>
+
+<details>
+  <summary>tinyConditioning</summary>  
+   </details>
+
+<details>
+    <summary>tinyKSampler</summary>
+    </details>
+
 ## ttN/pipe
 
 <details>

@@ -377,9 +377,14 @@ function widgetLogic(node, widget) {
                 toggleWidget(node, findWidgetByName(node, 'console_color'), true)
             }
             break;
-        
 
-
+        case 'sampling':
+            if (widget.value == 'Default') {
+                toggleWidget(node, findWidgetByName(node, 'zsnr'))
+            } else {
+                toggleWidget(node, findWidgetByName(node, 'zsnr'), true)
+            }
+            break;
 	}
 }
 
@@ -389,7 +394,28 @@ const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output',
 						'image_output', 'add_noise', 
 						'ckpt_B_name', 'ckpt_C_name', 'save_model', 'refiner_ckpt_name',
 						'num_loras', 'mode', 'toggle', 'empty_latent_aspect', 'conditioning_aspect', 'target_aspect', 'sampler_state',
-                        'print_to_console']
+                        'print_to_console', 'sampling']
+const getSetTitles = [
+    "hiresfixScale",
+    "pipeLoader",
+    "pipeLoader v1 (Legacy)",
+    "pipeLoaderSDXL",
+    "pipeLoaderSDXL v1 (Legacy)",
+    "pipeKSampler",
+    "pipeKSampler v1 (Legacy)",
+    "pipeKSamplerAdvanced",
+    "pipeKSamplerAdvanced v1 (Legacy)",
+    "pipeKSamplerSDXL",
+    "pipeKSamplerSDXL v1 (Legacy)",
+    "imageRemBG",
+    "imageOutput",
+    "multiModelMerge",
+    "pipeLoraStack",
+    "pipeEncodeConcat",
+    "tinyKSampler",
+    "debugInput",
+    "tinyLoader"
+];
 
 function getSetters(node) {
 	if (node.widgets)
@@ -419,28 +445,7 @@ app.registerExtension({
 	
 	nodeCreated(node) {
 		const nodeTitle = node.getTitle();
-		const titles = [
-			"hiresfixScale",
-			"pipeLoader",
-			"pipeLoader v1 (Legacy)",
-			"pipeLoaderSDXL",
-			"pipeLoaderSDXL v1 (Legacy)",
-			"pipeKSampler",
-			"pipeKSampler v1 (Legacy)",
-			"pipeKSamplerAdvanced",
-            "pipeKSamplerAdvanced v1 (Legacy)",
-			"pipeKSamplerSDXL",
-			"pipeKSamplerSDXL v1 (Legacy)",
-			"imageRemBG",
-			"imageOutput",
-			"multiModelMerge",
-			"pipeLoraStack",
-			"pipeEncodeConcat",
-            "ttN KSampler",
-            "debugInput"
-		];
-	
-		if (titles.includes(nodeTitle)) {
+		if (getSetTitles.includes(nodeTitle)) {
 			getSetters(node);
 		}
 	}
