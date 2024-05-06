@@ -1,6 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttN.js";
+import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttNdropdown.js";
 
 //GLOBAL CONSTANTS
 const FULLSCREEN_WRAPPER_ID = "ttN-FullscreenWrapper";
@@ -64,7 +64,7 @@ function _getSelectedNode() {
     return null;
 }
 
-function _setDefaultFullscreenNode() {
+export function _setDefaultFullscreenNode() {
     let selectedNode = _getSelectedNode();
     if (selectedNode) {
         sessionStorage.setItem('Comfy.Settings.ttN.default_fullscreen_node', JSON.stringify(selectedNode.id));
@@ -380,7 +380,6 @@ function _appendFullscreenMenuButtons() {
     const invertCtrlButton = document.createElement('button');
     invertCtrlButton.classList.add('ttN-invert-ctrl-button');
 
-    console.log('TTN_INVERTCTRL: ', TTN_INVERTCTRL)
     if (TTN_INVERTCTRL == true) {
         invertCtrlButton.classList.add('ttN-true');
         invertCtrlButton.innerHTML = 'Ctrl+Wheel: Scroll Images';
@@ -708,7 +707,7 @@ function _initiateFullscreen(Element) {
     }
 }
 
-function openFullscreenApp(node) {
+export function openFullscreenApp(node) {
     if (TTN_isFullscreen) return
 
     TTN_FullscreenNode = node;
@@ -861,7 +860,7 @@ function _setCurrentImageIndex(i, symbol=null) {
 
 app.registerExtension({
     name: "comfy.ttN.fullscreen",
-    setup() {
+    /*setup() {
         const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
         LGraphCanvas.prototype.getNodeMenuOptions = function (node) {
             const options = getNodeMenuOptions.apply(this, arguments);
@@ -887,7 +886,7 @@ app.registerExtension({
 
             return options;
         };
-    }
+    }*/
 });
 
 enable_document_listeners();

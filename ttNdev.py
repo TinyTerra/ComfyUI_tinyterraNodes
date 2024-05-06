@@ -10,7 +10,7 @@ class ttN_compareInput:
         RETURN_TYPES = tuple()
         RETURN_NAMES = tuple()
         FUNCTION = "debug"
-        CATEGORY = "ttN 🌏/dev"
+        CATEGORY = "🌏 tinyterra/dev"
         OUTPUT_NODE = True
 
         def debug(_, **kwargs):

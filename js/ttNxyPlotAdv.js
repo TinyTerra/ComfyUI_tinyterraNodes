@@ -1,5 +1,5 @@
 import { app } from "../../scripts/app.js";
-import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttN.js";
+import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttNdropdown.js";
 
 const widgets_to_ignore = ['control_after_generate', 'empty_latent_aspect', 'empty_latent_width', 'empty_latent_height']
 
@@ -368,7 +368,7 @@ app.registerExtension({
 	name: "comfy.ttN.xyPlotAdv",
     beforeRegisterNodeDef(nodeType, nodeData, app) {
 
-        if (nodeData.name === "ttN advPlot range") {
+        /*if (nodeData.name === "ttN advPlot range") {
             const origOnConnectionsChange = nodeType.prototype.onConnectionsChange;
             nodeType.prototype.onConnectionsChange = function (type, slotIndex, isConnected, link_info, _ioSlot) {
                 const r = origOnConnectionsChange ? origOnConnectionsChange.apply(this, arguments) : undefined;
@@ -382,7 +382,7 @@ app.registerExtension({
                 }
                 return r;
             };
-        }
+        }*/
     },
 	nodeCreated(node) {
         const node_title = node.getTitle();

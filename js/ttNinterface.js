@@ -382,27 +382,6 @@ app.registerExtension({
             return false;
         };
 
-        const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
-		LGraphCanvas.prototype.getNodeMenuOptions = function (node) {
-			const options = getNodeMenuOptions.apply(this, arguments);
-            node.setDirtyCanvas(true, true);
-            
-            options.splice(options.length - 1, 0, 
-				{
-					content: "Node Dimensions 🌏",
-					callback: () => { LGraphCanvas.prototype.ttNsetNodeDimension(node); }
-				},
-                {
-                    content: "Default BG Color 🌏",
-                    has_submenu: true,
-                    callback: LGraphCanvas.ttNsetDefaultBGColor
-                },
-                null
-            )
-
-			return options;
-		};  
-
         LGraphCanvas.prototype.ttNupdateRenderSettings = function (app) {
             let showLinkBorder = Number(localStorage.getItem('Comfy.Settings.ttN.links_render_border'));
             if (showLinkBorder !== undefined) {app.canvas.render_connections_border = showLinkBorder}
@@ -443,10 +422,10 @@ app.registerExtension({
                 menu_info.push({ content: "Rename Slot", slot: slot });
             }
 
-            menu_info.push({ content: "Slot Type Color 🌏", slot: slot, callback: () => { LGraphCanvas.prototype.ttNsetSlotTypeColor(slot) } });
-            menu_info.push({ content: "Show Link Border 🌏", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNlinkStyleBorder });
-            menu_info.push({ content: "Show Link Shadow 🌏", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNlinkStyleShadow });
-            menu_info.push({ content: "Link Style 🌏", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNonShowLinkStyles });
+            menu_info.push({ content: "🌏 Slot Type Color", slot: slot, callback: () => { LGraphCanvas.prototype.ttNsetSlotTypeColor(slot) } });
+            menu_info.push({ content: "🌏 Show Link Border", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNlinkStyleBorder });
+            menu_info.push({ content: "🌏 Show Link Shadow", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNlinkStyleShadow });
+            menu_info.push({ content: "🌏 Link Style", has_submenu: true, slot: slot, callback: LGraphCanvas.ttNonShowLinkStyles });
 
             return menu_info;
         }

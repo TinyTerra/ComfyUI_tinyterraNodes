@@ -1211,7 +1211,7 @@ class ttN_pipeLoader_v2:
     RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed", "width", "height", "pos_string", "neg_string")
 
     FUNCTION = "adv_pipeloader"
-    CATEGORY = "ttN 🌏/pipe"
+    CATEGORY = "🌏 tinyterra/pipe"
 
     def adv_pipeloader(self, ckpt_name, config_name, vae_name, clip_skip,
                        loras,
@@ -1318,7 +1318,7 @@ class ttN_pipeKSampler_v2:
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN 🌏/pipe"
+    CATEGORY = "🌏 tinyterra/pipe"
 
     def sample(self, pipe,
                lora_name, lora_strength,
@@ -1527,7 +1527,7 @@ class ttN_pipeKSamplerAdvanced_v2:
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "adv_sample"
-    CATEGORY = "ttN 🌏/pipe"
+    CATEGORY = "🌏 tinyterra/pipe"
 
     def adv_sample(self, pipe,
                lora_name, lora_strength,
@@ -1631,7 +1631,7 @@ class ttN_pipeLoaderSDXL_v2:
 
 
     FUNCTION = "sdxl_pipeloader"
-    CATEGORY = "ttN 🌏/pipe"
+    CATEGORY = "🌏 tinyterra/pipe"
 
     def sdxl_pipeloader(self, ckpt_name, config_name, vae_name, clip_skip, loras,
                         refiner_ckpt_name, refiner_config_name,
@@ -1774,7 +1774,7 @@ class ttN_pipeKSamplerSDXL_v2:
     RETURN_NAMES = ("sdxl_pipe", "pipe","model", "positive", "negative" , "refiner_model", "refiner_positive", "refiner_negative", "latent", "vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN 🌏/pipe"
+    CATEGORY = "🌏 tinyterra/pipe"
 
     def sample(self, sdxl_pipe,
                lora_name, lora_strength,
@@ -2004,7 +2004,7 @@ class ttN_pipe_EDIT:
     RETURN_NAMES = ("pipe", "model", "pos", "neg", "latent", "vae", "clip", "image", "seed")
     FUNCTION = "flush"
 
-    CATEGORY = "ttN 🌏/pipe"
+    CATEGORY = "🌏 tinyterra/pipe"
 
     def flush(self, pipe=None, model=None, pos=None, neg=None, latent=None, vae=None, clip=None, image=None, seed=None, my_unique_id=None):
 
@@ -2068,7 +2068,7 @@ class ttN_pipe_2BASIC:
     RETURN_NAMES = ("basic_pipe", "pipe",)
     FUNCTION = "flush"
 
-    CATEGORY = "ttN 🌏/pipe"
+    CATEGORY = "🌏 tinyterra/pipe"
     
     def flush(self, pipe):
         basic_pipe = (pipe.get('model'), pipe.get('clip'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'))
@@ -2093,7 +2093,7 @@ class ttN_pipe_2DETAILER:
     RETURN_NAMES = ("detailer_pipe", "pipe")
     FUNCTION = "flush"
 
-    CATEGORY = "ttN 🌏/pipe"
+    CATEGORY = "🌏 tinyterra/pipe"
 
     def flush(self, pipe, bbox_detector, wildcard, sam_model_opt=None, segm_detector_opt=None, detailer_hook=None):
         detailer_pipe = (pipe.get('model'), pipe.get('clip'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'), wildcard,
@@ -2129,7 +2129,7 @@ class ttN_pipeEncodeConcat:
     RETURN_NAMES = ("pipe", "positive", "negative", "clip")
     FUNCTION = "concat"
 
-    CATEGORY = "ttN 🌏/pipe"
+    CATEGORY = "🌏 tinyterra/pipe"
 
     def concat(self, toggle, positive_token_normalization, positive_weight_interpretation,
                negative_token_normalization, negative_weight_interpretation,
@@ -2229,7 +2229,7 @@ class ttN_pipeLoraStack:
     RETURN_NAMES = ("optional_pipe","lora_stack",)
     FUNCTION = "stack"
 
-    CATEGORY = "ttN 🌏/pipe"
+    CATEGORY = "🌏 tinyterra/pipe"
 
     def stack(self, toggle, mode, num_loras, optional_pipe=None, lora_stack=None, model_override=None, clip_override=None, **kwargs):
         if (toggle in [False, None, "False"]) or not kwargs:
@@ -2336,7 +2336,7 @@ class ttN_tinyLoader:
     RETURN_NAMES = ("model", "latent", "vae", "clip", "width", "height",)
 
     FUNCTION = "miniloader"
-    CATEGORY = "ttN 🌏/base"
+    CATEGORY = "🌏 tinyterra/base"
 
     def miniloader(self, ckpt_name, config_name, sampling, zsnr, cfg_rescale_mult, vae_name, clip_skip,
                        empty_latent_aspect, empty_latent_width, empty_latent_height,
@@ -2393,7 +2393,7 @@ class ttN_conditioning:
     RETURN_NAMES = ("model", "positive", "negative", "clip", "pos_string", "neg_string")
 
     FUNCTION = "condition"
-    CATEGORY = "ttN 🌏/base"
+    CATEGORY = "🌏 tinyterra/base"
 
     def condition(self, model, clip, loras,
                        positive, positive_token_normalization, positive_weight_interpretation, 
@@ -2475,7 +2475,7 @@ class ttN_KSampler_v2:
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN 🌏/base"
+    CATEGORY = "🌏 tinyterra/base"
 
     def sample( self, model, positive, negative, latent, vae, clip,
                 lora_name, lora_strength,
@@ -2584,7 +2584,7 @@ class ttN_advanced_XYPlot:
     RETURN_NAMES = ("adv_xyPlot", )
     FUNCTION = "plot"
 
-    CATEGORY = "ttN 🌏/xyPlot"
+    CATEGORY = "🌏 tinyterra/xyPlot"
     
     def plot(self, grid_spacing, latent_index, output_individuals, flip_xy, x_plot=None, y_plot=None, prompt=None, extra_pnginfo=None, my_unique_id=None):
         x_plot = ttN_advanced_XYPlot.get_plot_points(x_plot, my_unique_id)
@@ -2641,7 +2641,7 @@ class ttN_advPlot_range:
     FUNCTION = "plot"
     OUTPUT_NODE = True
 
-    CATEGORY = "ttN 🌏/xyPlot"
+    CATEGORY = "🌏 tinyterra/xyPlot"
 
     def plot(self, node, widget, start, step, num_steps, label_type):
         label_map = {
@@ -2728,7 +2728,7 @@ class ttN_multiModelMerge:
     RETURN_NAMES = ("model", "clip", "vae",)
     FUNCTION = "mergificate"
 
-    CATEGORY = "ttN 🌏"
+    CATEGORY = "🌏 tinyterra"
 
     def mergificate(self, ckpt_A_name, config_A_name, ckpt_B_name, config_B_name, ckpt_C_name, config_C_name,
                 model_interpolation, model_multiplier, clip_interpolation, clip_multiplier, save_model, save_prefix,
@@ -2892,34 +2892,6 @@ class ttN_multiModelMerge:
             comfy.utils.save_torch_file(sd, output_checkpoint, metadata=metadata)
 
         return (model, clip, vae)
-
-class ttN_debugInput:
-    version = '1.0.0'
-    @classmethod
-    def INPUT_TYPES(s):
-        return {"required": {
-                    "print_to_console": ("BOOLEAN",),
-                    "console_title": ("STRING", {"default": "ttN debug:"}),
-                    "console_color": (["Black", "Red", "Green", "Yellow", "Blue", "Violet", "Cyan", "White", "Grey", "LightRed", "LightGreen", "LightYellow", "LightBlue", "LightViolet", "LightCyan", "LightWhite"], {"default": "Red"}),
-                    },
-                "optional": {
-                    "debug": ("", {"default": None}),
-                    }
-        }
-
-    RETURN_TYPES = tuple()
-    RETURN_NAMES = tuple()
-    FUNCTION = "debug"
-    CATEGORY = "ttN 🌏"
-    OUTPUT_NODE = True
-
-    def debug(_, print_to_console, console_title, console_color, debug=None):
-
-        text = str(debug)
-        if print_to_console:
-            print(f"{getattr(CC, console_color.upper())}{console_title}\n{text}{CC.CLEAN}")
-
-        return {"ui": {"text": text}, "return": tuple()}
 #-----------------------------------------------------------------misc END-------------------------------------------------------------------------#
 
 #---------------------------------------------------------------ttN/text START----------------------------------------------------------------------#
@@ -2940,7 +2912,7 @@ class ttN_text:
     RETURN_NAMES = ("text",)
     FUNCTION = "conmeow"
 
-    CATEGORY = "ttN 🌏/text"
+    CATEGORY = "🌏 tinyterra/text"
 
     @staticmethod
     def conmeow(text):
@@ -2968,7 +2940,7 @@ class ttN_textDebug:
     FUNCTION = "write"
     OUTPUT_NODE = True
 
-    CATEGORY = "ttN 🌏/text"
+    CATEGORY = "🌏 tinyterra/text"
 
     def write(self, print_to_console, console_title, execute, text, prompt, extra_pnginfo, my_unique_id):
         if execute == "Always":
@@ -3022,7 +2994,7 @@ class ttN_concat:
     RETURN_NAMES = ("concat",)
     FUNCTION = "conmeow"
 
-    CATEGORY = "ttN 🌏/text"
+    CATEGORY = "🌏 tinyterra/text"
 
     def conmeow(self, text1='', text2='', text3='', delimiter=''):
         text1 = '' if text1 == 'undefined' else text1
@@ -3058,7 +3030,7 @@ class ttN_text3BOX_3WAYconcat:
     RETURN_NAMES = ("text1", "text2", "text3", "1 & 2", "1 & 3", "2 & 3", "concat",)
     FUNCTION = "conmeow"
 
-    CATEGORY = "ttN 🌏/text"
+    CATEGORY = "🌏 tinyterra/text"
 
     def conmeow(self, text1='', text2='', text3='', delimiter=''):
         text1 = '' if text1 == 'undefined' else text1
@@ -3101,7 +3073,7 @@ class ttN_text7BOX_concat:
     RETURN_NAMES = ("text1", "text2", "text3", "text4", "text5", "text6", "text7", "concat",)
     FUNCTION = "conmeow"
 
-    CATEGORY = "ttN 🌏/text"
+    CATEGORY = "🌏 tinyterra/text"
 
     def conmeow(self, text1, text2, text3, text4, text5, text6, text7, delimiter):
         text1 = '' if text1 == 'undefined' else text1
@@ -3139,7 +3111,7 @@ class ttN_INT:
     RETURN_NAMES = ("int", "float", "text",)
     FUNCTION = "convert"
 
-    CATEGORY = "ttN 🌏/util"
+    CATEGORY = "🌏 tinyterra/util"
 
     @staticmethod
     def convert(int):
@@ -3162,7 +3134,7 @@ class ttN_FLOAT:
     RETURN_NAMES = ("float", "int", "text",)
     FUNCTION = "convert"
 
-    CATEGORY = "ttN 🌏/util"
+    CATEGORY = "🌏 tinyterra/util"
 
     @staticmethod
     def convert(float):
@@ -3186,11 +3158,39 @@ class ttN_SEED:
     FUNCTION = "plant"
     OUTPUT_NODE = True
 
-    CATEGORY = "ttN 🌏/util"
+    CATEGORY = "🌏 tinyterra/util"
 
     @staticmethod
     def plant(seed):
         return seed,
+
+class ttN_debugInput:
+    version = '1.0.0'
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+                    "print_to_console": ("BOOLEAN",),
+                    "console_title": ("STRING", {"default": "ttN debug:"}),
+                    "console_color": (["Black", "Red", "Green", "Yellow", "Blue", "Violet", "Cyan", "White", "Grey", "LightRed", "LightGreen", "LightYellow", "LightBlue", "LightViolet", "LightCyan", "LightWhite"], {"default": "Red"}),
+                    },
+                "optional": {
+                    "debug": ("", {"default": None}),
+                    }
+        }
+
+    RETURN_TYPES = tuple()
+    RETURN_NAMES = tuple()
+    FUNCTION = "debug"
+    CATEGORY = "🌏 tinyterra/util"
+    OUTPUT_NODE = True
+
+    def debug(_, print_to_console, console_title, console_color, debug=None):
+
+        text = str(debug)
+        if print_to_console:
+            print(f"{getattr(CC, console_color.upper())}{console_title}\n{text}{CC.CLEAN}")
+
+        return {"ui": {"text": text}, "return": tuple()}
 #---------------------------------------------------------------ttN/util End------------------------------------------------------------------------#
 
 
@@ -3215,7 +3215,7 @@ class ttN_imageREMBG:
     RETURN_TYPES = ("IMAGE", "MASK")
     RETURN_NAMES = ("image", "mask")
     FUNCTION = "remove_background"
-    CATEGORY = "ttN 🌏/image"
+    CATEGORY = "🌏 tinyterra/image"
     OUTPUT_NODE = True
 
     def remove_background(self, image, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id):
@@ -3276,7 +3276,7 @@ class ttN_imageOUPUT:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("image",)
     FUNCTION = "output"
-    CATEGORY = "ttN 🌏/image"
+    CATEGORY = "🌏 tinyterra/image"
     OUTPUT_NODE = True
 
     def output(self, image, image_output, output_path, save_prefix, number_padding, file_type, overwrite_existing, embed_workflow, prompt, extra_pnginfo, my_unique_id):
@@ -3319,7 +3319,7 @@ class ttN_modelScale:
     RETURN_NAMES = ("latent", 'image',)
 
     FUNCTION = "upscale"
-    CATEGORY = "ttN 🌏/image"
+    CATEGORY = "🌏 tinyterra/image"
     OUTPUT_NODE = True
 
     def vae_encode_crop_pixels(self, pixels):
@@ -3813,7 +3813,7 @@ class ttN_XYPlot:
     RETURN_NAMES = ("xyPlot", )
     FUNCTION = "plot"
 
-    CATEGORY = "ttN 🌏/legacy"
+    CATEGORY = "🌏 tinyterra/legacy"
     
     def plot(self, grid_spacing, latent_id, output_individuals, flip_xy, x_axis, x_values, y_axis, y_values):
         def clean_values(values):
@@ -3893,7 +3893,7 @@ class ttN_pipe_IN:
     RETURN_NAMES = ("pipe", )
     FUNCTION = "flush"
 
-    CATEGORY = "ttN 🌏/legacy"
+    CATEGORY = "🌏 tinyterra/legacy"
 
     def flush(self, model, pos=0, neg=0, latent=0, vae=0, clip=0, image=0, seed=0):
         pipe = {"model": model,
@@ -3934,7 +3934,7 @@ class ttN_pipe_OUT:
     RETURN_NAMES = ("model", "pos", "neg", "latent", "vae", "clip", "image", "seed", "pipe")
     FUNCTION = "flush"
 
-    CATEGORY = "ttN 🌏/legacy"
+    CATEGORY = "🌏 tinyterra/legacy"
     
     def flush(self, pipe):
         model = pipe.get("model")
@@ -3990,7 +3990,7 @@ class ttN_TSC_pipeLoader:
     RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed",)
 
     FUNCTION = "adv_pipeloader"
-    CATEGORY = "ttN 🌏/legacy"
+    CATEGORY = "🌏 tinyterra/legacy"
 
     def adv_pipeloader(self, ckpt_name, config_name, vae_name, clip_skip,
                        lora1_name, lora1_model_strength, lora1_clip_strength,
@@ -4157,7 +4157,7 @@ class ttN_TSC_pipeKSampler:
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN 🌏/legacy"
+    CATEGORY = "🌏 tinyterra/legacy"
 
     def sample(self, pipe, lora_name, lora_model_strength, lora_clip_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
                optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, seed=None, xyPlot=None, upscale_method=None, factor=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False, disable_noise=False):
@@ -4378,7 +4378,7 @@ class ttN_pipeKSamplerAdvanced:
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN 🌏/legacy"
+    CATEGORY = "🌏 tinyterra/legacy"
 
     def sample(self, pipe,
                lora_name, lora_model_strength, lora_clip_strength,
@@ -4446,7 +4446,7 @@ class ttN_pipeLoaderSDXL:
     RETURN_NAMES = ("sdxl_pipe","model", "positive", "negative", "vae", "clip", "refiner_model", "refiner_positive", "refiner_negative", "refiner_vae", "refiner_clip", "latent", "seed",)
 
     FUNCTION = "adv_pipeloader"
-    CATEGORY = "ttN 🌏/legacy"
+    CATEGORY = "🌏 tinyterra/legacy"
 
     def adv_pipeloader(self, ckpt_name, vae_name,
                        lora1_name, lora1_model_strength, lora1_clip_strength,
@@ -4634,7 +4634,7 @@ class ttN_pipeKSamplerSDXL:
     RETURN_NAMES = ("sdxl_pipe", "model", "positive", "negative" ,"vae", "refiner_model", "refiner_positive", "refiner_negative" ,"refiner_vae", "latent", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
-    CATEGORY = "ttN 🌏/legacy"
+    CATEGORY = "🌏 tinyterra/legacy"
 
     def sample(self, sdxl_pipe, sampler_state,
                base_steps, refiner_steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 

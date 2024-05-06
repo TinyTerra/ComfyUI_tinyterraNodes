@@ -1,5 +1,5 @@
 import { app } from "../../scripts/app.js";
-import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttN.js";
+import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttNdropdown.js";
 
 function generateNumList(dictionary) {
   const minimum = dictionary["min"] || 0;

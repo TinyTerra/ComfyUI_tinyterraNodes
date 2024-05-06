@@ -1,20 +1,20 @@
 from .tinyterraNodes import TTN_VERSIONS
+from .py import ttNserver
 import configparser
-import folder_paths
+import folder_paths # type: ignore
 import subprocess
 import shutil
-import sys
 import os
 
 # ------- CONFIG -------- #
 cwd_path = os.path.dirname(os.path.realpath(__file__))
+js_path = os.path.join(cwd_path, "js")
 comfy_path = folder_paths.base_path
 
 config_path = os.path.join(cwd_path, "config.ini")
 
 optionValues = {
         "auto_update": ('true', 'false'),
-        "install_rembg": ('true', 'false'),
         "enable_embed_autocomplete": ('true', 'false'),
         "enable_interface": ('true', 'false'),
         "enable_fullscreen": ('true', 'false'),
@@ -39,7 +39,6 @@ def update_config():
     section_data = {
         "ttNodes": {
             "auto_update": False,
-            "install_rembg": False,
             "enable_interface": True,
             "enable_fullscreen": True,
             "enable_embed_autocomplete": True,
@@ -94,10 +93,6 @@ def config_remove(section, option):
         with open(config_path, 'w') as f:
             config.write(f)
 
-def copy_to_web(file):
-    """Copy a file to the web extension path."""
-    shutil.copy(file, web_extension_path)
-
 def config_value_validator(section, option, default):
     value = str(config_read(section, option)).lower()
     if value not in optionValues[option]:
@@ -125,82 +120,31 @@ if config_value_validator("ttNodes", "auto_update", 'false') == 'true':
     except:
         pass
 
-# Install RemBG if True
-
-Install = config_read("ttNodes", "install_rembg")
-if Install in [True, 'true', 'True']:
-    try:
-        from rembg import remove
-        config_write("ttNodes", "install_rembg", 'Already Installed')
-    except ImportError:
-        if Install not in ('Failed to install', 'Installed successfully'):
-            try:
-                print("\033[92m[ttNodes] \033[0;31mREMBG is not installed. Attempting to install...\033[0m")
-                p = subprocess.Popen([sys.executable, "-m", "pip", "install", "rembg[gpu]"])
-                p.wait()
-                print("\033[92m[ttNodes] REMBG[GPU] Installed!\033[0m")
-
-                config_write("ttNodes", "install_rembg", 'Installed successfully')
-            except:
-                try:
-                    print("\033[92m[ttNodes] \033[0;31mREMBG[GPU] failed to install. Attempting to install REMBG...\033[0m")
-                    p = subprocess.Popen([sys.executable, "-m", "pip", "install", "rembg"])
-                    p.wait()
-                    print("\033[92m[ttNodes] REMBG Installed!\033[0m")
-                    config_write("ttNodes", "install_rembg", 'Installed successfully')
-                except:
-                    config_write("ttNodes", "install_rembg", 'Failed to install')
-                    print("\033[92m[ttNodes] \033[0;31mFailed to install REMBG.\033[0m")
-
 # --------- WEB ---------- #
+# Remove old web JS folder
 web_extension_path = os.path.join(comfy_path, "web", "extensions", "tinyterraNodes")
 
-ttNstyles_JS_file_web = os.path.join(web_extension_path, "ttNstyles.js")
-
-ttN_JS_file = os.path.join(cwd_path, "js", "ttN.js")
-ttNxyPlot_JS_file = os.path.join(cwd_path, "js", "ttNxyPlot.js")
-ttNxyPlotAdv_JS_file = os.path.join(cwd_path, "js", "ttNxyPlotAdv.js")
-ttNembedAC_JS_file = os.path.join(cwd_path, "js", "ttNembedAC.js")
-ttNwidgets_JS_file = os.path.join(cwd_path, "js", "ttNwidgets.js")
-ttNinterface_JS_file = os.path.join(cwd_path, "js", "ttNinterface.js")
-ttNdynamicWidgets_JS_file = os.path.join(cwd_path, "js", "ttNdynamicWidgets.js")
-ttNfullscreen_JS_file = os.path.join(cwd_path, "js", "ttNfullscreen.js")
-
-if not os.path.exists(web_extension_path):
-    os.makedirs(web_extension_path)
-else:
+if os.path.exists(web_extension_path):
     try:
         shutil.rmtree(web_extension_path)
-        os.makedirs(web_extension_path)
     except:
         print("\033[92m[ttNodes] \033[0;31mFailed to remove old web extension.\033[0m")
-        pass
 
-copy_to_web(ttN_JS_file)
-copy_to_web(ttNwidgets_JS_file)
-copy_to_web(ttNxyPlot_JS_file)
-copy_to_web(ttNxyPlotAdv_JS_file)
-
-# Enable Custom Styles if True
-if config_value_validator("ttNodes", "enable_interface", 'true') == 'true':
-    copy_to_web(ttNinterface_JS_file)
-
-if config_value_validator("ttNodes", "enable_fullscreen", 'true') == 'true':
-    copy_to_web(ttNfullscreen_JS_file)
-
-# Enable Embed Autocomplete if True
-if config_value_validator("ttNodes", "enable_embed_autocomplete", "true") == 'true':
-    copy_to_web(ttNembedAC_JS_file)
-
-# Enable Dynamic Widgets if True
-if config_value_validator("ttNodes", "enable_dynamic_widgets", "true") == 'true':
-    copy_to_web(ttNdynamicWidgets_JS_file)
+js_files = {
+    "interface": "enable_interface",
+    "fullscreen": "enable_fullscreen",
+    "embed_autocomplete": "enable_embed_autocomplete",
+    "dynamic_widgets": "enable_dynamic_widgets",
+}
+for js_file, config_key in js_files.items():
+    file_path = os.path.join(js_path, f"ttN{js_file}.js")
+    if config_value_validator("ttNodes", config_key, 'true') == 'false' and os.path.isfile(file_path):
+        os.rename(file_path, f"{file_path}.disable")
+    elif config_value_validator("ttNodes", config_key, 'true') == 'true' and os.path.isfile(f"{file_path}.disable"):
+        os.rename(f"{file_path}.disable", file_path)
 
 # Enable Dev Nodes if True
 if config_value_validator("ttNodes", "enable_dev_nodes", 'true') == 'true':
-    ttNbusJSfile = os.path.join(cwd_path, "dev", "ttNbus.js")
-    ttNdebugJSfile = os.path.join(cwd_path, "dev", "ttNdebug.js")
-
     from .ttNdev import NODE_CLASS_MAPPINGS as ttNdev_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as ttNdev_DISPLAY_NAME_MAPPINGS
 else:
     ttNdev_CLASS_MAPPINGS = {}
@@ -211,5 +155,7 @@ from .tinyterraNodes import NODE_CLASS_MAPPINGS as ttN_CLASS_MAPPINGS,  NODE_DIS
 
 NODE_CLASS_MAPPINGS = {**ttN_CLASS_MAPPINGS, **ttNdev_CLASS_MAPPINGS}
 NODE_DISPLAY_NAME_MAPPINGS = {**ttN_DISPLAY_NAME_MAPPINGS, **ttNdev_DISPLAY_NAME_MAPPINGS}
+
+WEB_DIRECTORY = "./js"
 
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
