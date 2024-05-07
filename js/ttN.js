@@ -48,7 +48,7 @@ class TinyTerra extends EventTarget {
                 }
                 return options;
             };
-        }, 500);
+        }, 1000);
     }
     getTinyTerraContextMenuItems() {
         const that = this 

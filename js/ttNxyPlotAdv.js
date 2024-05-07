@@ -312,6 +312,51 @@ function setPlotWidgetOptions(currentNode) {
             }
         }
     }
+    const int_widgets = [
+        'seed',
+        'clip_skip',
+        'steps',
+        'start_at_step',
+        'end_at_step',
+        'empty_latent_width',
+        'empty_latent_height',
+        'noise_seed',
+    ]
+    const float_widgets = [
+        'cfg',
+        'denoise',
+        'strength_model',
+        'strength_clip',
+        'strength',
+        'scale_by',
+        'lora_strength'
+    ]
+
+    const widgetWidget = currentNode.widgets.find(w => w.name === 'widget');
+    const widgetWidgetValue = widgetWidget.value;
+    const rangeModeWidget = currentNode.widgets.find(w => w.name === 'range_mode');
+    const rangeModeWidgetValue = rangeModeWidget.value;
+
+    if (int_widgets.includes(widgetWidgetValue)) {
+        rangeModeWidget.options.values = ['step_int', 'num_steps_int']
+        if (rangeModeWidgetValue === 'num_steps_float') {
+            rangeModeWidget.value = 'num_steps_int'
+        }
+        if (rangeModeWidgetValue === 'step_float') {
+            rangeModeWidget.value = 'step_int'
+        }
+    } else if (float_widgets.includes(widgetWidgetValue)) {
+        rangeModeWidget.options.values = ['step_float', 'num_steps_float']
+        rangeModeWidget.value.replace('int', 'float')
+        if (rangeModeWidgetValue === 'num_steps_int') {
+            rangeModeWidget.value = 'num_steps_float'
+        }
+        if (rangeModeWidgetValue === 'step_int') {
+            rangeModeWidget.value = 'step_float'
+        }
+    } else {
+        rangeModeWidget.options.values = ['step_int', 'num_steps_int', 'step_float', 'num_steps_float']
+    }
 }
 
 const getSetWidgets = [
@@ -355,6 +400,7 @@ function getSetters(node) {
                 mouseOver = newVal;
                 if (mouseOver) {
                     //console.log('im over this', node)
+                    setPlotWidgetOptions(node);
                     setPlotNodeOptions(node);
                 }
             }

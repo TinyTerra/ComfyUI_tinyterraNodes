@@ -303,7 +303,7 @@ function widgetLogic(node, widget) {
 			break;
 
 		case 'mode':
-			let number_to_show2 = findWidgetByName(node, 'num_loras').value + 1
+			let number_to_show2 = findWidgetByName(node, 'num_loras')?.value + 1
 			for (let i = 0; i < number_to_show2; i++) {
 				if (widget.value === "simple") {
 					toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_strength'), true)
@@ -385,6 +385,49 @@ function widgetLogic(node, widget) {
                 toggleWidget(node, findWidgetByName(node, 'zsnr'), true)
             }
             break;
+        
+        case 'range_mode':
+            function setWidgetOptions(widget, options) {
+                widget.options.step = options.step;
+                widget.options.round = options.round;
+                widget.options.precision = options.precision;
+            }
+
+            if (widget.value.startsWith('step')) {
+                toggleWidget(node, findWidgetByName(node, 'stop'))
+                toggleWidget(node, findWidgetByName(node, 'step'), true)
+                toggleWidget(node, findWidgetByName(node, 'include_stop'))
+            } else {
+                toggleWidget(node, findWidgetByName(node, 'stop'), true)
+                toggleWidget(node, findWidgetByName(node, 'step'))
+                toggleWidget(node, findWidgetByName(node, 'include_stop'), true)
+            }
+            if (widget.value.endsWith('int')) {
+                const intOptions = {
+                    step: 10,
+                    round: 1,
+                    precision: 0
+                  };
+                const start_widget = findWidgetByName(node, 'start')
+                const stop_widget = findWidgetByName(node, 'stop')
+                const step_widget = findWidgetByName(node, 'step')
+                setWidgetOptions(start_widget, intOptions);
+                setWidgetOptions(stop_widget, intOptions);
+                setWidgetOptions(step_widget, intOptions);
+
+            } else {
+                const floatOptions = {
+                    step: 0.1,
+                    round: 0.01,
+                    precision: 2
+                  };
+                const start_widget = findWidgetByName(node, 'start')
+                const stop_widget = findWidgetByName(node, 'stop')
+                const step_widget = findWidgetByName(node, 'step')
+                setWidgetOptions(start_widget, floatOptions);
+                setWidgetOptions(stop_widget, floatOptions);
+                setWidgetOptions(step_widget, floatOptions);
+        }
 	}
 }
 
@@ -394,7 +437,7 @@ const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output',
 						'image_output', 'add_noise', 
 						'ckpt_B_name', 'ckpt_C_name', 'save_model', 'refiner_ckpt_name',
 						'num_loras', 'mode', 'toggle', 'empty_latent_aspect', 'conditioning_aspect', 'target_aspect', 'sampler_state',
-                        'print_to_console', 'sampling']
+                        'print_to_console', 'sampling', 'range_mode']
 const getSetTitles = [
     "hiresfixScale",
     "pipeLoader",
@@ -414,7 +457,8 @@ const getSetTitles = [
     "pipeEncodeConcat",
     "tinyKSampler",
     "debugInput",
-    "tinyLoader"
+    "tinyLoader",
+    "advPlot range"
 ];
 
 function getSetters(node) {

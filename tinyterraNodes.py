@@ -2612,7 +2612,7 @@ class ttN_Plotting(ttN_advanced_XYPlot):
         return (xy_plot, )
 
 class ttN_advPlot_range:
-    version = '1.0.0'
+    version = '1.1.0'
     def __init__(self):
         pass
 
@@ -2623,11 +2623,13 @@ class ttN_advPlot_range:
                 "node": ([AnyType("Connect to xyPlot for options"),],{}),
                 "widget": ([AnyType("Select node for options"),],{}),
 
-                #"mode": (['step',],{}),
+                "range_mode": (['step_int','num_steps_int','step_float','num_steps_float'],{}),
                 "start": ("FLOAT", {"min": -0xffffffffffffffff, "max": 0xffffffffffffffff, "step": 0.01, "default": 1,}),
                 "step": ("FLOAT", {"min": -0xffffffffffffffff, "max": 0xffffffffffffffff, "step": 0.01, "default": 1,}),
+                "stop": ("FLOAT", {"min": -0xffffffffffffffff, "max": 0xffffffffffffffff, "step": 0.01, "default": 5,}),
+                "include_stop": ("BOOLEAN",{"default": True}),
                 "num_steps": ("INT", {"min": 1, "max": 1000, "step": 1, "default": 5,}),
-                
+
                 "label_type": (['Values', 'Title and Values', 'ID, Title and Values'],{"default": "Values"}),
 
             },
@@ -2643,7 +2645,12 @@ class ttN_advPlot_range:
 
     CATEGORY = "🌏 tinyterra/xyPlot"
 
-    def plot(self, node, widget, start, step, num_steps, label_type):
+    def plot(self, node, widget, range_mode, start, step, stop, include_stop, num_steps, label_type):
+        if '[' in node and ']' in node:
+            nodeid = node.split('[', 1)[1].split(']', 1)[0]
+        else:
+            return {"ui": {"text": ''}, "result": ('',)}
+        
         label_map = {
             'Values': 'v_label',
             'Title and Values': 'tv_label',
@@ -2652,24 +2659,23 @@ class ttN_advPlot_range:
         label = label_map[label_type]
 
         plot_text = []
+        vals = []
         
-        start_decimals = len(str(start).split('.')[1].rstrip('0')) if '.' in str(start) else 0
-        step_decimals = len(str(step).split('.')[1].rstrip('0')) if '.' in str(step) else 0
-        decimal_places = max(start_decimals, step_decimals)
+        if range_mode.startswith('step_'):
+            for num in range(1, num_steps + 1):
+                vals.append(start + step * (num - 1))
+        if range_mode.startswith('num_steps'):
+            vals = np.linspace(start, stop, num_steps, endpoint=include_stop).tolist()
 
-        if '[' in node and ']' in node:
-            nodeid = node.split('[', 1)[1].split(']', 1)[0]
-        else:
-            return {"ui": {"text": ''}, "result": ('',)}
-        
-        for num in range(1, num_steps + 1):
-            rounded = round(start+step*(num-1), decimal_places)
-            if decimal_places == 0:
-                rounded = int(rounded)
-            line = f"[{nodeid}:{widget}='{rounded}']"
-            plot_text.append(f"<{num}:{label}>")
+        for i, val in enumerate(vals):
+            if range_mode.endswith('int'):
+                val = int(round(val, 0))
+            else:
+                val = round(val, 2)
+            line = f"[{nodeid}:{widget}='{val}']"
+            plot_text.append(f"<{i+1}:{label}>")
             plot_text.append(line)
-
+            
         out = '\n'.join(plot_text)
 
         return {"ui": {"text": out}, "result": (out,)}
@@ -3125,7 +3131,7 @@ class ttN_FLOAT:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "float": ("FLOAT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                    "float": ("FLOAT", {"default": 0.00, "min": 0.00, "max": 0xffffffffffffffff, 'step': 0.01}),
                 },
                 "hidden": {"ttNnodeVersion": ttN_FLOAT.version},
         }
