@@ -340,10 +340,12 @@ class ttNloader:
 
         if model_override is not None:
             model = model_override
+            del model_override
 
         if clip_override is not None:
             clip = clip_override
-
+            del clip_override
+            
         if optional_lora_stack is not None:
             for lora in optional_lora_stack:
                 model, clip = self.load_lora(lora[0], model, clip, lora[1], lora[2])
