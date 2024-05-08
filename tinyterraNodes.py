@@ -14,6 +14,7 @@
 ttN_version = '1.2.0'
 
 MAX_RESOLUTION=8192
+OUTPUT_FILETYPES = ["png", "jpg", "jpeg", "tiff", "tif", "webp", "bmp"]
 
 import os
 import re
@@ -1054,15 +1055,16 @@ class ttNsave:
     @staticmethod
     def filename_parser(output_dir: str, filename_prefix: str, prompt: Dict[str, dict], my_unique_id: str, number_padding: int, group_id: int, ext: str) -> str:
         """Parse the filename using provided patterns and replace them with actual values."""
-        subfolder = os.path.dirname(os.path.normpath(filename_prefix))
-        filename = os.path.basename(os.path.normpath(filename_prefix))
-
         filename = re.sub(r'%date:(.*?)%', lambda m: ttNsave._format_date(m.group(1), datetime.datetime.now()), filename_prefix)
         all_inputs = ttNsave._gather_all_inputs(prompt, my_unique_id)
 
         filename = re.sub(r'%(.*?)%', lambda m: str(all_inputs.get(m.group(1), '')), filename)
-        filename = re.sub(r'[/\\]+', '-', filename)
+        
+        subfolder = os.path.dirname(os.path.normpath(filename))
+        filename = os.path.basename(os.path.normpath(filename))
 
+        output_dir = os.path.join(output_dir, subfolder)
+        
         filename = ttNsave._get_filename_with_padding(output_dir, filename, number_padding, group_id, ext)
 
         return filename, subfolder
@@ -1081,7 +1083,8 @@ class ttNsave:
             "jpeg": "JPEG",
             "bmp": "BMP",
             "tif": "TIFF",
-            "tiff": "TIFF"
+            "tiff": "TIFF",
+            "webp": "WEBP",
         }
 
         if ext not in FORMAT_MAP:
@@ -1104,7 +1107,7 @@ class ttNsave:
 
             filename, subfolder = ttNsave.filename_parser(output_dir, filename, self.prompt, self.my_unique_id, self.number_padding, group_id, ext)
 
-            file_path = os.path.join(output_dir, filename)
+            file_path = os.path.join(output_dir, subfolder, filename)
 
             if ext == "png" and embed_workflow in (True, "True"):
                 metadata = PngInfo()
@@ -1117,6 +1120,8 @@ class ttNsave:
                         
                 if self.overwrite_existing or not os.path.isfile(file_path):
                     img.save(file_path, pnginfo=metadata, format=FORMAT_MAP[ext])
+                else:
+                    ttNl(f"File {file_path} already exists... Skipping").error().p()
             else:
                 if self.overwrite_existing or not os.path.isfile(file_path):
                     img.save(file_path, format=FORMAT_MAP[ext])
@@ -1268,7 +1273,7 @@ class ttN_pipeLoader_v2:
         return (pipe, model, positive_embedding, negative_embedding, samples, vae, clip, seed, empty_latent_width, empty_latent_height, final_positive, final_negative)
 
 class ttN_pipeKSampler_v2:
-    version = '2.1.0'
+    version = '2.2.0'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -1302,7 +1307,9 @@ class ttN_pipeKSampler_v2:
                 "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
                 "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
-                "save_prefix": ("STRING", {"default": "ComfyUI"})
+                "save_prefix": ("STRING", {"default": "ComfyUI"}),
+                "file_type": (OUTPUT_FILETYPES,{"default": "png"}),
+                "embed_workflow": ("BOOLEAN", {"default": True}),
                 },
                 "optional": 
                 {"seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
@@ -1330,7 +1337,7 @@ class ttN_pipeKSampler_v2:
 
     def sample(self, pipe,
                lora_name, lora_strength,
-               sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
+               sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, file_type, embed_workflow, denoise=1.0, 
                optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, input_image_override=None,
                seed=None, adv_xyPlot=None, upscale_model_name=None, upscale_method=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None,
                prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False, disable_noise=False):
@@ -1355,7 +1362,7 @@ class ttN_pipeKSampler_v2:
         def process_sample_state(pipe, samp_model, samp_images, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
                                  upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
                                  steps, cfg, sampler_name, scheduler, denoise,
-                                 image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise):
+                                 image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise):
             # Load Lora
             if lora_name not in (None, "None"):
                 samp_model, samp_clip = loader.load_lora(lora_name, samp_model, samp_clip, lora_model_strength, lora_clip_strength)
@@ -1380,7 +1387,7 @@ class ttN_pipeKSampler_v2:
                 latent = samp_samples["samples"]
                 samp_images = samp_vae.decode(latent)
 
-                results = ttN_save.images(samp_images, save_prefix, image_output)
+                results = ttN_save.images(samp_images, save_prefix, image_output, embed_workflow, file_type)
 
             sampler.update_value_by_id("results", my_unique_id, results)
 
@@ -1410,7 +1417,7 @@ class ttN_pipeKSampler_v2:
 
         def process_xyPlot(pipe, samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
                            steps, cfg, sampler_name, scheduler, denoise,
-                           image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot):
+                           image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot):
 
             random.seed(seed)
 
@@ -1424,7 +1431,7 @@ class ttN_pipeKSampler_v2:
                                  image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
 
 
-            results = ttN_save.images(images[0], save_prefix, image_output)
+            results = ttN_save.images(images[0], save_prefix, image_output, embed_workflow, file_type)
 
             sampler.update_value_by_id("results", my_unique_id, results)
 
@@ -1458,16 +1465,17 @@ class ttN_pipeKSampler_v2:
         if sampler_state == "Sample" and adv_xyPlot is None:
             return process_sample_state(pipe, samp_model, samp_images, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_strength, lora_strength,
                                         upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
-                                        steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent)
+                                        steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent)
 
         elif sampler_state == "Sample" and adv_xyPlot is not None:
-            return process_xyPlot(pipe, samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_strength, lora_strength, steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot)
+            return process_xyPlot(pipe, samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_strength, lora_strength, steps, cfg, sampler_name, 
+                                  scheduler, denoise, image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot)
 
         elif sampler_state == "Hold":
             return sampler.process_hold_state(pipe, image_output, my_unique_id)
 
 class ttN_pipeKSamplerAdvanced_v2:
-    version = '2.1.0'
+    version = '2.2.0'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -1509,6 +1517,8 @@ class ttN_pipeKSamplerAdvanced_v2:
                 "return_with_leftover_noise": (["disable", "enable"], ),
                 "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
                 "save_prefix": ("STRING", {"default": "ComfyUI"}),
+                "file_type": (OUTPUT_FILETYPES,{"default": "png"}),
+                "embed_workflow": ("BOOLEAN", {"default": True}),
                 },
             "optional": {
                 "noise_seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
@@ -1539,7 +1549,7 @@ class ttN_pipeKSamplerAdvanced_v2:
 
     def adv_sample(self, pipe,
                lora_name, lora_strength,
-               sampler_state, add_noise, steps, cfg, sampler_name, scheduler, image_output, save_prefix, noise, 
+               sampler_state, add_noise, steps, cfg, sampler_name, scheduler, image_output, save_prefix, file_type, embed_workflow, noise, 
                noise_seed=None, optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, input_image_override=None, adv_xyPlot=None, upscale_method=None, upscale_model_name=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None, prompt=None, extra_pnginfo=None, my_unique_id=None, start_at_step=None, end_at_step=None, return_with_leftover_noise=False):
 
         force_full_denoise = True
@@ -1550,7 +1560,7 @@ class ttN_pipeKSamplerAdvanced_v2:
         if add_noise == "disable":
             disable_noise = True
 
-        return ttN_pipeKSampler_v2.sample(self, pipe, lora_name, lora_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, noise, 
+        return ttN_pipeKSampler_v2.sample(self, pipe, lora_name, lora_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, file_type, embed_workflow, noise, 
                 optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, input_image_override, noise_seed, adv_xyPlot, upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, force_full_denoise, disable_noise)
 
 class ttN_pipeLoaderSDXL_v2:
@@ -1717,7 +1727,7 @@ class ttN_pipeLoaderSDXL_v2:
         return (sdxl_pipe, model, positive_embedding, negative_embedding, vae, clip, refiner_model, refiner_positive_embedding, refiner_negative_embedding, refiner_clip, samples, seed, empty_latent_width, empty_latent_height, final_positive, final_negative)
 
 class ttN_pipeKSamplerSDXL_v2:
-    version = '2.1.0'
+    version = '2.2.0'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -1754,7 +1764,9 @@ class ttN_pipeKSamplerSDXL_v2:
                 "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
                 "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
                 "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
-                "save_prefix": ("STRING", {"default": "ComfyUI"})
+                "save_prefix": ("STRING", {"default": "ComfyUI"}),
+                "file_type": (OUTPUT_FILETYPES, {"default": "png"}),
+                "embed_workflow": ("BOOLEAN", {"default": True}),
                 },
                 "optional": 
                 {"seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
@@ -1786,7 +1798,7 @@ class ttN_pipeKSamplerSDXL_v2:
 
     def sample(self, sdxl_pipe,
                lora_name, lora_strength,
-               sampler_state, base_steps, refiner_steps, cfg, denoise, refiner_cfg, refiner_denoise, sampler_name, scheduler, image_output, save_prefix, 
+               sampler_state, base_steps, refiner_steps, cfg, denoise, refiner_cfg, refiner_denoise, sampler_name, scheduler, image_output, save_prefix, file_type, embed_workflow,
                optional_model=None, optional_positive=None, optional_negative=None, optional_latent=None, optional_vae=None, optional_clip=None, input_image_override=None, adv_xyPlot=None,
                seed=None, upscale_model_name=None, upscale_method=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None,
                prompt=None, extra_pnginfo=None, my_unique_id=None, force_full_denoise=False, disable_noise=False,
@@ -1820,7 +1832,7 @@ class ttN_pipeKSamplerSDXL_v2:
                                  sdxl_refiner_model, sdxl_refiner_positive, sdxl_refiner_negative, sdxl_refiner_clip,
                                  upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
                                  base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise, refiner_denoise,
-                                 image_output, save_prefix, prompt, my_unique_id, preview_latent, force_full_denoise=force_full_denoise, disable_noise=disable_noise):
+                                 image_output, save_prefix, file_type, embed_workflow, prompt, my_unique_id, preview_latent, force_full_denoise=force_full_denoise, disable_noise=disable_noise):
             
             # Load Lora
             if lora_name not in (None, "None"):
@@ -1858,7 +1870,7 @@ class ttN_pipeKSamplerSDXL_v2:
                 latent = sdxl_samples["samples"]
                 sdxl_images = sdxl_vae.decode(latent)
 
-                results = ttN_save.images(sdxl_images, save_prefix, image_output)
+                results = ttN_save.images(sdxl_images, save_prefix, image_output, embed_workflow, file_type)
 
             sampler.update_value_by_id("results", my_unique_id, results)
 
@@ -1906,7 +1918,7 @@ class ttN_pipeKSamplerSDXL_v2:
 
         def process_xyPlot(sdxl_pipe, sdxl_model, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_model_strength, lora_clip_strength,
                            base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise,
-                           image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot):
+                           image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot):
 
             random.seed(seed)
 
@@ -1921,7 +1933,7 @@ class ttN_pipeKSamplerSDXL_v2:
                                  image_output, save_prefix, prompt, my_unique_id, preview_latent, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
 
 
-            results = ttN_save.images(images[0], save_prefix, image_output)
+            results = ttN_save.images(images[0], save_prefix, image_output, embed_workflow, file_type)
 
             sampler.update_value_by_id("results", my_unique_id, results)
 
@@ -1976,12 +1988,12 @@ class ttN_pipeKSamplerSDXL_v2:
                                         lora_name, lora_strength, lora_strength,
                                         sdxl_refiner_model, sdxl_refiner_positive, sdxl_refiner_negative, sdxl_refiner_clip,
                                         upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
-                                        base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise, refiner_denoise, image_output, save_prefix, prompt, my_unique_id, preview_latent)
+                                        base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise, refiner_denoise, image_output, save_prefix, file_type, embed_workflow, prompt, my_unique_id, preview_latent)
 
         elif sampler_state == "Sample" and adv_xyPlot is not None:
             return process_xyPlot(sdxl_pipe, sdxl_model, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_strength, lora_strength,
                            base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise,
-                           image_output, save_prefix, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot)
+                           image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot)
 
         elif sampler_state == "Hold":
             return sampler.process_hold_state(sdxl_pipe, image_output, my_unique_id, sdxl=True)

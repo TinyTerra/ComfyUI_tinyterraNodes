@@ -301,6 +301,7 @@ function setPlotWidgetOptions(currentNode) {
     if (!nodeId) return;
 
     const optionNode = app.graph._nodes_by_id[nodeId];
+    if (!optionNode) return;
     const widgetsList = Object.values(optionNode.widgets)
         .filter(w => w.type === 'number')
         .map((w) => w.name);

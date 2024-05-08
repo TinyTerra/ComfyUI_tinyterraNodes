@@ -235,12 +235,19 @@ function widgetLogic(node, widget) {
 				toggleWidget(node, findWidgetByName(node, 'embed_workflow'))
 				toggleWidget(node, findWidgetByName(node, 'number_padding'))
 				toggleWidget(node, findWidgetByName(node, 'overwrite_existing'))
+                toggleWidget(node, findWidgetByName(node, 'file_type'))
 			} else if (['Save', 'Hide/Save', 'Disabled'].includes(widget.value)) {
 				toggleWidget(node, findWidgetByName(node, 'save_prefix'), true)
 				toggleWidget(node, findWidgetByName(node, 'output_path'), true)
-				toggleWidget(node, findWidgetByName(node, 'embed_workflow'), true)
 				toggleWidget(node, findWidgetByName(node, 'number_padding'), true)
 				toggleWidget(node, findWidgetByName(node, 'overwrite_existing'), true)
+                toggleWidget(node, findWidgetByName(node, 'file_type'), true)
+                const fileTypeValue = findWidgetByName(node, 'file_type')?.value
+                if (fileTypeValue === 'png') {
+                    toggleWidget(node, findWidgetByName(node, 'embed_workflow'), true)
+                } else {
+                    toggleWidget(node, findWidgetByName(node, 'embed_workflow'))
+                }
 			}
 			break;
 
@@ -427,7 +434,16 @@ function widgetLogic(node, widget) {
                 setWidgetOptions(start_widget, floatOptions);
                 setWidgetOptions(stop_widget, floatOptions);
                 setWidgetOptions(step_widget, floatOptions);
-        }
+            }
+            break;
+
+        case 'file_type':
+            if (widget.value == 'png') {
+                toggleWidget(node, findWidgetByName(node, 'embed_workflow'), true)
+            } else {
+                toggleWidget(node, findWidgetByName(node, 'embed_workflow'))
+            }
+            break;
 	}
 }
 
@@ -437,7 +453,7 @@ const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output',
 						'image_output', 'add_noise', 
 						'ckpt_B_name', 'ckpt_C_name', 'save_model', 'refiner_ckpt_name',
 						'num_loras', 'mode', 'toggle', 'empty_latent_aspect', 'conditioning_aspect', 'target_aspect', 'sampler_state',
-                        'print_to_console', 'sampling', 'range_mode']
+                        'print_to_console', 'sampling', 'range_mode', 'file_type']
 const getSetTitles = [
     "hiresfixScale",
     "pipeLoader",
