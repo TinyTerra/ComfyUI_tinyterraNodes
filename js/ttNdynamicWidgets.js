@@ -438,7 +438,8 @@ function widgetLogic(node, widget) {
             break;
 
         case 'file_type':
-            if (widget.value == 'png') {
+            const imageOutputValue = findWidgetByName(node, 'image_output').value
+            if (widget.value == 'png' && ['Save', 'Hide/Save', 'Disabled'].includes(imageOutputValue)) {
                 toggleWidget(node, findWidgetByName(node, 'embed_workflow'), true)
             } else {
                 toggleWidget(node, findWidgetByName(node, 'embed_workflow'))

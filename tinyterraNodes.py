@@ -1098,6 +1098,7 @@ class ttNsave:
         if output_type == "Preview":
             output_dir = folder_paths.get_temp_directory()
             filename_prefix = 'ttNpreview'
+            ext = "png"
 
         results=list()
         for image in images:
