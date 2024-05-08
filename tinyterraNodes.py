@@ -647,6 +647,8 @@ class ttNadv_xyPlot:
 
         def split_text_into_lines(text, font, label_width):
             words = text.split()
+            if words == []:
+                return ['None']
             lines = []
             current_line = words[0]
             for word in words[1:]:
