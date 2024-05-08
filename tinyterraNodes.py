@@ -2438,7 +2438,7 @@ class ttN_conditioning:
         return (model, positive_embedding, negative_embedding, clip, final_positive, final_negative)
 
 class ttN_KSampler_v2:
-    version = '2.0.0'
+    version = '2.1.0'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -2478,7 +2478,9 @@ class ttN_KSampler_v2:
                 "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
                 "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
-                "save_prefix": ("STRING", {"default": "ComfyUI"})
+                "save_prefix": ("STRING", {"default": "ComfyUI"}),
+                "file_type": (OUTPUT_FILETYPES,{"default": "png"}),
+                "embed_workflow": ("BOOLEAN", {"default": True}),
                 },
                 "optional": 
                 {"seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
@@ -2500,7 +2502,7 @@ class ttN_KSampler_v2:
 
     def sample( self, model, positive, negative, latent, vae, clip,
                 lora_name, lora_strength,
-                sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise=1.0, 
+                sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, file_type, embed_workflow, denoise=1.0, 
                 input_image_override=None,
                 seed=None, adv_xyPlot=None, upscale_model_name=None, upscale_method=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None,
                 prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False, disable_noise=False):
@@ -2518,7 +2520,7 @@ class ttN_KSampler_v2:
                 "loader_settings": None
                 }
 
-        return ttN_pipeKSampler_v2.sample(self, pipe, lora_name, lora_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, denoise, 
+        return ttN_pipeKSampler_v2.sample(self, pipe, lora_name, lora_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, file_type, embed_workflow, denoise, 
                 None, None, None, None, None, None, input_image_override, seed, adv_xyPlot, upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop, prompt, extra_pnginfo, my_unique_id, None, None, force_full_denoise, disable_noise)
 #---------------------------------------------------------------ttN/base END------------------------------------------------------------------------#
 
