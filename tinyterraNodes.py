@@ -336,16 +336,25 @@ class ttNloader:
         
     def load_main3(self, ckpt_name, config_name, vae_name, loras, clip_skip, model_override=None, clip_override=None, optional_lora_stack=None):
         # Load models
-        model, clip, vae = self.load_checkpoint(ckpt_name, config_name, clip_skip)
+        if (model_override is not None) and (clip_override is not None) and (vae_name != "Baked VAE"):
+            model, clip, vae = None, None, None
+        else:
+            model, clip, vae = self.load_checkpoint(ckpt_name, config_name, clip_skip)
 
         if model_override is not None:
             model = model_override
             del model_override
 
         if clip_override is not None:
-            clip = clip_override
+            clip = clip_override.clone()
+
+            if clip_skip != 0:
+                clip.clip_layer(clip_skip)
             del clip_override
-            
+
+        if vae_name != "Baked VAE":
+            vae = self.load_vae(vae_name)
+
         if optional_lora_stack is not None:
             for lora in optional_lora_stack:
                 model, clip = self.load_lora(lora[0], model, clip, lora[1], lora[2])
@@ -353,11 +362,6 @@ class ttNloader:
         if loras not in [None, "None"]:
             model, clip = self.load_lora_text(loras, model, clip)
 
-        # Check for custom VAE
-        if vae_name != "Baked VAE":
-            vae = self.load_vae(vae_name)
-
-        # CLIP skip
         if not clip:
             raise Exception("No CLIP found")
         
