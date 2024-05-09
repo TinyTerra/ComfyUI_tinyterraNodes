@@ -229,7 +229,7 @@ function widgetLogic(node, widget) {
 			break;
 
 		case 'image_output':
-			if (widget.value === 'Hide' || widget.value === 'Preview') {
+			if (['Hide', 'Preview'].includes(widget.value)) {
 				toggleWidget(node, findWidgetByName(node, 'save_prefix'))
 				toggleWidget(node, findWidgetByName(node, 'output_path'))
 				toggleWidget(node, findWidgetByName(node, 'embed_workflow'))
@@ -243,7 +243,7 @@ function widgetLogic(node, widget) {
 				toggleWidget(node, findWidgetByName(node, 'overwrite_existing'), true)
                 toggleWidget(node, findWidgetByName(node, 'file_type'), true)
                 const fileTypeValue = findWidgetByName(node, 'file_type')?.value
-                if (fileTypeValue === 'png') {
+                if (['png', 'webp'].includes(fileTypeValue)) {
                     toggleWidget(node, findWidgetByName(node, 'embed_workflow'), true)
                 } else {
                     toggleWidget(node, findWidgetByName(node, 'embed_workflow'))
@@ -439,7 +439,7 @@ function widgetLogic(node, widget) {
 
         case 'file_type':
             const imageOutputValue = findWidgetByName(node, 'image_output').value
-            if (widget.value == 'png' && ['Save', 'Hide/Save', 'Disabled'].includes(imageOutputValue)) {
+            if (['png', 'webp'].includes(widget.value) && ['Save', 'Hide/Save', 'Disabled'].includes(imageOutputValue)) {
                 toggleWidget(node, findWidgetByName(node, 'embed_workflow'), true)
             } else {
                 toggleWidget(node, findWidgetByName(node, 'embed_workflow'))

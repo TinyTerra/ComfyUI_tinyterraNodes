@@ -1110,19 +1110,40 @@ class ttNsave:
 
             file_path = os.path.join(output_dir, subfolder, filename)
 
-            if ext == "png" and embed_workflow in (True, "True"):
-                metadata = PngInfo()
-                if self.prompt is not None:
-                    metadata.add_text("prompt", json.dumps(self.prompt))
-                    
-                if self.extra_pnginfo is not None:
-                    for x in self.extra_pnginfo:
-                        metadata.add_text(x, json.dumps(self.extra_pnginfo[x]))
+            if (embed_workflow in (True, "True")) and (ext in ("png", "webp")):
+                if ext == "png":    
+                    metadata = PngInfo()
+                    if self.prompt is not None:
+                        metadata.add_text("prompt", json.dumps(self.prompt))
                         
-                if self.overwrite_existing or not os.path.isfile(file_path):
-                    img.save(file_path, pnginfo=metadata, format=FORMAT_MAP[ext])
-                else:
-                    ttNl(f"File {file_path} already exists... Skipping").error().p()
+                    if self.extra_pnginfo is not None:
+                        for x in self.extra_pnginfo:
+                            metadata.add_text(x, json.dumps(self.extra_pnginfo[x]))
+                            
+                    if self.overwrite_existing or not os.path.isfile(file_path):
+                        img.save(file_path, pnginfo=metadata, format=FORMAT_MAP[ext])
+                    else:
+                        ttNl(f"File {file_path} already exists... Skipping").error().p()
+                        
+                if ext == "webp":
+                    img_exif = img.getexif()
+                    workflow_metadata = ''
+                    prompt_str = ''
+                    if self.prompt is not None:
+                        prompt_str = json.dumps(self.prompt)
+                        img_exif[0x010f] = "Prompt:" + prompt_str
+                        
+                    if self.extra_pnginfo is not None:
+                        for x in self.extra_pnginfo:
+                            workflow_metadata += json.dumps(self.extra_pnginfo[x])
+                            
+                    img_exif[0x010e] = "Workflow:" + workflow_metadata
+                    exif_data = img_exif.tobytes()
+
+                    if self.overwrite_existing or not os.path.isfile(file_path):
+                        img.save(file_path, exif=exif_data, format=FORMAT_MAP[ext])
+                    else:
+                        ttNl(f"File {file_path} already exists... Skipping").error().p()
             else:
                 if self.overwrite_existing or not os.path.isfile(file_path):
                     img.save(file_path, format=FORMAT_MAP[ext])
