@@ -2438,7 +2438,7 @@ class ttN_conditioning:
         return (model, positive_embedding, negative_embedding, clip, final_positive, final_negative)
 
 class ttN_KSampler_v2:
-    version = '2.1.0'
+    version = '2.2.0'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
