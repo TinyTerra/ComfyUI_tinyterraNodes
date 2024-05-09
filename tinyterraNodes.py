@@ -2688,7 +2688,7 @@ class ttN_advanced_XYPlot:
                 "prompt": ("PROMPT",),
                 "extra_pnginfo": ("EXTRA_PNGINFO",),
                 "my_unique_id": ("MY_UNIQUE_ID",),
-                "ttNnodeVersion": ttN_XYPlot.version,
+                "ttNnodeVersion": ttN_advanced_XYPlot.version,
             },
         }
 
@@ -2746,7 +2746,7 @@ class ttN_advPlot_range:
 
             },
             "hidden": {
-                "ttNnodeVersion": ttN_XYPlot.version,
+                "ttNnodeVersion": ttN_advPlot_range.version,
             }
         }
 
