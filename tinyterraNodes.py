@@ -2807,7 +2807,7 @@ CLIP_INTERPOLATIONS = [FOLLOW, WEIGHTED_SUM, ADD_DIFFERENCE, A_ONLY, B_ONLY, C_O
 ABC = "ABC"
 
 class ttN_multiModelMerge:
-    version = '1.0.1'
+    version = '1.1.0'
     def __init__(self):
         pass
     
@@ -2826,9 +2826,6 @@ class ttN_multiModelMerge:
                     
                     "clip_interpolation": (CLIP_INTERPOLATIONS,),
                     "clip_multiplier": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-
-                    "save_model": (["True", "False"],{"default": "False"}),
-                    "save_prefix": ("STRING", {"default": "checkpoints/ComfyUI"}),
                 },
                 "optional": {
                     "model_A_override": ("MODEL",),
@@ -2837,22 +2834,21 @@ class ttN_multiModelMerge:
                     "clip_A_override": ("CLIP",),
                     "clip_B_override": ("CLIP",),
                     "clip_C_override": ("CLIP",),
-                    "optional_vae": ("VAE",),
                 },
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "ttNnodeVersion": ttN_multiModelMerge.version, "my_unique_id": "UNIQUE_ID"},
         }
     
-    RETURN_TYPES = ("MODEL", "CLIP", "VAE",)
-    RETURN_NAMES = ("model", "clip", "vae",)
+    RETURN_TYPES = ("MODEL", "CLIP",)
+    RETURN_NAMES = ("model", "clip",)
     FUNCTION = "mergificate"
 
     CATEGORY = "🌏 tinyterra"
 
     def mergificate(self, ckpt_A_name, config_A_name, ckpt_B_name, config_B_name, ckpt_C_name, config_C_name,
-                model_interpolation, model_multiplier, clip_interpolation, clip_multiplier, save_model, save_prefix,
+                model_interpolation, model_multiplier, clip_interpolation, clip_multiplier,
                 model_A_override=None, model_B_override=None, model_C_override=None,
                 clip_A_override=None, clip_B_override=None, clip_C_override=None,
-                optional_vae=None, prompt=None, extra_pnginfo=None, my_unique_id=None):
+                prompt=None, extra_pnginfo=None, my_unique_id=None):
         
         def required_assets(model_interpolation, clip_interpolation):
             required = set(["model_A"])
@@ -2885,8 +2881,6 @@ class ttN_multiModelMerge:
                     else:
                         e = f"Checkpoint name or model override not provided for model_{letter}.\nUnable to merge models using the following interpolation: {model_interpolation}"
                         ttNl(e).t(f'multiModelMerge [{my_unique_id}]').error().p().interrupt(e)
-
-
             
             if f'clip_{letter}' in required_list:
                 if clip_override is not None:
@@ -2900,7 +2894,6 @@ class ttN_multiModelMerge:
                     ttNl(e).t(f'multiModelMerge [{my_unique_id}]').error().p().interrupt(e)
             
             return model, clip
-
 
         def merge(base_model, base_strength, patch_model, patch_strength):
             m = base_model.clone()
@@ -2960,56 +2953,9 @@ class ttN_multiModelMerge:
             clip = _add_assets(clip_A, clip_B, True, clip_multiplier, True)
         if (clip_interpolation == ADD_DIFFERENCE):
             clip = _add_assets(clip_A, _subtract_assets(clip_B, clip_C, True), True, clip_multiplier)
-        
 
-        if optional_vae not in ["None", None]:
-            vae_sd = optional_vae.get_sd()
-            vae = optional_vae
-        else:
-            vae_sd = {}
-            vae = None
+        return (model, clip)
 
-        if save_model == "True":
-            full_output_folder, filename, counter, subfolder, save_prefix = folder_paths.get_save_image_path(save_prefix, folder_paths.get_output_directory())
-
-            prompt_info = ""
-            if prompt is not None:
-                prompt_info = json.dumps(prompt)
-
-            metadata = {}
-
-            enable_modelspec = True
-            if isinstance(model.model, comfy.model_base.SDXL):
-                metadata["modelspec.architecture"] = "stable-diffusion-xl-v1-base"
-            elif isinstance(model.model, comfy.model_base.SDXLRefiner):
-                metadata["modelspec.architecture"] = "stable-diffusion-xl-v1-refiner"
-            else:
-                enable_modelspec = False
-
-            if enable_modelspec:
-                metadata["modelspec.sai_model_spec"] = "1.0.0"
-                metadata["modelspec.implementation"] = "sgm"
-                metadata["modelspec.title"] = "{} {}".format(filename, counter)
-
-            if model.model.model_type == comfy.model_base.ModelType.EPS:
-                metadata["modelspec.predict_key"] = "epsilon"
-            elif model.model.model_type == comfy.model_base.ModelType.V_PREDICTION:
-                metadata["modelspec.predict_key"] = "v"
-
-            if not args.disable_metadata:
-                metadata["prompt"] = prompt_info
-                if extra_pnginfo is not None:
-                    for x in extra_pnginfo:
-                        metadata[x] = json.dumps(extra_pnginfo[x])
-
-            output_checkpoint = f"{filename}_{counter:05}_.safetensors"
-            output_checkpoint = os.path.join(full_output_folder, output_checkpoint)
-
-            comfy.model_management.load_models_gpu([model, clip.load_model()])
-            sd = model.model.state_dict_for_saving(clip.get_sd(), vae_sd)
-            comfy.utils.save_torch_file(sd, output_checkpoint, metadata=metadata)
-
-        return (model, clip, vae)
 #-----------------------------------------------------------------misc END-------------------------------------------------------------------------#
 
 #---------------------------------------------------------------ttN/text START----------------------------------------------------------------------#
