@@ -2,8 +2,9 @@ import os
 import sys
 from server import PromptServer
 
+routes = PromptServer.instance.routes
 
-@PromptServer.instance.routes.get("/ttN/reboot")
+@routes.get("/ttN/reboot")
 def restart(self):
     try:
         sys.stdout.close_log()

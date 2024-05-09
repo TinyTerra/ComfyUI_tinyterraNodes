@@ -1,7 +1,7 @@
-from .tinyterraNodes import TTN_VERSIONS
-from .py import ttNserver
+from .ttNpy.tinyterraNodes import TTN_VERSIONS
+from .ttNpy import ttNserver # Do Not Remove
 import configparser
-import folder_paths # type: ignore
+import folder_paths
 import subprocess
 import shutil
 import os
@@ -151,11 +151,12 @@ else:
     ttNdev_DISPLAY_NAME_MAPPINGS = {}
 
 # ------- MAPPING ------- #
-from .tinyterraNodes import NODE_CLASS_MAPPINGS as ttN_CLASS_MAPPINGS,  NODE_DISPLAY_NAME_MAPPINGS as ttN_DISPLAY_NAME_MAPPINGS
+from .ttNpy.tinyterraNodes import NODE_CLASS_MAPPINGS as TTN_CLASS_MAPPINGS,  NODE_DISPLAY_NAME_MAPPINGS as TTN_DISPLAY_NAME_MAPPINGS
+from .ttNpy.ttNlegacyNodes import NODE_CLASS_MAPPINGS as LEGACY_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS as LEGACY_DISPLAY_NAME_MAPPINGS
 
-NODE_CLASS_MAPPINGS = {**ttN_CLASS_MAPPINGS, **ttNdev_CLASS_MAPPINGS}
-NODE_DISPLAY_NAME_MAPPINGS = {**ttN_DISPLAY_NAME_MAPPINGS, **ttNdev_DISPLAY_NAME_MAPPINGS}
+NODE_CLASS_MAPPINGS = {**TTN_CLASS_MAPPINGS, **LEGACY_CLASS_MAPPINGS, **ttNdev_CLASS_MAPPINGS}
+NODE_DISPLAY_NAME_MAPPINGS = {**TTN_DISPLAY_NAME_MAPPINGS, **LEGACY_DISPLAY_NAME_MAPPINGS, **ttNdev_DISPLAY_NAME_MAPPINGS}
 
 WEB_DIRECTORY = "./js"
 
-__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
+__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS', 'WEB_DIRECTORY']
