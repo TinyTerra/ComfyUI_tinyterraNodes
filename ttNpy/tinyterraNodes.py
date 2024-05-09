@@ -387,7 +387,7 @@ class ttNsampler:
 
         last_results = self.init_state(my_unique_id, "results", list())
 
-        output = self.get_output(last_pipe) if not sdxl else self.get_output_sdxl(last_pipe)
+        output = self.get_output(last_pipe) if not sdxl else self.get_output_sdxl_v2(last_pipe)
         
         if image_output in ("Hide", "Hide/Save", "Disabled"):
             return output
@@ -400,7 +400,7 @@ class ttNsampler:
         if value is not None:
             return value
         return default
-    
+
     def get_value_by_id(self, key: str, my_unique_id: Any) -> Optional[Any]:
         """Retrieve value by its associated ID."""
         try:
@@ -441,37 +441,54 @@ class ttNsampler:
             samples = self.upscale(samples, upscale_method, factor, crop)[0]
         return samples
 
-
     def get_output(self, pipe: dict) -> Tuple:
         """Return a tuple of various elements fetched from the input pipe dictionary."""
         return (
             pipe,
-            pipe[0], # Model
-            pipe[1], # Positive
-            pipe[2], # Negative
-            pipe[5], # Samples
-            pipe[3], # VAE
-            pipe[4], # CLIP
-            pipe[6], # Image
-            pipe[7], # Seed
+            pipe.get("model"),
+            pipe.get("positive"),
+            pipe.get("negative"),
+            pipe.get("samples"),
+            pipe.get("vae"),
+            pipe.get("clip"),
+            pipe.get("images"),
+            pipe.get("seed")
         )
     
-    def get_output_sdxl(self, sdxl_pipe: dict, pipe: dict) -> Tuple:
+    def get_output_sdxl(self, sdxl_pipe: dict) -> Tuple:
+        """Return a tuple of various elements fetched from the input sdxl_pipe dictionary."""
+        return (
+            sdxl_pipe,
+            sdxl_pipe.get("model"),
+            sdxl_pipe.get("positive"),
+            sdxl_pipe.get("negative"),
+            sdxl_pipe.get("vae"),
+            sdxl_pipe.get("refiner_model"),
+            sdxl_pipe.get("refiner_positive"),
+            sdxl_pipe.get("refiner_negative"),
+            sdxl_pipe.get("refiner_vae"),
+            sdxl_pipe.get("samples"),
+            sdxl_pipe.get("clip"),
+            sdxl_pipe.get("images"),
+            sdxl_pipe.get("seed")
+        )
+    
+    def get_output_sdxl_v2(self, sdxl_pipe: dict, pipe: dict) -> Tuple:
         """Return a tuple of various elements fetched from the input sdxl_pipe dictionary."""
         return (
             sdxl_pipe,
             pipe,
-            sdxl_pipe[0], # Model
-            sdxl_pipe[1], # Positive
-            sdxl_pipe[2], # Negative
-            sdxl_pipe[5], # Refiner Model
-            sdxl_pipe[6], # Refiner Positive
-            sdxl_pipe[7], # Refiner Negative
-            sdxl_pipe[9], # Samples
-            sdxl_pipe[3], # VAE
-            sdxl_pipe[4], # CLIP
-            sdxl_pipe[10], # Image
-            sdxl_pipe[11], # Seed
+            sdxl_pipe.get("model"),
+            sdxl_pipe.get("positive"),
+            sdxl_pipe.get("negative"),
+            sdxl_pipe.get("refiner_model"),
+            sdxl_pipe.get("refiner_positive"),
+            sdxl_pipe.get("refiner_negative"),
+            sdxl_pipe.get("samples"),
+            sdxl_pipe.get("vae"),
+            sdxl_pipe.get("clip"),
+            sdxl_pipe.get("images"),
+            sdxl_pipe.get("seed")
         )
 
 class ttNadv_xyPlot:
@@ -1088,7 +1105,7 @@ sampler = ttNsampler()
 
 #---------------------------------------------------------------ttN/pipe START----------------------------------------------------------------------#
 class ttN_pipeLoader_v2:
-    version = '2.1.0'
+    version = '2.0.0'
     @classmethod
     def INPUT_TYPES(cls):
         aspect_ratios = ["width x height [custom]",
@@ -1140,7 +1157,7 @@ class ttN_pipeLoader_v2:
                     },
                 "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoader_v2.version}, "my_unique_id": "UNIQUE_ID",}
 
-    RETURN_TYPES = ("PIPE_LINE_V2" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT", "INT", "INT", "STRING", "STRING")
+    RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT", "INT", "INT", "STRING", "STRING")
     RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed", "width", "height", "pos_string", "neg_string")
 
     FUNCTION = "adv_pipeloader"
@@ -1173,7 +1190,18 @@ class ttN_pipeLoader_v2:
 
         image = None
 
-        pipe = (model, positive_embedding, negative_embedding, vae, clip, samples, image, seed,)
+        pipe = {"model": model,
+                "positive": positive_embedding,
+                "negative": negative_embedding,
+                "vae": vae,
+                "clip": clip,
+
+                "samples": samples,
+                "images": image,
+                "seed": seed,
+
+                "loader_settings": None,
+        }
 
         final_positive = (prepend_positive + ' ' if prepend_positive else '') + (positive + ' ' if positive else '')
         final_negative = (prepend_negative + ' ' if prepend_negative else '') + (negative + ' ' if negative else '')
@@ -1181,7 +1209,7 @@ class ttN_pipeLoader_v2:
         return (pipe, model, positive_embedding, negative_embedding, samples, vae, clip, seed, empty_latent_width, empty_latent_height, final_positive, final_negative)
 
 class ttN_pipeKSampler_v2:
-    version = '2.3.0'
+    version = '2.2.0'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -1193,7 +1221,7 @@ class ttN_pipeKSampler_v2:
     @classmethod
     def INPUT_TYPES(cls):
         return {"required":
-                {"pipe": ("PIPE_LINE_V2",),
+                {"pipe": ("PIPE_LINE",),
 
                 "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
                 "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
@@ -1237,7 +1265,7 @@ class ttN_pipeKSampler_v2:
                  "ttNnodeVersion": ttN_pipeKSampler_v2.version},
         }
 
-    RETURN_TYPES = ("PIPE_LINE_V2", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
+    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
@@ -1254,18 +1282,20 @@ class ttN_pipeKSampler_v2:
 
         ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo)
 
-        samp_model = optional_model if optional_model is not None else pipe[0]
-        samp_positive = optional_positive if optional_positive is not None else pipe[1]
-        samp_negative = optional_negative if optional_negative is not None else pipe[2]
-        samp_vae = optional_vae if optional_vae is not None else pipe[3]
-        samp_clip = optional_clip if optional_clip is not None else pipe[4]
-        samp_samples = optional_latent if optional_latent is not None else pipe[5]
-        samp_images = input_image_override if input_image_override is not None else pipe[6]
-        samp_seed = seed if seed not in (None, 'undefined') else pipe[7]
+        samp_model = optional_model if optional_model is not None else pipe["model"]
+        samp_positive = optional_positive if optional_positive is not None else pipe["positive"]
+        samp_negative = optional_negative if optional_negative is not None else pipe["negative"]
+        samp_samples = optional_latent if optional_latent is not None else pipe["samples"]
+        samp_images = input_image_override if input_image_override is not None else pipe["images"]
+        samp_vae = optional_vae if optional_vae is not None else pipe["vae"]
+        samp_clip = optional_clip if optional_clip is not None else pipe["clip"]
 
-        del pipe
+        if seed in (None, 'undefined'):
+            samp_seed = pipe["seed"]
+        else:
+            samp_seed = seed
 
-        def process_sample_state(samp_model, samp_images, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
+        def process_sample_state(pipe, samp_model, samp_images, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
                                  upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
                                  steps, cfg, sampler_name, scheduler, denoise,
                                  image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise):
@@ -1297,9 +1327,23 @@ class ttN_pipeKSampler_v2:
 
             sampler.update_value_by_id("results", my_unique_id, results)
 
-            new_pipe = (samp_model, samp_positive, samp_negative, samp_vae, samp_clip, samp_samples, samp_images, samp_seed,)
+            new_pipe = {
+                "model": samp_model,
+                "positive": samp_positive,
+                "negative": samp_negative,
+                "vae": samp_vae,
+                "clip": samp_clip,
+
+                "samples": samp_samples,
+                "images": samp_images,
+                "seed": samp_seed,
+
+                "loader_settings": pipe["loader_settings"],
+            }
             
             sampler.update_value_by_id("pipe_line", my_unique_id, new_pipe)
+
+            del pipe
             
             if image_output in ("Hide", "Hide/Save", "Disabled"):
                 return sampler.get_output(new_pipe)
@@ -1307,7 +1351,7 @@ class ttN_pipeKSampler_v2:
             return {"ui": {"images": results},
                     "result": sampler.get_output(new_pipe)}
 
-        def process_xyPlot(samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
+        def process_xyPlot(pipe, samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
                            steps, cfg, sampler_name, scheduler, denoise,
                            image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot):
 
@@ -1317,7 +1361,7 @@ class ttN_pipeKSampler_v2:
             samples, images = plotter.xy_plot_process()
 
             if samples is None and images is None:
-                return process_sample_state(samp_model, samp_images, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
+                return process_sample_state(pipe, samp_model, samp_images, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
                                  upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
                                  steps, cfg, sampler_name, scheduler, denoise,
                                  image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
@@ -1337,6 +1381,8 @@ class ttN_pipeKSampler_v2:
                 "samples": samples,
                 "images": images[1],
                 "seed": samp_seed,
+
+                "loader_settings": pipe["loader_settings"],
             }
 
             sampler.update_value_by_id("pipe_line", my_unique_id, new_pipe)
@@ -1353,19 +1399,19 @@ class ttN_pipeKSampler_v2:
             preview_latent = False
 
         if sampler_state == "Sample" and adv_xyPlot is None:
-            return process_sample_state(samp_model, samp_images, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_strength, lora_strength,
+            return process_sample_state(pipe, samp_model, samp_images, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_strength, lora_strength,
                                         upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
                                         steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent)
 
         elif sampler_state == "Sample" and adv_xyPlot is not None:
-            return process_xyPlot(samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_strength, lora_strength, steps, cfg, sampler_name, 
+            return process_xyPlot(pipe, samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_strength, lora_strength, steps, cfg, sampler_name, 
                                   scheduler, denoise, image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot)
 
         elif sampler_state == "Hold":
             return sampler.process_hold_state(pipe, image_output, my_unique_id)
 
 class ttN_pipeKSamplerAdvanced_v2:
-    version = '2.3.0'
+    version = '2.2.0'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -1378,7 +1424,7 @@ class ttN_pipeKSamplerAdvanced_v2:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "pipe": ("PIPE_LINE_V2",),
+                "pipe": ("PIPE_LINE",),
                 
                 "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
                 "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
@@ -1431,7 +1477,7 @@ class ttN_pipeKSamplerAdvanced_v2:
                 },
             }
 
-    RETURN_TYPES = ("PIPE_LINE_V2", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT", )
+    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT", )
     RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "adv_sample"
@@ -1454,7 +1500,7 @@ class ttN_pipeKSamplerAdvanced_v2:
                 optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, input_image_override, noise_seed, adv_xyPlot, upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, force_full_denoise, disable_noise)
 
 class ttN_pipeLoaderSDXL_v2:
-    version = '2.1.0'
+    version = '2.0.0'
     @classmethod
     def INPUT_TYPES(cls):
         aspect_ratios = ["width x height [custom]",
@@ -1534,7 +1580,7 @@ class ttN_pipeLoaderSDXL_v2:
                     },
                 "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoaderSDXL_v2.version}, "my_unique_id": "UNIQUE_ID",}
 
-    RETURN_TYPES = ("PIPE_LINE_V2_SDXL" ,"MODEL", "CONDITIONING", "CONDITIONING", "VAE", "CLIP", "MODEL", "CONDITIONING", "CONDITIONING", "CLIP", "LATENT", "INT", "INT", "INT", "STRING", "STRING")
+    RETURN_TYPES = ("PIPE_LINE_SDXL" ,"MODEL", "CONDITIONING", "CONDITIONING", "VAE", "CLIP", "MODEL", "CONDITIONING", "CONDITIONING", "CLIP", "LATENT", "INT", "INT", "INT", "STRING", "STRING")
     RETURN_NAMES = ("sdxl_pipe","model", "positive", "negative", "vae", "clip", "refiner_model", "refiner_positive", "refiner_negative", "refiner_clip", "latent", "seed", "width", "height", "pos_string", "neg_string")
 
 
@@ -1593,7 +1639,23 @@ class ttN_pipeLoaderSDXL_v2:
 
         image = None
 
-        sdxl_pipe = (model, positive_embedding, negative_embedding, vae, clip, refiner_model, refiner_positive_embedding, refiner_negative_embedding, refiner_clip, samples, image, seed,)
+        sdxl_pipe = {"model": model,
+                    "positive": positive_embedding,
+                    "negative": negative_embedding,
+                    "vae": vae,
+                    "clip": clip,
+
+                    "refiner_model": refiner_model,
+                    "refiner_positive": refiner_positive_embedding,
+                    "refiner_negative": refiner_negative_embedding,
+                    "refiner_clip": refiner_clip,
+
+                    "samples": samples,
+                    "images": image,
+                    "seed": seed,
+
+                "loader_settings": None
+        }
 
         final_positive = (prepend_positive_g + ' ' if prepend_positive_g else '') + (positive_g + ' ' if positive_g else '') + (prepend_positive_l + ' ' if prepend_positive_l else '') + (positive_l + ' ' if positive_l else '')
         final_negative = (prepend_negative_g + ' ' if prepend_negative_g else '') + (negative_g + ' ' if negative_g else '') + (prepend_negative_l + ' ' if prepend_negative_l else '') + (negative_l + ' ' if negative_l else '')
@@ -1601,7 +1663,7 @@ class ttN_pipeLoaderSDXL_v2:
         return (sdxl_pipe, model, positive_embedding, negative_embedding, vae, clip, refiner_model, refiner_positive_embedding, refiner_negative_embedding, refiner_clip, samples, seed, empty_latent_width, empty_latent_height, final_positive, final_negative)
 
 class ttN_pipeKSamplerSDXL_v2:
-    version = '2.3.0'
+    version = '2.2.0'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -1613,7 +1675,7 @@ class ttN_pipeKSamplerSDXL_v2:
     @classmethod
     def INPUT_TYPES(cls):
         return {"required":
-                {"sdxl_pipe": ("PIPE_LINE_V2_SDXL",),
+                {"sdxl_pipe": ("PIPE_LINE_SDXL",),
 
                 "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
                 "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
@@ -1664,7 +1726,7 @@ class ttN_pipeKSamplerSDXL_v2:
                 "ttNnodeVersion": ttN_pipeKSamplerSDXL_v2.version},
         }
 
-    RETURN_TYPES = ("PIPE_LINE_V2_SDXL", "PIPE_LINE_V2", "MODEL", "CONDITIONING", "CONDITIONING", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
+    RETURN_TYPES = ("PIPE_LINE_SDXL", "PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
     RETURN_NAMES = ("sdxl_pipe", "pipe","model", "positive", "negative" , "refiner_model", "refiner_positive", "refiner_negative", "latent", "vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
@@ -1681,25 +1743,28 @@ class ttN_pipeKSamplerSDXL_v2:
         my_unique_id = int(my_unique_id)
 
         ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo)
-        
-        sdxl_model = optional_model if optional_model is not None else sdxl_pipe[0]
-        sdxl_positive = optional_positive if optional_positive is not None else sdxl_pipe[1]
-        sdxl_negative = optional_negative if optional_negative is not None else sdxl_pipe[2]
-        sdxl_vae = optional_vae if optional_vae is not None else sdxl_pipe[3]
-        sdxl_clip = optional_clip if optional_clip is not None else sdxl_pipe[4]
 
-        sdxl_refiner_model = optional_refiner_model if optional_refiner_model is not None else sdxl_pipe[5]
-        sdxl_refiner_positive = optional_refiner_positive if optional_refiner_positive is not None else sdxl_pipe[6]
-        sdxl_refiner_negative = optional_refiner_negative if optional_refiner_negative is not None else sdxl_pipe[7]
-        sdxl_refiner_clip = sdxl_pipe[8] 
+        sdxl_model = optional_model if optional_model is not None else sdxl_pipe["model"]
+        sdxl_positive = optional_positive if optional_positive is not None else sdxl_pipe["positive"]
+        sdxl_negative = optional_negative if optional_negative is not None else sdxl_pipe["negative"]
+        sdxl_samples = optional_latent if optional_latent is not None else sdxl_pipe["samples"]
+        sdxl_images = input_image_override if input_image_override is not None else sdxl_pipe["images"]
+        sdxl_vae = optional_vae if optional_vae is not None else sdxl_pipe["vae"]
+        sdxl_clip = optional_clip if optional_clip is not None else sdxl_pipe["clip"]
 
-        sdxl_samples = optional_latent if optional_latent is not None else sdxl_pipe[9]
-        sdxl_images = input_image_override if input_image_override is not None else sdxl_pipe[10]
-        sdxl_seed = seed if seed not in (None, 'undefined') else sdxl_pipe[11]   
+        sdxl_refiner_model = optional_refiner_model if optional_refiner_model is not None else sdxl_pipe["refiner_model"]
+        sdxl_refiner_positive = optional_refiner_positive if optional_refiner_positive is not None else sdxl_pipe["refiner_positive"]
+        #sdxl_refiner_positive = sdxl_positive if sdxl_refiner_positive is None else sdxl_refiner_positive
+        sdxl_refiner_negative = optional_refiner_negative if optional_refiner_negative is not None else sdxl_pipe["refiner_negative"]
+        #sdxl_refiner_negative = sdxl_negative if sdxl_refiner_negative is None else sdxl_refiner_negative
+        sdxl_refiner_clip = sdxl_pipe["refiner_clip"]
 
-        del sdxl_pipe
+        if seed in (None, 'undefined'):
+            sdxl_seed = sdxl_pipe["seed"]
+        else:
+            sdxl_seed = seed      
 
-        def process_sample_state(sdxl_model, sdxl_images, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_model_strength, lora_clip_strength,
+        def process_sample_state(sdxl_pipe, sdxl_model, sdxl_images, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_model_strength, lora_clip_strength,
                                  sdxl_refiner_model, sdxl_refiner_positive, sdxl_refiner_negative, sdxl_refiner_clip,
                                  upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
                                  base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise, refiner_denoise,
@@ -1761,6 +1826,7 @@ class ttN_pipeKSamplerSDXL_v2:
                 "images": sdxl_images,
                 "seed": sdxl_seed,
 
+                "loader_settings": sdxl_pipe["loader_settings"],
             }
             
             pipe = {"model": sdxl_model,
@@ -1773,18 +1839,20 @@ class ttN_pipeKSamplerSDXL_v2:
                 "images": sdxl_images,
                 "seed": sdxl_seed,
                 
+                "loader_settings": sdxl_pipe["loader_settings"],  
             }
             
             sampler.update_value_by_id("pipe_line", my_unique_id, new_sdxl_pipe)
 
+            del sdxl_pipe
             
             if image_output in ("Hide", "Hide/Save", "Disabled"):
-                return sampler.get_output_sdxl(new_sdxl_pipe, pipe)
+                return sampler.get_output_sdxl_v2(new_sdxl_pipe, pipe)
 
             return {"ui": {"images": results},
-                    "result": sampler.get_output_sdxl(new_sdxl_pipe, pipe)}
+                    "result": sampler.get_output_sdxl_v2(new_sdxl_pipe, pipe)}
 
-        def process_xyPlot(sdxl_model, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_model_strength, lora_clip_strength,
+        def process_xyPlot(sdxl_pipe, sdxl_model, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_model_strength, lora_clip_strength,
                            base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise,
                            image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot):
 
@@ -1794,7 +1862,7 @@ class ttN_pipeKSamplerSDXL_v2:
             samples, images = plotter.xy_plot_process()
 
             if samples is None and images is None:
-                return process_sample_state(sdxl_model, sdxl_images, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_model_strength, lora_clip_strength,
+                return process_sample_state(sdxl_pipe, sdxl_model, sdxl_images, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_model_strength, lora_clip_strength,
                                  sdxl_refiner_model, sdxl_refiner_positive, sdxl_refiner_negative, sdxl_refiner_clip,
                                  upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
                                  base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise, refiner_denoise,
@@ -1820,6 +1888,8 @@ class ttN_pipeKSamplerSDXL_v2:
                 "samples": samples,
                 "images": images[1],
                 "seed": sdxl_seed,
+
+                "loader_settings": sdxl_pipe["loader_settings"],
             }
             
             pipe = {"model": sdxl_model,
@@ -1831,37 +1901,41 @@ class ttN_pipeKSamplerSDXL_v2:
                 "samples": samples,
                 "images": images[1],
                 "seed": sdxl_seed,
+                
+                "loader_settings": sdxl_pipe["loader_settings"],  
             }
 
             sampler.update_value_by_id("pipe_line", my_unique_id, new_sdxl_pipe)
+
+            del sdxl_pipe
             
             if image_output in ("Hide", "Hide/Save", "Disabled"):
-                return sampler.get_output_sdxl(new_sdxl_pipe, pipe)
+                return sampler.get_output_sdxl_v2(new_sdxl_pipe, pipe)
 
             return {"ui": {"images": results},
-                    "result": sampler.get_output_sdxl(new_sdxl_pipe, pipe)}
+                    "result": sampler.get_output_sdxl_v2(new_sdxl_pipe, pipe)}
             
         preview_latent = True
         if image_output in ("Hide", "Hide/Save", "Disabled"):
             preview_latent = False
 
         if sampler_state == "Sample" and adv_xyPlot is None:
-            return process_sample_state(sdxl_model, sdxl_images, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative,
+            return process_sample_state(sdxl_pipe, sdxl_model, sdxl_images, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative,
                                         lora_name, lora_strength, lora_strength,
                                         sdxl_refiner_model, sdxl_refiner_positive, sdxl_refiner_negative, sdxl_refiner_clip,
                                         upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
                                         base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise, refiner_denoise, image_output, save_prefix, file_type, embed_workflow, prompt, my_unique_id, preview_latent)
 
         elif sampler_state == "Sample" and adv_xyPlot is not None:
-            return process_xyPlot(sdxl_model, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_strength, lora_strength,
+            return process_xyPlot(sdxl_pipe, sdxl_model, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_strength, lora_strength,
                            base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise,
                            image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot)
 
         elif sampler_state == "Hold":
             return sampler.process_hold_state(sdxl_pipe, image_output, my_unique_id, sdxl=True)
 
-class ttN_pipe_v2_EDIT:
-    version = '2.0.0'
+class ttN_pipe_EDIT:
+    version = '1.1.1'
     def __init__(self):
         pass
     
@@ -1869,7 +1943,7 @@ class ttN_pipe_v2_EDIT:
     def INPUT_TYPES(s):
         return {"required": {},
                 "optional": {
-                    "pipe": ("PIPE_LINE_V2",),
+                    "pipe": ("PIPE_LINE",),
                     "model": ("MODEL",),
                     "pos": ("CONDITIONING",),
                     "neg": ("CONDITIONING",),
@@ -1879,10 +1953,10 @@ class ttN_pipe_v2_EDIT:
                     "image": ("IMAGE",),
                     "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
                 },
-                "hidden": {"ttNnodeVersion": ttN_pipe_v2_EDIT.version, "my_unique_id": "UNIQUE_ID"},
+                "hidden": {"ttNnodeVersion": ttN_pipe_EDIT.version, "my_unique_id": "UNIQUE_ID"},
             }
 
-    RETURN_TYPES = ("PIPE_LINE_V2", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT")
+    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT")
     RETURN_NAMES = ("pipe", "model", "pos", "neg", "latent", "vae", "clip", "image", "seed")
     FUNCTION = "flush"
 
@@ -1890,38 +1964,50 @@ class ttN_pipe_v2_EDIT:
 
     def flush(self, pipe=None, model=None, pos=None, neg=None, latent=None, vae=None, clip=None, image=None, seed=None, my_unique_id=None):
 
-        model = model or pipe[0]
+        model = model or pipe.get("model")
         if model is None:
             ttNl("Model missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
-        pos = pos or pipe[1]
+        pos = pos or pipe.get("positive")
         if pos is None:
             ttNl("Positive conditioning missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
-        neg = neg or pipe[2]
+        neg = neg or pipe.get("negative")
         if neg is None:
             ttNl("Negative conditioning missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
-        samples = latent or pipe[5]
+        samples = latent or pipe.get("samples")
         if samples is None:
             ttNl("Latent missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
-        vae = vae or pipe[3]
+        vae = vae or pipe.get("vae")
         if vae is None:
             ttNl("VAE missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
-        clip = clip or pipe[4]
+        clip = clip or pipe.get("clip")
         if clip is None:
             ttNl("Clip missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
-        image = image or pipe[6]
+        image = image or pipe.get("images")
         if image is None:
             ttNl("Image missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
-        seed = seed or pipe[7]
+        seed = seed or pipe.get("seed")
         if seed is None:
             ttNl("Seed missing from pipeLine").t(f'pipeEdit[{my_unique_id}]').warn().p()
 
-        new_pipe = (model, pos, neg, vae, clip, samples, image, seed,)
+        new_pipe = {
+            "model": model,
+            "positive": pos,
+            "negative": neg,
+            "vae": vae,
+            "clip": clip,
+
+            "samples": samples,
+            "images": image,
+            "seed": seed,
+
+            "loader_settings": pipe["loader_settings"],
+        }
         del pipe
 
         return (new_pipe, )
 
-class ttN_pipe_v2_2BASIC:
-    version = '2.0.0'
+class ttN_pipe_2BASIC:
+    version = '1.1.0'
     def __init__(self):
         pass
     
@@ -1929,26 +2015,26 @@ class ttN_pipe_v2_2BASIC:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "pipe": ("PIPE_LINE_V2",),
+                "pipe": ("PIPE_LINE",),
                 },
-            "hidden": {"ttNnodeVersion": ttN_pipe_v2_2BASIC.version},
+            "hidden": {"ttNnodeVersion": ttN_pipe_2BASIC.version},
             }
 
-    RETURN_TYPES = ("BASIC_PIPE", "PIPE_LINE_V2",)
+    RETURN_TYPES = ("BASIC_PIPE", "PIPE_LINE",)
     RETURN_NAMES = ("basic_pipe", "pipe",)
     FUNCTION = "flush"
 
     CATEGORY = "🌏 tinyterra/pipe"
     
     def flush(self, pipe):
-        basic_pipe = (pipe[0], pipe[4], pipe[3], pipe[1], pipe[2])
+        basic_pipe = (pipe.get('model'), pipe.get('clip'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'))
         return (basic_pipe, pipe, )
 
-class ttN_pipe_v2_2DETAILER:
-    version = '2.0.0'
+class ttN_pipe_2DETAILER:
+    version = '1.2.0'
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {"pipe": ("PIPE_LINE_V2",),
+        return {"required": {"pipe": ("PIPE_LINE",),
                              "bbox_detector": ("BBOX_DETECTOR", ), 
                              "wildcard": ("STRING", {"multiline": True, "placeholder": "wildcard spec: if kept empty, this option will be ignored"}),
                             },
@@ -1956,17 +2042,17 @@ class ttN_pipe_v2_2DETAILER:
                              "segm_detector_opt": ("SEGM_DETECTOR",),
                              "detailer_hook": ("DETAILER_HOOK",),
                             },
-                "hidden": {"ttNnodeVersion": ttN_pipe_v2_2DETAILER.version},
+                "hidden": {"ttNnodeVersion": ttN_pipe_2DETAILER.version},
                 }
 
-    RETURN_TYPES = ("DETAILER_PIPE", "PIPE_LINE_V2" )
+    RETURN_TYPES = ("DETAILER_PIPE", "PIPE_LINE" )
     RETURN_NAMES = ("detailer_pipe", "pipe")
     FUNCTION = "flush"
 
     CATEGORY = "🌏 tinyterra/pipe"
 
     def flush(self, pipe, bbox_detector, wildcard, sam_model_opt=None, segm_detector_opt=None, detailer_hook=None):
-        detailer_pipe = (pipe[0], pipe[4], pipe[3], pipe[1], pipe[2], wildcard,
+        detailer_pipe = (pipe.get('model'), pipe.get('clip'), pipe.get('vae'), pipe.get('positive'), pipe.get('negative'), wildcard,
                          bbox_detector, segm_detector_opt, sam_model_opt, detailer_hook, None, None, None, None)
         return (detailer_pipe, pipe, )
     
@@ -1975,7 +2061,7 @@ class ttN_pipeEncodeConcat:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": {
-                    "pipe": ("PIPE_LINE_V2",),
+                    "pipe": ("PIPE_LINE",),
                     "toggle": ([True, False],),
                     },
                 "optional": {
@@ -1995,7 +2081,7 @@ class ttN_pipeEncodeConcat:
         }
     
     OUTPUT_NODE = True
-    RETURN_TYPES = ("PIPE_LINE_V2", "CONDITIONING", "CONDITIONING", "CLIP")
+    RETURN_TYPES = ("PIPE_LINE", "CONDITIONING", "CONDITIONING", "CLIP")
     RETURN_NAMES = ("pipe", "positive", "negative", "clip")
     FUNCTION = "concat"
 
@@ -2006,7 +2092,7 @@ class ttN_pipeEncodeConcat:
                  pipe=None, positive='', negative='', seed=None, my_unique_id=None, optional_positive_from=None, optional_negative_from=None, optional_clip=None):
         
         if toggle == False:
-            return (pipe, pipe[1], pipe[2], pipe[4],)
+            return (pipe, pipe["positive"], pipe["negative"], pipe["clip"])
         
         positive_from = optional_positive_from if optional_positive_from is not None else pipe["positive"] 
         negative_from = optional_negative_from if optional_negative_from is not None else pipe["negative"]
@@ -2042,14 +2128,123 @@ class ttN_pipeEncodeConcat:
         if negative not in ['', None, ' ']:
             neg = enConcatConditioning(negative, negative_token_normalization, negative_weight_interpretation, negative_from, new_text)
 
-        pos = pos if pos is not None else pipe[1]
-        neg = neg if neg is not None else pipe[2]
+        pos = pos if pos is not None else pipe["positive"]
+        neg = neg if neg is not None else pipe["negative"]
         
-        new_pipe = [pipe[0], pos, neg, pipe[3], samp_clip, pipe[5], pipe[6], pipe[7]]
+        new_pipe = {
+                "model": pipe["model"],
+                "positive": pos,
+                "negative": neg,
+                "vae": pipe["vae"],
+                "clip": samp_clip,
 
+                "samples": pipe["samples"],
+                "images": pipe["images"],
+                "seed": pipe["seed"],
+
+                "loader_settings": pipe["loader_settings"],
+            }
         del pipe
 
-        return (new_pipe, pos, neg, samp_clip, { "ui": { "string": new_text } } )
+        return (new_pipe, new_pipe["positive"], new_pipe["negative"], samp_clip, { "ui": { "string": new_text } } )
+
+class ttN_pipeLoraStack:
+    version = '1.1.1'
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        inputs = {
+            "required": {
+                "toggle": ([True, False],),
+                "mode": (["simple", "advanced"],),
+                "num_loras": ("INT", {"default": 1, "min": 0, "max": 20}),
+            },
+            "optional": {
+                "optional_pipe": ("PIPE_LINE", {"default": None}),
+                "model_override": ("MODEL",),
+                "clip_override": ("CLIP",),
+                "optional_lora_stack": ("LORA_STACK",),
+            }, 
+            "hidden": {
+                "ttNnodeVersion": (ttN_pipeLoraStack.version),
+            },
+        }
+
+        for i in range(1, 21):
+            inputs["optional"][f"lora_{i}_name"] = (["None"] + folder_paths.get_filename_list("loras"),{"default": "None"})
+            inputs["optional"][f"lora_{i}_strength"] = ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}) 
+            inputs["optional"][f"lora_{i}_model_strength"] = ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01})
+            inputs["optional"][f"lora_{i}_clip_strength"] = ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01})
+        
+        return inputs
+    
+    
+    RETURN_TYPES = ("PIPE_LINE", "LORA_STACK",)
+    RETURN_NAMES = ("optional_pipe","lora_stack",)
+    FUNCTION = "stack"
+
+    CATEGORY = "🌏 tinyterra/pipe"
+
+    def stack(self, toggle, mode, num_loras, optional_pipe=None, lora_stack=None, model_override=None, clip_override=None, **kwargs):
+        if (toggle in [False, None, "False"]) or not kwargs:
+            return optional_pipe, None
+        
+        loras = []
+
+        # Import Stack values
+        if lora_stack is not None:
+            loras.extend([l for l in lora_stack if l[0] != "None"])
+
+        # Import Lora values
+        for i in range(1, num_loras + 1):
+            lora_name = kwargs.get(f"lora_{i}_name")
+
+            if not lora_name or lora_name == "None":
+                continue
+
+            if mode == "simple":
+                lora_strength = float(kwargs.get(f"lora_{i}_strength"))
+                loras.append((lora_name, lora_strength, lora_strength))
+            elif mode == "advanced":
+                model_strength = float(kwargs.get(f"lora_{i}_model_strength"))
+                clip_strength = float(kwargs.get(f"lora_{i}_clip_strength"))
+                loras.append((lora_name, model_strength, clip_strength))
+        
+        if not loras:
+            return optional_pipe, None
+        
+        if loras and not optional_pipe:
+            return optional_pipe, loras
+        
+        # Load Loras
+        model = model_override or optional_pipe.get("model")
+        clip = clip_override or optional_pipe.get("clip")
+
+        if not model or not clip:
+            return optional_pipe, loras
+        
+        for lora in loras:
+            model, clip = loader.load_lora(lora[0], model, clip, lora[1], lora[2])
+
+        new_pipe = {
+            "model": model,
+            "positive": optional_pipe["positive"],
+            "negative": optional_pipe["negative"],
+            "vae": optional_pipe["vae"],
+            "clip": clip,
+
+            "samples": optional_pipe["samples"],
+            "images": optional_pipe["images"],
+            "seed": optional_pipe["seed"],
+
+            "loader_settings": optional_pipe["loader_settings"],
+        }
+
+        del optional_pipe
+
+        return new_pipe, loras
 
 #---------------------------------------------------------------ttN/pipe END------------------------------------------------------------------------#
 
@@ -3244,13 +3439,14 @@ TTN_VERSIONS = {
     "pipeKSamplerAdvanced_v2": ttN_pipeKSamplerAdvanced_v2.version,
     "pipeLoaderSDXL_v2": ttN_pipeLoaderSDXL_v2.version,
     "pipeKSamplerSDXL_v2": ttN_pipeKSamplerSDXL_v2.version,
-    "pipeEDIT": ttN_pipe_v2_EDIT.version,
-    "pipe2BASIC": ttN_pipe_v2_2BASIC.version,
-    "pipe2DETAILER": ttN_pipe_v2_2DETAILER.version,
+    "pipeEDIT": ttN_pipe_EDIT.version,
+    "pipe2BASIC": ttN_pipe_2BASIC.version,
+    "pipe2DETAILER": ttN_pipe_2DETAILER.version,
     "advanced xyPlot": ttN_advanced_XYPlot.version,
-    #"advPlot merge": ttN_advPlot_merge.version,
+#    "advPlot merge": ttN_advPlot_merge.version,
     "advPlot range": ttN_advPlot_range.version,
     "pipeEncodeConcat": ttN_pipeEncodeConcat.version,
+    "multiLoraStack": ttN_pipeLoraStack.version,
     "multiModelMerge": ttN_multiModelMerge.version,
     "debugInput": ttN_debugInput.version,
     "text": ttN_text.version,
@@ -3278,15 +3474,17 @@ NODE_CLASS_MAPPINGS = {
     "ttN pipeLoaderSDXL_v2": ttN_pipeLoaderSDXL_v2,
     "ttN pipeKSamplerSDXL_v2": ttN_pipeKSamplerSDXL_v2,
     "ttN advanced xyPlot": ttN_advanced_XYPlot,
-    #"ttN advPlot merge": ttN_advPlot_merge,
+#    "ttN advPlot merge": ttN_advPlot_merge,
     "ttN advPlot range": ttN_advPlot_range,
-    "ttN pipeEDIT_v2": ttN_pipe_v2_EDIT,
-    "ttN pipe2BASIC_v2": ttN_pipe_v2_2BASIC,
-    "ttN pipe2DETAILER_v2": ttN_pipe_v2_2DETAILER,
+    "ttN pipeEDIT": ttN_pipe_EDIT,
+    "ttN pipe2BASIC": ttN_pipe_2BASIC,
+    "ttN pipe2DETAILER": ttN_pipe_2DETAILER,
     "ttN pipeEncodeConcat": ttN_pipeEncodeConcat,
+    "ttN pipeLoraStack": ttN_pipeLoraStack,
 
     #ttN/misc
     "ttN multiModelMerge": ttN_multiModelMerge,
+    "ttN debugInput": ttN_debugInput,
 
     #ttN/text
     "ttN text": ttN_text,
@@ -3304,7 +3502,6 @@ NODE_CLASS_MAPPINGS = {
     "ttN int": ttN_INT,
     "ttN float": ttN_FLOAT,
     "ttN seed": ttN_SEED,
-    "ttN debugInput": ttN_debugInput,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     #ttN/base
@@ -3317,18 +3514,20 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN pipeKSamplerAdvanced_v2": "pipeKSamplerAdvanced",
     "ttN pipeLoaderSDXL_v2": "pipeLoaderSDXL",
     "ttN pipeKSamplerSDXL_v2": "pipeKSamplerSDXL",
-    "ttN pipeEDIT_v2": "pipeEDIT",
-    "ttN pipe2BASIC_v2": "pipe > basic_pipe",
-    "ttN pipe2DETAILER_v2": "pipe > detailer_pipe",
+    "ttN pipeEDIT": "pipeEDIT",
+    "ttN pipe2BASIC": "pipe > basic_pipe",
+    "ttN pipe2DETAILER": "pipe > detailer_pipe",
     "ttN pipeEncodeConcat": "pipeEncodeConcat",
+    "ttN pipeLoraStack": "pipeLoraStack",
 
     #ttN/xyPlot
     "ttN advanced xyPlot": "advanced xyPlot",
-    #"ttN advPlot merge": "advPlot merge",
+#    "ttN advPlot merge": "advPlot merge",
     "ttN advPlot range": "advPlot range",
     
     #ttN/misc
     "ttN multiModelMerge": "multiModelMerge",
+    "ttN debugInput": "debugInput",
 
     #ttN/text
     "ttN text": "text",
@@ -3346,7 +3545,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN int": "int",
     "ttN float": "float",
     "ttN seed": "seed",
-    "ttN debugInput": "debugInput",
 }
 
 ttNl('Loaded').full().p()
