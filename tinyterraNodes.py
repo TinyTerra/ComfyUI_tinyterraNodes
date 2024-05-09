@@ -2471,7 +2471,7 @@ class ttN_KSampler_v2:
                 "longer_side": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                 "crop": (cls.crop_methods,),
 
-                "sampler_state": (["Sample", "Hold"], ),
+                "sampler_state": (["Sample",], ),
                 "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                 "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
                 "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
@@ -2494,8 +2494,8 @@ class ttN_KSampler_v2:
                  "ttNnodeVersion": ttN_pipeKSampler_v2.version},
         }
 
-    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
-    RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
+    RETURN_TYPES = ("MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
+    RETURN_NAMES = ("model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
     OUTPUT_NODE = True
     FUNCTION = "sample"
     CATEGORY = "🌏 tinyterra/base"
@@ -2507,21 +2507,89 @@ class ttN_KSampler_v2:
                 seed=None, adv_xyPlot=None, upscale_model_name=None, upscale_method=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None,
                 prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False, disable_noise=False):
 
-        pipe = {"model": model,
-                "positive": positive,
-                "negative": negative,
-                "vae": vae,
-                "clip": clip,
+        my_unique_id = int(my_unique_id)
 
-                "samples": latent,
-                "images": input_image_override,
-                "seed": seed,
+        ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo)
 
-                "loader_settings": None
-                }
 
-        return ttN_pipeKSampler_v2.sample(self, pipe, lora_name, lora_strength, sampler_state, steps, cfg, sampler_name, scheduler, image_output, save_prefix, file_type, embed_workflow, denoise, 
-                None, None, None, None, None, None, input_image_override, seed, adv_xyPlot, upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop, prompt, extra_pnginfo, my_unique_id, None, None, force_full_denoise, disable_noise)
+        def process_sample_state(model, images, clip, samples, vae, seed, positive, negative, lora_name, lora_model_strength, lora_clip_strength,
+                                 upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
+                                 steps, cfg, sampler_name, scheduler, denoise,
+                                 image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise):
+            # Load Lora
+            if lora_name not in (None, "None"):
+                model, clip = loader.load_lora(lora_name, model, clip, lora_model_strength, lora_clip_strength)
+
+            upscale_method = upscale_method.split(' ', 1)
+
+            # Upscale samples if enabled
+            if upscale_method[0] == "[latent]":
+                samples = sampler.handle_upscale(samples, upscale_method[1], factor, crop)
+            
+            if upscale_method[0] == "[hiresFix]": 
+                if (images is None):
+                    images = vae.decode(samples["samples"])
+                hiresfix = ttN_modelScale()
+                samples = hiresfix.upscale(upscale_model_name, images, True if rescale != 'None' else False, upscale_method[1], rescale, percent, width, height, longer_side, crop, "return latent", None, True, vae)
+
+            samples = sampler.common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, samples, denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
+      
+            results = list()
+            if (image_output != "Disabled"):
+                # Save images
+                latent = samples["samples"]
+                images = vae.decode(latent)
+
+                results = ttN_save.images(images, save_prefix, image_output, embed_workflow, file_type)
+
+            sampler.update_value_by_id("results", my_unique_id, results)
+            
+            if image_output in ("Hide", "Hide/Save", "Disabled"):
+                return (model, positive, negative, samples, vae, clip, images, seed)
+
+            return {"ui": {"images": results},
+                    "result": (model, positive, negative, samples, vae, clip, images, seed)}
+
+        def process_xyPlot(model, clip, samples, vae, seed, positive, negative, lora_name, lora_model_strength, lora_clip_strength,
+                           steps, cfg, sampler_name, scheduler, denoise,
+                           image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot):
+
+            random.seed(seed)
+
+            plotter = ttNadv_xyPlot(adv_xyPlot, my_unique_id, prompt, extra_pnginfo, save_prefix, image_output)
+            samples, images = plotter.xy_plot_process()
+
+            if samples is None and images is None:
+                return process_sample_state(model, images, clip, samples, vae, seed, positive, negative, lora_name, lora_model_strength, lora_clip_strength,
+                                 upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
+                                 steps, cfg, sampler_name, scheduler, denoise,
+                                 image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
+
+
+            results = ttN_save.images(images[0], save_prefix, image_output, embed_workflow, file_type)
+
+            sampler.update_value_by_id("results", my_unique_id, results)
+
+            if image_output in ("Hide", "Hide/Save"):
+                return (model, positive, negative, samples, vae, clip, images, seed)
+
+            return {"ui": {"images": results}, "result": (model, positive, negative, samples, vae, clip, images, seed)}
+
+        preview_latent = True
+        if image_output in ("Hide", "Hide/Save", "Disabled"):
+            preview_latent = False
+
+        if sampler_state == "Sample" and adv_xyPlot is None:
+            return process_sample_state(model, input_image_override, clip, latent, vae, seed, positive, negative, lora_name, lora_strength, lora_strength,
+                                        upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
+                                        steps, cfg, sampler_name, scheduler, denoise, image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent)
+
+        elif sampler_state == "Sample" and adv_xyPlot is not None:
+            return process_xyPlot(model, clip, latent, vae, seed, positive, negative, lora_name, lora_strength, lora_strength, steps, cfg, sampler_name, 
+                                  scheduler, denoise, image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot)
+
+        elif sampler_state == "Hold":
+            return sampler.process_hold_state((model, positive, negative, latent, vae, clip, input_image_override, seed), image_output, my_unique_id)
 #---------------------------------------------------------------ttN/base END------------------------------------------------------------------------#
 
 
