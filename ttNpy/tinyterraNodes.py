@@ -184,9 +184,12 @@ class ttNloader:
         return model_lora, clip_lora
 
     def validate_lora_format(self, lora_string):
-        if not re.match(r'^<lora:.*?:[-0-9.]+(:[-0-9.]+)*>$', lora_string):
+        if lora_string is None:
+            return None
+        if not re.match(r'^<lora:([a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]+)?):([-0-9.]+)(:([-0-9.]+))*>$', lora_string):
             ttNl(f'{lora_string}').t("Skipping invalid lora format").error().p()
             return None
+
         return lora_string
 
     def parse_lora_string(self, lora_string):
@@ -195,7 +198,6 @@ class ttNloader:
         
         # Assign parts to variables. If some parts are missing, assign None.
         lora_name = parts[0] if len(parts) > 0 else None 
-        lora_name = self.loraDict.get(lora_name, lora_name)
         weight1 = float(parts[1]) if len(parts) > 1 else None
         weight2 = float(parts[2]) if len(parts) > 2 else weight1
         return lora_name, weight1, weight2
@@ -210,6 +212,12 @@ class ttNloader:
             match = self.validate_lora_format(match)
             if match is not None:
                 lora_name, weight1, weight2 = self.parse_lora_string(match)
+                
+                if lora_name not in self.loraDict:
+                    ttNl(f'{lora_name}').t("Skipping unknown lora").error().p()
+                    continue
+                
+                lora_name = self.loraDict.get(lora_name, lora_name)
                 model, clip = self.load_lora(lora_name, model, clip, weight1, weight2)
         
         return model, clip
