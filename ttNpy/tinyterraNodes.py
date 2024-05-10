@@ -395,7 +395,7 @@ class ttNsampler:
 
         last_results = self.init_state(my_unique_id, "results", list())
 
-        output = self.get_output(last_pipe) if not sdxl else self.get_output_sdxl_v2(last_pipe)
+        output = self.get_output(last_pipe) if not sdxl else self.get_output_sdxl(last_pipe)
         
         if image_output in ("Hide", "Hide/Save", "Disabled"):
             return output
@@ -463,25 +463,7 @@ class ttNsampler:
             pipe.get("seed")
         )
     
-    def get_output_sdxl(self, sdxl_pipe: dict) -> Tuple:
-        """Return a tuple of various elements fetched from the input sdxl_pipe dictionary."""
-        return (
-            sdxl_pipe,
-            sdxl_pipe.get("model"),
-            sdxl_pipe.get("positive"),
-            sdxl_pipe.get("negative"),
-            sdxl_pipe.get("vae"),
-            sdxl_pipe.get("refiner_model"),
-            sdxl_pipe.get("refiner_positive"),
-            sdxl_pipe.get("refiner_negative"),
-            sdxl_pipe.get("refiner_vae"),
-            sdxl_pipe.get("samples"),
-            sdxl_pipe.get("clip"),
-            sdxl_pipe.get("images"),
-            sdxl_pipe.get("seed")
-        )
-    
-    def get_output_sdxl_v2(self, sdxl_pipe: dict, pipe: dict) -> Tuple:
+    def get_output_sdxl(self, sdxl_pipe: dict, pipe: dict) -> Tuple:
         """Return a tuple of various elements fetched from the input sdxl_pipe dictionary."""
         return (
             sdxl_pipe,
@@ -1855,10 +1837,10 @@ class ttN_pipeKSamplerSDXL_v2:
             del sdxl_pipe
             
             if image_output in ("Hide", "Hide/Save", "Disabled"):
-                return sampler.get_output_sdxl_v2(new_sdxl_pipe, pipe)
+                return sampler.get_output_sdxl(new_sdxl_pipe, pipe)
 
             return {"ui": {"images": results},
-                    "result": sampler.get_output_sdxl_v2(new_sdxl_pipe, pipe)}
+                    "result": sampler.get_output_sdxl(new_sdxl_pipe, pipe)}
 
         def process_xyPlot(sdxl_pipe, sdxl_model, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_model_strength, lora_clip_strength,
                            base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise,
@@ -1918,10 +1900,10 @@ class ttN_pipeKSamplerSDXL_v2:
             del sdxl_pipe
             
             if image_output in ("Hide", "Hide/Save", "Disabled"):
-                return sampler.get_output_sdxl_v2(new_sdxl_pipe, pipe)
+                return sampler.get_output_sdxl(new_sdxl_pipe, pipe)
 
             return {"ui": {"images": results},
-                    "result": sampler.get_output_sdxl_v2(new_sdxl_pipe, pipe)}
+                    "result": sampler.get_output_sdxl(new_sdxl_pipe, pipe)}
             
         preview_latent = True
         if image_output in ("Hide", "Hide/Save", "Disabled"):
