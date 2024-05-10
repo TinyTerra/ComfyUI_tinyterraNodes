@@ -1250,8 +1250,6 @@ class ttN_pipeKSampler_v2:
                 },
                 "hidden":
                 {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
-                 "embeddingsList": (folder_paths.get_filename_list("embeddings"),),
-                 "lorasList": (folder_paths.get_filename_list("loras"),),
                  "ttNnodeVersion": ttN_pipeKSampler_v2.version},
         }
 
@@ -1461,8 +1459,6 @@ class ttN_pipeKSamplerAdvanced_v2:
                 "prompt": "PROMPT",
                 "extra_pnginfo": "EXTRA_PNGINFO",
                 "my_unique_id": "UNIQUE_ID",
-                "embeddingsList": (folder_paths.get_filename_list("embeddings"),),
-                "lorasList": (folder_paths.get_filename_list("loras"),),
                 "ttNnodeVersion": ttN_pipeKSamplerAdvanced_v2.version
                 },
             }
@@ -1711,8 +1707,6 @@ class ttN_pipeKSamplerSDXL_v2:
                 },
                 "hidden":
                 {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
-                 "embeddingsList": (folder_paths.get_filename_list("embeddings"),),
-                 "lorasList": (folder_paths.get_filename_list("loras"),),
                 "ttNnodeVersion": ttN_pipeKSamplerSDXL_v2.version},
         }
 
@@ -2415,8 +2409,6 @@ class ttN_KSampler_v2:
                 },
                 "hidden":
                 {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
-                 "embeddingsList": (folder_paths.get_filename_list("embeddings"),),
-                 "lorasList": (folder_paths.get_filename_list("loras"),),
                  "ttNnodeVersion": ttN_pipeKSampler_v2.version},
         }
 

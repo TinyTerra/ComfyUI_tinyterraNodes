@@ -1,4 +1,5 @@
 import { app } from "../../scripts/app.js";
+import { api } from "../../scripts/api.js";
 import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttNdropdown.js";
 
 // Initialize some global lists and objects.
@@ -270,12 +271,13 @@ function _attachLorasHandler(widget) {
 
 app.registerExtension({
     name: "comfy.ttN.AutoComplete",
-    async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        if (nodeData.name === "ttN pipeKSampler_v2") {
-            _initializeAutocompleteData(nodeData.input.hidden.embeddingsList[0], 'embedding:');
-            _initializeAutocompleteData(nodeData.input.hidden.lorasList[0], '<lora:');
-            _initializeAutocompleteList(nsp_keys, '__');
-        }
+    async init() {
+        const embs = await api.fetchApi("/embeddings")
+        const loras = await api.fetchApi("/ttN/loras")
+
+        _initializeAutocompleteData(await embs.json(), 'embedding:');
+        _initializeAutocompleteData(await loras.json(), '<lora:');
+        _initializeAutocompleteList(nsp_keys, '__');
     },
     nodeCreated(node) {
         if (node.widgets && node.getTitle() !== "xyPlot") {
