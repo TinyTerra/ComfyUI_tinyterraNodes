@@ -806,25 +806,25 @@ class ttNadv_xyPlot:
 
         # Rearrange latent array to match preview image grid
         self.latent_list = self.rearrange_tensors(self.latent_list, self.num_cols, self.num_rows)
-        rearreanged_image_list = self.rearrange_tensors(self.image_list, self.num_cols, self.num_rows)
+        rearranged_image_list = self.rearrange_tensors(self.image_list, self.num_cols, self.num_rows)
 
         if self.image_output in ["Preview", "Save"]:
-            rearreanged_ui_list = self.rearrange_tensors(self.ui_list, self.num_cols, self.num_rows)
+            rearranged_ui_list = self.rearrange_tensors(self.ui_list, self.num_cols, self.num_rows)
         else:
-            rearreanged_ui_list = []
+            rearranged_ui_list = []
 
         # Concatenate the tensors along the first dimension (dim=0)
         self.latent_list = torch.cat(self.latent_list, dim=0)
         plot_image = self.plot_images()
 
         images = []
-        for image in rearreanged_image_list:
+        for image in rearranged_image_list:
             images.append(sampler.pil2tensor(image))
 
         images_out = torch.cat(images, dim=0)
         samples = {"samples": self.latent_list}
         
-        return plot_image, images_out, samples, rearreanged_ui_list
+        return plot_image, images_out, samples, rearranged_ui_list
 
 class ttNsave:
     def __init__(self, my_unique_id=0, prompt=None, extra_pnginfo=None, number_padding=5, overwrite_existing=False, output_dir=folder_paths.get_temp_directory()):
