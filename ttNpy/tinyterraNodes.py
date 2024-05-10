@@ -767,7 +767,10 @@ class ttNadv_xyPlot:
             for node_id, inputs in nodes.items():
                 if node_id == 'label':
                     continue
-                x_node_inputs = x_prompt[node_id]["inputs"]
+                try:
+                    x_node_inputs = x_prompt[node_id]["inputs"]
+                except KeyError:
+                    raise KeyError(f'Node with ID: [{node_id}] not found in prompt for xyPlot')
                 x_class_type = x_prompt[node_id]["class_type"]
                 x_class_def = COMFY_CLASS_MAPPINGS[x_class_type]
                 x_input_types = x_class_def.INPUT_TYPES()
@@ -785,7 +788,10 @@ class ttNadv_xyPlot:
                     for node_id, inputs in nodes.items():
                         if node_id == 'label':
                             continue
-                        y_node_inputs = y_prompt[node_id]["inputs"]
+                        try:
+                            y_node_inputs = y_prompt[node_id]["inputs"]
+                        except KeyError:
+                            raise KeyError(f'Node with ID: [{node_id}] not found in prompt for xyPlot')
                         y_class_type = y_prompt[node_id]["class_type"]
                         y_class_def = COMFY_CLASS_MAPPINGS[y_class_type]
                         y_input_types = y_class_def.INPUT_TYPES()
