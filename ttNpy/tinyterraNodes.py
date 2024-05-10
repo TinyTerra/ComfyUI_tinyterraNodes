@@ -186,7 +186,7 @@ class ttNloader:
     def validate_lora_format(self, lora_string):
         if lora_string is None:
             return None
-        if not re.match(r'^<lora:([a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]+)?):([-0-9.]+)(:([-0-9.]+))*>$', lora_string):
+        if not re.match(r'^<lora:.*?:[-0-9.]+(:[-0-9.]+)*>$', lora_string):
             ttNl(f'{lora_string}').t("Skipping invalid lora format").error().p()
             return None
 
