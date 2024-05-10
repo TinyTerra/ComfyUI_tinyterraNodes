@@ -858,37 +858,6 @@ function _setCurrentImageIndex(i, symbol=null) {
     updateImageElements();
 }
 
-app.registerExtension({
-    name: "comfy.ttN.fullscreen",
-    /*setup() {
-        const getNodeMenuOptions = LGraphCanvas.prototype.getNodeMenuOptions;
-        LGraphCanvas.prototype.getNodeMenuOptions = function (node) {
-            const options = getNodeMenuOptions.apply(this, arguments);
-            node.setDirtyCanvas(true, true);
-
-            options.splice(options.length - 1, 0,
-                {
-                    content: "Fullscreen 🌏",
-                    callback: () => { openFullscreenApp(node) }
-                },
-                {
-                    content: "Set Default Fullscreen Node 🌏",
-                    callback: _setDefaultFullscreenNode
-                },
-                {
-                    content: "Clear Default Fullscreen Node 🌏",
-                    callback: function () {
-                        sessionStorage.removeItem('Comfy.Settings.ttN.default_fullscreen_node');
-                    }
-                },
-                null
-            );
-
-            return options;
-        };
-    }*/
-});
-
 enable_document_listeners();
 enable_api_listeners();
 
