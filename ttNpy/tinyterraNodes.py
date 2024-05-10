@@ -3211,6 +3211,7 @@ class ttN_imageOUPUT:
         return {"required": { 
                 "image": ("IMAGE",),
                 "image_output": (["Hide", "Preview", "Save", "Hide/Save"],{"default": "Preview"}),
+                "output_path": ("STRING", {"default": folder_paths.get_output_directory(), "multiline": False}),
                 "save_prefix": ("STRING", {"default": "ComfyUI"}),
                 "number_padding": (["None", 2, 3, 4, 5, 6, 7, 8, 9],{"default": 5}),
                 "file_type": (OUTPUT_FILETYPES, {"default": "png"}),
@@ -3227,8 +3228,8 @@ class ttN_imageOUPUT:
     CATEGORY = "🌏 tinyterra/image"
     OUTPUT_NODE = True
 
-    def output(self, image, image_output, save_prefix, number_padding, file_type, overwrite_existing, embed_workflow, prompt, extra_pnginfo, my_unique_id):
-        ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo, number_padding, overwrite_existing)
+    def output(self, image, image_output, output_path, save_prefix, number_padding, file_type, overwrite_existing, embed_workflow, prompt, extra_pnginfo, my_unique_id):
+        ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo, number_padding, overwrite_existing, output_path)
         results = ttN_save.images(image, save_prefix, image_output, embed_workflow, file_type)
 
         if image_output in ("Hide", "Hide/Save"):
