@@ -447,17 +447,18 @@ class ttNadv_xyPlot:
         self.image_output = image_output
 
         self.outputs = {}
+        self.outputs_ui = {}
         self.object_storage = {}
 
         self.results = {}
         self.latent_list = []
         self.image_list = []
+        self.ui_list = []
 
         self.adv_xyPlot = adv_xyPlot
         self.x_points = adv_xyPlot.get("x_plot", None)
         self.y_points = adv_xyPlot.get("y_plot", None)
-        self.latent_index = adv_xyPlot.get("latent_index", 0)
-        self.output_individuals = adv_xyPlot.get("output_individuals", False)
+        self.save_individuals = adv_xyPlot.get("save_individuals", False)
         self.image_output = prompt[str(unique_id)]["inputs"]["image_output"]
         self.x_labels = []
         self.y_labels = []
@@ -651,8 +652,9 @@ class ttNadv_xyPlot:
                 obj = class_def()
                 object_storage[(unique_id, class_type)] = obj
 
-            output_data, _ = execution.get_output_data(obj, input_data_all)
+            output_data, output_ui = execution.get_output_data(obj, input_data_all)
             self.outputs[unique_id] = output_data
+            self.outputs_ui[unique_id] = output_ui
         except comfy.model_management.InterruptProcessingException as iex:
             logging.info("Processing interrupted")
             raise iex
@@ -660,9 +662,13 @@ class ttNadv_xyPlot:
         return self.outputs
     
     def execute_prompt(self, prompt, extra_data, xpoint, ypoint, x_label, y_label):
-        if self.output_individuals == "True":
-            prompt[self.unique_id]["inputs"]["image_output"] = "Save"
-        elif self.image_output == "Preview":
+        if self.save_individuals == True:
+            if self.image_output in ["Hide", "Hide/Save"]:
+                prompt[self.unique_id]["inputs"]["image_output"] = "Hide/Save"
+            else:
+                prompt[self.unique_id]["inputs"]["image_output"] = "Save"
+                
+        elif self.image_output in ["Preview", "Save"]:
             prompt[self.unique_id]["inputs"]["image_output"] = "Preview"
         else:
             prompt[self.unique_id]["inputs"]["image_output"] = "Hide"
@@ -678,7 +684,9 @@ class ttNadv_xyPlot:
                     to_delete += [o]
             for o in to_delete:
                 d = self.outputs.pop(o)
+                d2 = self.outputs_ui.pop(o)
                 del d
+                del d2
             to_delete = []
             for o in self.object_storage:
                 if o[0] not in prompt:
@@ -699,13 +707,12 @@ class ttNadv_xyPlot:
             if comfy.model_management.DISABLE_SMART_MEMORY:
                 comfy.model_management.unload_all_models()
 
+        self.latent_list.append(self.outputs[self.unique_id][-6][0]["samples"])
+        ui_out = self.outputs_ui[self.unique_id].get('images')
+        if ui_out is not None and len(ui_out) > 0:
+            self.ui_list.append(ui_out[0])
 
-
-        #self.results[xpoint][ypoint] = self.outputs[self.unique_id]
-
-        self.latent_list.append(self.outputs[self.unique_id][-5][0]["samples"])
-
-        image = self.outputs[self.unique_id][-2][0]
+        image = self.outputs[self.unique_id][-3][0]
         pil_image = ttNsampler.tensor2pil(image)
         self.image_list.append(pil_image)
 
@@ -746,7 +753,7 @@ class ttNadv_xyPlot:
         
     def xy_plot_process(self):
         if self.x_points is None and self.y_points is None:
-            return None, None
+            return None, None, None, None
 
         regex = re.compile(r'%(.*?);(.*?)%')
         
@@ -791,25 +798,27 @@ class ttNadv_xyPlot:
             else:
                 self.execute_prompt(x_prompt, self.extra_pnginfo, xpoint, "1", x_label, None)
 
-        if self.latent_index > len(self.image_list) - 1:
-            self.latent_index = len(self.image_list) - 1
-
         # Rearrange latent array to match preview image grid
         self.latent_list = self.rearrange_tensors(self.latent_list, self.num_cols, self.num_rows)
         rearreanged_image_list = self.rearrange_tensors(self.image_list, self.num_cols, self.num_rows)
 
-        for i, tensor in enumerate(self.latent_list):
-            if i == self.latent_index:
-                samples = {"samples": tensor}
-                break
+        if self.image_output in ["Preview", "Save"]:
+            rearreanged_ui_list = self.rearrange_tensors(self.ui_list, self.num_cols, self.num_rows)
+        else:
+            rearreanged_ui_list = []
 
         # Concatenate the tensors along the first dimension (dim=0)
         self.latent_list = torch.cat(self.latent_list, dim=0)
+        plot_image = self.plot_images()
 
-        images = [self.plot_images(), sampler.pil2tensor(rearreanged_image_list[self.latent_index])]
+        images = []
+        for image in rearreanged_image_list:
+            images.append(sampler.pil2tensor(image))
 
-        #print('OUTPUTS', outputs)
-        return samples, images
+        images_out = torch.cat(images, dim=0)
+        samples = {"samples": self.latent_list}
+        
+        return plot_image, images_out, samples, rearreanged_ui_list
 
 class ttNsave:
     def __init__(self, my_unique_id=0, prompt=None, extra_pnginfo=None, number_padding=5, overwrite_existing=False, output_dir=folder_paths.get_temp_directory()):
@@ -1156,7 +1165,7 @@ class ttN_pipeLoader_v2:
         return (pipe, model, positive_embedding, negative_embedding, samples, vae, clip, seed, empty_latent_width, empty_latent_height, final_positive, final_negative)
 
 class ttN_pipeKSampler_v2:
-    version = '2.3.0'
+    version = '2.3.1'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -1209,8 +1218,8 @@ class ttN_pipeKSampler_v2:
                  "ttNnodeVersion": ttN_pipeKSampler_v2.version},
         }
 
-    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
-    RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
+    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT", "IMAGE")
+    RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "images", "seed", "plot_image")
     OUTPUT_NODE = True
     FUNCTION = "sample"
     CATEGORY = "🌏 tinyterra/pipe"
@@ -1286,10 +1295,10 @@ class ttN_pipeKSampler_v2:
             }
 
             if image_output in ("Hide", "Hide/Save", "Disabled"):
-                return sampler.get_output(new_pipe)
+                return (*sampler.get_output(new_pipe), None)
 
             return {"ui": {"images": results},
-                    "result": sampler.get_output(new_pipe)}
+                    "result": (*sampler.get_output(new_pipe), None)}
 
         def process_xyPlot(samp_model, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
                            steps, cfg, sampler_name, scheduler, denoise,
@@ -1298,7 +1307,7 @@ class ttN_pipeKSampler_v2:
             random.seed(seed)
 
             plotter = ttNadv_xyPlot(adv_xyPlot, my_unique_id, prompt, extra_pnginfo, save_prefix, image_output)
-            samples, images = plotter.xy_plot_process()
+            plot_image, images, samples, ui_results = plotter.xy_plot_process()
 
             if samples is None and images is None:
                 return process_sample_state(samp_model, samp_images, samp_clip, samp_samples, samp_vae, samp_seed, samp_positive, samp_negative, lora_name, lora_model_strength, lora_clip_strength,
@@ -1307,7 +1316,8 @@ class ttN_pipeKSampler_v2:
                                  image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
 
 
-            results = ttN_save.images(images[0], save_prefix, image_output, embed_workflow, file_type)
+            plot_result = ttN_save.images(plot_image, save_prefix, image_output, embed_workflow, file_type)
+            plot_result.extend(ui_results)
 
             new_pipe = {
                 "model": samp_model,
@@ -1317,16 +1327,16 @@ class ttN_pipeKSampler_v2:
                 "clip": samp_clip,
 
                 "samples": samples,
-                "images": images[1],
+                "images": images,
                 "seed": samp_seed,
 
                 "loader_settings": None,
             }
 
             if image_output in ("Hide", "Hide/Save"):
-                return sampler.get_output(new_pipe)
+                return (*sampler.get_output(new_pipe), plot_image)
 
-            return {"ui": {"images": results}, "result": sampler.get_output(new_pipe)}
+            return {"ui": {"images": plot_result}, "result": (*sampler.get_output(new_pipe), plot_image)}
 
         preview_latent = True
         if image_output in ("Hide", "Hide/Save", "Disabled"):
@@ -1590,7 +1600,7 @@ class ttN_pipeLoaderSDXL_v2:
         return (sdxl_pipe, model, positive_embedding, negative_embedding, vae, clip, refiner_model, refiner_positive_embedding, refiner_negative_embedding, refiner_clip, samples, seed, empty_latent_width, empty_latent_height, final_positive, final_negative)
 
 class ttN_pipeKSamplerSDXL_v2:
-    version = '2.3.0'
+    version = '2.3.1'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -1650,8 +1660,8 @@ class ttN_pipeKSamplerSDXL_v2:
                 "ttNnodeVersion": ttN_pipeKSamplerSDXL_v2.version},
         }
 
-    RETURN_TYPES = ("PIPE_LINE_SDXL", "PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
-    RETURN_NAMES = ("sdxl_pipe", "pipe","model", "positive", "negative" , "refiner_model", "refiner_positive", "refiner_negative", "latent", "vae", "clip", "image", "seed", )
+    RETURN_TYPES = ("PIPE_LINE_SDXL", "PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT", "IMAGE")
+    RETURN_NAMES = ("sdxl_pipe", "pipe","model", "positive", "negative" , "refiner_model", "refiner_positive", "refiner_negative", "latent", "vae", "clip", "images", "seed", "plot_image")
     OUTPUT_NODE = True
     FUNCTION = "sample"
     CATEGORY = "🌏 tinyterra/pipe"
@@ -1767,10 +1777,10 @@ class ttN_pipeKSamplerSDXL_v2:
             }
             
             if image_output in ("Hide", "Hide/Save", "Disabled"):
-                return sampler.get_output_sdxl(new_sdxl_pipe, pipe)
+                return (*sampler.get_output_sdxl(new_sdxl_pipe, pipe), None)
 
             return {"ui": {"images": results},
-                    "result": sampler.get_output_sdxl(new_sdxl_pipe, pipe)}
+                    "result": (*sampler.get_output_sdxl(new_sdxl_pipe, pipe), None)}
 
         def process_xyPlot(sdxl_model, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_model_strength, lora_clip_strength,
                            base_steps, refiner_steps, cfg, sampler_name, scheduler, denoise,
@@ -1779,7 +1789,7 @@ class ttN_pipeKSamplerSDXL_v2:
             random.seed(seed)
 
             plotter = ttNadv_xyPlot(adv_xyPlot, my_unique_id, prompt, extra_pnginfo, save_prefix, image_output)
-            samples, images = plotter.xy_plot_process()
+            plot_image, images, samples, ui_results = plotter.xy_plot_process()
 
             if samples is None and images is None:
                 return process_sample_state(sdxl_model, sdxl_images, sdxl_clip, sdxl_samples, sdxl_vae, sdxl_seed, sdxl_positive, sdxl_negative, lora_name, lora_model_strength, lora_clip_strength,
@@ -1789,7 +1799,8 @@ class ttN_pipeKSamplerSDXL_v2:
                                  image_output, save_prefix, prompt, my_unique_id, preview_latent, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
 
 
-            results = ttN_save.images(images[0], save_prefix, image_output, embed_workflow, file_type)
+            plot_result = ttN_save.images(plot_image, save_prefix, image_output, embed_workflow, file_type)
+            plot_result.extend(ui_results)
 
             new_sdxl_pipe = {
                 "model": sdxl_model,
@@ -1804,7 +1815,7 @@ class ttN_pipeKSamplerSDXL_v2:
                 "refiner_clip": sdxl_refiner_clip,
 
                 "samples": samples,
-                "images": images[1],
+                "images": images,
                 "seed": sdxl_seed,
 
                 "loader_settings": None,
@@ -1817,17 +1828,17 @@ class ttN_pipeKSamplerSDXL_v2:
                 "clip": sdxl_clip,
 
                 "samples": samples,
-                "images": images[1],
+                "images": images,
                 "seed": sdxl_seed,
                 
                 "loader_settings": None,  
             }
 
             if image_output in ("Hide", "Hide/Save", "Disabled"):
-                return sampler.get_output_sdxl(new_sdxl_pipe, pipe)
+                return (*sampler.get_output_sdxl(new_sdxl_pipe, pipe), plot_image)
 
-            return {"ui": {"images": results},
-                    "result": sampler.get_output_sdxl(new_sdxl_pipe, pipe)}
+            return {"ui": {"images": plot_result},
+                    "result": (*sampler.get_output_sdxl(new_sdxl_pipe, pipe), plot_image)}
             
         preview_latent = True
         if image_output in ("Hide", "Hide/Save", "Disabled"):
@@ -2284,7 +2295,7 @@ class ttN_conditioning:
         return (model, positive_embedding, negative_embedding, clip, final_positive, final_negative)
 
 class ttN_KSampler_v2:
-    version = '2.3.0'
+    version = '2.3.1'
     upscale_methods = ["None",
                        "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                        "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
@@ -2337,8 +2348,8 @@ class ttN_KSampler_v2:
                  "ttNnodeVersion": ttN_pipeKSampler_v2.version},
         }
 
-    RETURN_TYPES = ("MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT",)
-    RETURN_NAMES = ("model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
+    RETURN_TYPES = ("MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT", "IMAGE")
+    RETURN_NAMES = ("model", "positive", "negative", "latent","vae", "clip", "images", "seed", "plot_image")
     OUTPUT_NODE = True
     FUNCTION = "sample"
     CATEGORY = "🌏 tinyterra/base"
@@ -2385,10 +2396,10 @@ class ttN_KSampler_v2:
                 results = ttN_save.images(images, save_prefix, image_output, embed_workflow, file_type)
             
             if image_output in ("Hide", "Hide/Save", "Disabled"):
-                return (model, positive, negative, samples, vae, clip, images, seed)
+                return (model, positive, negative, samples, vae, clip, images, seed, None)
 
             return {"ui": {"images": results},
-                    "result": (model, positive, negative, samples, vae, clip, images, seed)}
+                    "result": (model, positive, negative, samples, vae, clip, images, seed, None)}
 
         def process_xyPlot(model, clip, samples, vae, seed, positive, negative, lora_name, lora_model_strength, lora_clip_strength,
                            steps, cfg, sampler_name, scheduler, denoise,
@@ -2397,7 +2408,7 @@ class ttN_KSampler_v2:
             random.seed(seed)
 
             plotter = ttNadv_xyPlot(adv_xyPlot, my_unique_id, prompt, extra_pnginfo, save_prefix, image_output)
-            samples, images = plotter.xy_plot_process()
+            plot_image, images, samples, ui_results = plotter.xy_plot_process()
 
             if samples is None and images is None:
                 return process_sample_state(model, images, clip, samples, vae, seed, positive, negative, lora_name, lora_model_strength, lora_clip_strength,
@@ -2406,12 +2417,13 @@ class ttN_KSampler_v2:
                                  image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
 
 
-            results = ttN_save.images(images[0], save_prefix, image_output, embed_workflow, file_type)
+            plot_result = ttN_save.images(plot_image, save_prefix, image_output, embed_workflow, file_type)
+            plot_result.extend(ui_results)
 
             if image_output in ("Hide", "Hide/Save"):
-                return (model, positive, negative, samples, vae, clip, images, seed)
+                return (model, positive, negative, samples, vae, clip, images, seed, plot_image)
 
-            return {"ui": {"images": results}, "result": (model, positive, negative, samples, vae, clip, images, seed)}
+            return {"ui": {"images": plot_result}, "result": (model, positive, negative, samples, vae, clip, images, seed, plot_image)}
 
         preview_latent = True
         if image_output in ("Hide", "Hide/Save", "Disabled"):
@@ -2430,7 +2442,7 @@ class ttN_KSampler_v2:
 
 #-------------------------------------------------------------ttN/xyPlot START----------------------------------------------------------------------#
 class ttN_advanced_XYPlot:
-    version = '1.0.0'
+    version = '1.1.0'
     plotPlaceholder = "_PLOT\nExample:\n\n<axis number:label1>\n[node_ID:widget_Name='value']\n\n<axis number2:label2>\n[node_ID:widget_Name='value2']\n[node_ID:widget2_Name='value']\n[node_ID2:widget_Name='value']\n\netc..."
 
     def get_plot_points(plot_data, unique_id):
@@ -2491,9 +2503,9 @@ class ttN_advanced_XYPlot:
         return {
             "required": {
                 "grid_spacing": ("INT",{"min": 0, "max": 500, "step": 5, "default": 0,}),
-                "latent_index": ("INT",{"min": 0, "max": 100, "step": 1, "default": 0, }),
-                "output_individuals": (["False", "True"],{"default": "False"}),
-                "flip_xy": (["False", "True"],{"default": "False"}),
+                "save_individuals": ("BOOLEAN", {"default": False}),
+                "flip_xy": ("BOOLEAN", {"default": False}),
+                
                 "x_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'X' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
                 "y_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'Y' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
             },
@@ -2511,7 +2523,7 @@ class ttN_advanced_XYPlot:
 
     CATEGORY = "🌏 tinyterra/xyPlot"
     
-    def plot(self, grid_spacing, latent_index, output_individuals, flip_xy, x_plot=None, y_plot=None, prompt=None, extra_pnginfo=None, my_unique_id=None):
+    def plot(self, grid_spacing, save_individuals, flip_xy, x_plot=None, y_plot=None, prompt=None, extra_pnginfo=None, my_unique_id=None):
         x_plot = ttN_advanced_XYPlot.get_plot_points(x_plot, my_unique_id)
         y_plot = ttN_advanced_XYPlot.get_plot_points(y_plot, my_unique_id)
 
@@ -2526,14 +2538,13 @@ class ttN_advanced_XYPlot:
         xy_plot = {"x_plot": x_plot,
                    "y_plot": y_plot,
                    "grid_spacing": grid_spacing,
-                   "latent_index": latent_index,
-                   "output_individuals": output_individuals,}
+                   "save_individuals": save_individuals,}
         
         return (xy_plot, )
 
 class ttN_Plotting(ttN_advanced_XYPlot):
-    def plot(self, grid_spacing, latent_index, output_individuals, flip_xy, x_plot, y_plot, prompt=None, extra_pnginfo=None, my_unique_id=None):
-        xy_plot = {"x_plot": None, "y_plot": None, "grid_spacing": None, "latent_index": None, "output_individuals": None,}
+    def plot(self, **args):
+        xy_plot = None
         return (xy_plot, )
 
 '''
