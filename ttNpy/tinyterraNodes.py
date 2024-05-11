@@ -1931,7 +1931,7 @@ class ttN_pipe_EDIT:
         }
         del pipe
 
-        return (new_pipe, )
+        return (new_pipe, model, pos, neg, latent, vae, clip, image, seed)
 
 class ttN_pipe_2BASIC:
     version = '1.1.0'
