@@ -748,7 +748,6 @@ class ttNadv_xyPlot:
 
         # Rearrange latent array to match preview image grid
         self.latent_list = self.rearrange_tensors(self.latent_list, self.num_cols, self.num_rows)
-        self.image_list = self.rearrange_tensors(self.image_list, self.num_cols, self.num_rows)
 
         if self.image_output in ["Preview", "Save"]:
             rearranged_ui_list = self.rearrange_tensors(self.ui_list, self.num_cols, self.num_rows)
@@ -758,6 +757,8 @@ class ttNadv_xyPlot:
         # Concatenate the tensors along the first dimension (dim=0)
         self.latent_list = torch.cat(self.latent_list, dim=0)
         plot_image = self.plot_images()
+
+        self.image_list = self.rearrange_tensors(self.image_list, self.num_cols, self.num_rows)
 
         images = []
         for image in self.image_list:
