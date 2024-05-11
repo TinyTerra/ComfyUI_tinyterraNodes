@@ -3192,13 +3192,14 @@ class ttN_imageOUPUT:
                 "result": (image,)}
 
 class ttN_modelScale:
-    version = '1.0.3'
+    version = '1.1.0'
     upscale_methods = ["nearest-exact", "bilinear", "area", "bicubic", "lanczos", "bislerp"]
     crop_methods = ["disabled", "center"]
 
     @classmethod
     def INPUT_TYPES(s):
         return {"required": { "model_name": (folder_paths.get_filename_list("upscale_models"),),
+                              "vae": ("VAE",),
                               "image": ("IMAGE",),
                               "rescale_after_model": ([False, True],{"default": True}),
                               "rescale_method": (s.upscale_methods,),
@@ -3210,8 +3211,7 @@ class ttN_modelScale:
                               "crop": (s.crop_methods,),
                               "image_output": (["Hide", "Preview", "Save", "Hide/Save"],),
                               "save_prefix": ("STRING", {"default": "ComfyUI"}),
-                              "output_latent": ([False, True],{"default": True}),
-                              "vae": ("VAE",),},
+                              "output_latent": ([False, True],{"default": True}),},
                 "hidden": {   "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
                                "ttNnodeVersion": ttN_modelScale.version},
         }

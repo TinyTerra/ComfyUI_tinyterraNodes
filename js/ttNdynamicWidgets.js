@@ -137,7 +137,7 @@ function widgetLogic(node, widget) {
 
 		case 'rescale':
 			let rescale_after_model = findWidgetByName(node, 'rescale_after_model')?.value
-			let hiresfix = findWidgetByName(node, 'upscale_method')
+			let hiresfix = findWidgetByName(node, 'upscale_method') || findWidgetByName(node, 'rescale_method')
             if (typeof(hiresfix.value) == 'string' && hiresfix.value.includes('hiresFix')) {
                 hiresfix = true
             } else {
