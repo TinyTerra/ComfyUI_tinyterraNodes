@@ -14,7 +14,7 @@ if (!customLinkColors["INT"] || !LGraphCanvas.link_type_colors["INT"]) {customLi
 if (!customLinkColors["XYPLOT"] || !LGraphCanvas.link_type_colors["XYPLOT"]) {customLinkColors["XYPLOT"] = customXYPlotLink;}
 if (!customLinkColors["ADV_XYPLOT"] || !LGraphCanvas.link_type_colors["ADV_XYPLOT"]) {customLinkColors["ADV_XYPLOT"] = customXYPlotLink;}
 if (!customLinkColors["LORA_STACK"] || !LGraphCanvas.link_type_colors["LORA_STACK"]) {customLinkColors["LORA_STACK"] = customLoraStackLink;}
-if (!customLinkColors["CONTROLNET_STACK"] || !LGraphCanvas.link_type_colors["CONTROLNET_STACK"]) {customLinkColors["CONTROLNET_STACK"] = customLoraStackLink;}
+if (!customLinkColors["CONTROL_NET_STACK"] || !LGraphCanvas.link_type_colors["CONTROL_NET_STACK"]) {customLinkColors["CONTROL_NET_STACK"] = customLoraStackLink;}
 if (!customLinkColors["STRING"] || !LGraphCanvas.link_type_colors["STRING"]) {customLinkColors["STRING"] = customStringLink;}
 
 localStorage.setItem('Comfy.Settings.ttN.customLinkColors', JSON.stringify(customLinkColors));
