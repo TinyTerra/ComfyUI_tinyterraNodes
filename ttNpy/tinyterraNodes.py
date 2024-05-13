@@ -645,9 +645,9 @@ class ttNadv_xyPlot:
             self.executor.execute(prompt, self.num, extra_data, valid[2])
 
             self.latent_list.append(self.executor.outputs[self.unique_id][-6][0]["samples"])
-            ui_out = self.executor.outputs_ui[self.unique_id].get('images')
-            if ui_out is not None and len(ui_out) > 0:
-                self.ui_list.append(ui_out[0])
+            #ui_out = self.executor.outputs_ui[self.unique_id].get('images')
+            #if ui_out is not None and len(ui_out) > 0:
+            #    self.ui_list.append(ui_out[0])
 
             image = self.executor.outputs[self.unique_id][-3][0]
             pil_image = ttNsampler.tensor2pil(image)
@@ -749,10 +749,10 @@ class ttNadv_xyPlot:
         # Rearrange latent array to match preview image grid
         self.latent_list = self.rearrange_tensors(self.latent_list, self.num_cols, self.num_rows)
 
-        if self.image_output in ["Preview", "Save"]:
-            rearranged_ui_list = self.rearrange_tensors(self.ui_list, self.num_cols, self.num_rows)
-        else:
-            rearranged_ui_list = []
+        #if self.image_output in ["Preview", "Save"]:
+        #    rearranged_ui_list = self.rearrange_tensors(self.ui_list, self.num_cols, self.num_rows)
+        #else:
+        #    rearranged_ui_list = []
 
         # Concatenate the tensors along the first dimension (dim=0)
         self.latent_list = torch.cat(self.latent_list, dim=0)
@@ -767,7 +767,7 @@ class ttNadv_xyPlot:
         images_out = torch.cat(images, dim=0)
         samples = {"samples": self.latent_list}
         
-        return plot_image, images_out, samples, rearranged_ui_list
+        return plot_image, images_out, samples
 
 class ttNsave:
     def __init__(self, my_unique_id=0, prompt=None, extra_pnginfo=None, number_padding=5, overwrite_existing=False, output_dir=folder_paths.get_temp_directory()):
@@ -1257,7 +1257,7 @@ class ttN_pipeKSampler_v2:
 
             executor = xyExecutor()
             plotter = ttNadv_xyPlot(adv_xyPlot, my_unique_id, prompt, extra_pnginfo, save_prefix, image_output, executor)
-            plot_image, images, samples, ui_results = plotter.xy_plot_process()
+            plot_image, images, samples = plotter.xy_plot_process()
             plotter.reset()
             del executor, plotter
 
@@ -1742,7 +1742,7 @@ class ttN_pipeKSamplerSDXL_v2:
             
             executor = xyExecutor()
             plotter = ttNadv_xyPlot(adv_xyPlot, my_unique_id, prompt, extra_pnginfo, save_prefix, image_output, executor)
-            plot_image, images, samples, ui_results = plotter.xy_plot_process()
+            plot_image, images, samples = plotter.xy_plot_process()
             plotter.reset()
             del executor, plotter
 
@@ -2364,7 +2364,7 @@ class ttN_KSampler_v2:
             
             executor = xyExecutor()
             plotter = ttNadv_xyPlot(adv_xyPlot, my_unique_id, prompt, extra_pnginfo, save_prefix, image_output, executor)
-            plot_image, images, samples, ui_results = plotter.xy_plot_process()
+            plot_image, images, samples = plotter.xy_plot_process()
             plotter.reset()
             del executor, plotter
 
