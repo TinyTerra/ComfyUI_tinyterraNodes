@@ -1217,7 +1217,7 @@ class ttN_pipeKSampler_v2:
                 if (samp_images is None):
                     samp_images = samp_vae.decode(samp_samples["samples"])
                 hiresfix = ttN_modelScale()
-                samp_samples = hiresfix.upscale(upscale_model_name, samp_images, True if rescale != 'None' else False, upscale_method[1], rescale, percent, width, height, longer_side, crop, "return latent", None, True, samp_vae)
+                samp_samples = hiresfix.upscale(upscale_model_name, samp_vae, samp_images, True if rescale != 'None' else False, upscale_method[1], rescale, percent, width, height, longer_side, crop, "return latent", None, True)
 
             samp_samples = sampler.common_ksampler(samp_model, samp_seed, steps, cfg, sampler_name, scheduler, samp_positive, samp_negative, samp_samples, denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
       
@@ -1674,7 +1674,7 @@ class ttN_pipeKSamplerSDXL_v2:
                 if (sdxl_images is None):
                     sdxl_images = sdxl_vae.decode(sdxl_samples["samples"])
                 hiresfix = ttN_modelScale()
-                sdxl_samples = hiresfix.upscale(upscale_model_name, sdxl_images, True if rescale != 'None' else False, upscale_method[1], rescale, percent, width, height, longer_side, crop, "return latent", None, True, sdxl_vae)
+                sdxl_samples = hiresfix.upscale(upscale_model_name, sdxl_vae, sdxl_images, True if rescale != 'None' else False, upscale_method[1], rescale, percent, width, height, longer_side, crop, "return latent", None, True)
 
 
             if (refiner_steps > 0) and (sdxl_refiner_model not in [None, "None"]):
@@ -2338,7 +2338,7 @@ class ttN_KSampler_v2:
                 if (images is None):
                     images = vae.decode(samples["samples"])
                 hiresfix = ttN_modelScale()
-                samples = hiresfix.upscale(upscale_model_name, images, True if rescale != 'None' else False, upscale_method[1], rescale, percent, width, height, longer_side, crop, "return latent", None, True, vae)
+                samples = hiresfix.upscale(upscale_model_name, vae, images, True if rescale != 'None' else False, upscale_method[1], rescale, percent, width, height, longer_side, crop, "return latent", None, True)
 
             samples = sampler.common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, samples, denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
       
