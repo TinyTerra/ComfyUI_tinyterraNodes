@@ -2,7 +2,7 @@
 @author: tinyterra
 @title: tinyterraNodes
 @nickname: 🌏
-@description: This extension offers various pipe nodes, fullscreen image viewer based on node history, dynamic widgets, interface customization, and more.
+@description: This extension offers extensive xyPlot, various pipe nodes, fullscreen image viewer based on node history, dynamic widgets, interface customization, and more.
 """
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -11,7 +11,7 @@
 # Like the pack and want to support me?                     https://www.buymeacoffee.com/tinyterra                                                  #
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
-ttN_version = '1.2.0'
+ttN_version = '2.0.1'
 
 MAX_RESOLUTION=8192
 OUTPUT_FILETYPES = ["png", "jpg", "jpeg", "tiff", "tif", "webp", "bmp"]
