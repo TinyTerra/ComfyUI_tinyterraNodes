@@ -1,5 +1,5 @@
 [project]
-name = "tinyterraNodes"
+name = "comfyui_tinyterranodes"
 description = "Customizable xyPlot, various pipe nodes, fullscreen image viewer based on node history, dynamic widgets, interface customization, and more."
 version = "2.0.0"
 license = "LICENSE"
@@ -9,6 +9,6 @@ Repository = "https://github.com/TinyTerra/ComfyUI_tinyterraNodes"
 
 [tool.comfy]
 PublisherId = "tinyterra"
-DisplayName = "ComfyUI_tinyterraNodes"
+DisplayName = "tinyterraNodes"
 Icon = "images/icon.jpg"
 Models = []
