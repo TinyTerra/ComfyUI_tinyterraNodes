@@ -11,7 +11,7 @@
 # Like the pack and want to support me?                     https://www.buymeacoffee.com/tinyterra                                                  #
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
-ttN_version = '2.0.1'
+ttN_version = '2.0.2'
 
 MAX_RESOLUTION=8192
 OUTPUT_FILETYPES = ["png", "jpg", "jpeg", "tiff", "tif", "webp", "bmp"]
@@ -264,8 +264,6 @@ class ttNloader:
         cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
         conditioning = [[cond, {"pooled_output": pooled, "width": width, "height": height, "crop_w": crop_width, "crop_h": crop_height, "target_width": target_width, "target_height": target_height}]]
 
-
-            
         return conditioning, refiner_conditioning
         
     def load_main3(self, ckpt_name, config_name, vae_name, loras, clip_skip, model_override=None, clip_override=None, optional_lora_stack=None):
@@ -351,7 +349,6 @@ class ttNsampler:
         return latent
 
     def common_ksampler(self, model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent, denoise=1.0, disable_noise=False, start_step=None, last_step=None, force_full_denoise=False, preview_latent=True, disable_pbar=False):
-        device = comfy.model_management.get_torch_device()
         latent_image = latent["samples"]
 
         if disable_noise:
@@ -369,8 +366,8 @@ class ttNsampler:
             preview_format = "JPEG"
 
         previewer = False
-
         if preview_latent:
+            device = comfy.model_management.get_torch_device()
             previewer = latent_preview.get_previewer(device, model.model.latent_format)  
 
         pbar = comfy.utils.ProgressBar(steps)
@@ -379,6 +376,8 @@ class ttNsampler:
             if previewer:
                 preview_bytes = previewer.decode_latent_to_preview_image(preview_format, x0)
             pbar.update_absolute(step + 1, total_steps, preview_bytes)
+            
+        disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
 
         samples = comfy.sample.sample(model, noise, steps, cfg, sampler_name, scheduler, positive, negative, latent_image,
                                     denoise=denoise, disable_noise=disable_noise, start_step=start_step, last_step=last_step,
@@ -1436,7 +1435,7 @@ class ttN_pipeLoaderSDXL_v2:
                         "negative_g": ("STRING", {"placeholder": "negative_g", "multiline": True, "dynamicPrompts": True}),
                         "negative_l": ("STRING", {"placeholder": "negative_l", "multiline": True, "dynamicPrompts": True}),
 
-                        "conditioning_aspect": (relative_ratios, {"default": "2x Empty Latent Aspect"}),
+                        "conditioning_aspect": (relative_ratios, {"default": "1x Empty Latent Aspect"}),
                         "conditioning_width": ("INT", {"default": 2048.0, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                         "conditioning_height": ("INT", {"default": 2048.0, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                         
@@ -2143,9 +2142,23 @@ class ttN_tinyLoader:
                         "768 x 512 [L] 3:2",
                         "910 x 512 [L] 16:9",
                         
+                        "1024 x 1024 [S] 1:1",                        
                         "512 x 1024 [P] 1:2",
                         "1024 x 512 [L] 2:1",
-                        "1024 x 1024 [S] 1:1",
+
+                        "640 x 1536 [P] 9:21",
+                        "704 x 1472 [P] 9:19",
+                        "768 x 1344 [P] 9:16",
+                        "768 x 1216 [P] 5:8",
+                        "832 x 1216 [P] 2:3",
+                        "896 x 1152 [P] 3:4",
+
+                        "1536 x 640 [L] 21:9",
+                        "1472 x 704 [L] 19:9",
+                        "1344 x 768 [L] 16:9",
+                        "1216 x 768 [L] 8:5",
+                        "1216 x 832 [L] 3:2",
+                        "1152 x 896 [L] 4:3",
                         ]
 
         return {"required": { 
