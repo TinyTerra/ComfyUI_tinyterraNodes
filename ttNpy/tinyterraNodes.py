@@ -1009,7 +1009,7 @@ sampler = ttNsampler()
 
 #---------------------------------------------------------------ttN/pipe START----------------------------------------------------------------------#
 class ttN_pipeLoader_v2:
-    version = '2.0.0'
+    version = '2.1.0'
     @classmethod
     def INPUT_TYPES(cls):
         aspect_ratios = ["width x height [custom]",
@@ -1049,6 +1049,7 @@ class ttN_pipeLoader_v2:
                         "empty_latent_aspect": (aspect_ratios, {"default":"512 x 512 [S] 1:1"}),
                         "empty_latent_width": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                         "empty_latent_height": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
+                        "batch_size": ("INT", {"default": 1, "min": 1, "max": 64}),
                         "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                         },                
                 "optional": {
@@ -1071,7 +1072,7 @@ class ttN_pipeLoader_v2:
                        loras,
                        positive, positive_token_normalization, positive_weight_interpretation, 
                        negative, negative_token_normalization, negative_weight_interpretation, 
-                       empty_latent_aspect, empty_latent_width, empty_latent_height, seed,
+                       empty_latent_aspect, empty_latent_width, empty_latent_height, batch_size, seed,
                        model_override=None, clip_override=None, optional_lora_stack=None, optional_controlnet_stack=None, prepend_positive=None, prepend_negative=None,
                        prompt=None, my_unique_id=None):
 
@@ -1080,7 +1081,7 @@ class ttN_pipeLoader_v2:
         vae: VAE | None = None
 
         # Create Empty Latent
-        latent = sampler.emptyLatent(empty_latent_aspect, 1, empty_latent_width, empty_latent_height)
+        latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height)
         samples = {"samples":latent}
 
         model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, clip_skip, model_override, clip_override, optional_lora_stack)
@@ -2126,7 +2127,7 @@ class ttN_pipeLoraStack:
 
 #--------------------------------------------------------------ttN/base START-----------------------------------------------------------------------#
 class ttN_tinyLoader:
-    version = '1.0.0'
+    version = '1.1.0'
     @classmethod
     def INPUT_TYPES(cls):
         aspect_ratios = ["width x height [custom]",
@@ -2174,7 +2175,8 @@ class ttN_tinyLoader:
                         "empty_latent_aspect": (aspect_ratios, {"default":"512 x 512 [S] 1:1"}),
                         "empty_latent_width": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                         "empty_latent_height": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
-                        },                
+                        "batch_size": ("INT", {"default": 1, "min": 1, "max": 64}),
+                        },
                 "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_tinyLoader.version, "my_unique_id": "UNIQUE_ID",}
                 }
 
@@ -2185,7 +2187,7 @@ class ttN_tinyLoader:
     CATEGORY = "🌏 tinyterra/base"
 
     def miniloader(self, ckpt_name, config_name, sampling, zsnr, cfg_rescale_mult, vae_name, clip_skip,
-                       empty_latent_aspect, empty_latent_width, empty_latent_height,
+                       empty_latent_aspect, empty_latent_width, empty_latent_height, batch_size,
                        prompt=None, my_unique_id=None):
 
         model: ModelPatcher | None = None
@@ -2193,7 +2195,7 @@ class ttN_tinyLoader:
         vae: VAE | None = None
 
         # Create Empty Latent
-        latent = sampler.emptyLatent(empty_latent_aspect, 1, empty_latent_width, empty_latent_height)
+        latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height)
         samples = {"samples": latent}
 
         model, clip, vae = loader.load_checkpoint(ckpt_name, config_name, clip_skip)
