@@ -107,6 +107,131 @@ class TinyTerra extends EventTarget {
                 }
             },
             {
+                content: "🌏 Groups",
+                disabled: true,
+                className: "tinyterra-contextmenu-item tinyterra-contextmenu-label",
+            },
+            {
+                content: "Base",
+                className: "tinyterra-contextmenu-item",
+                callback : async function(value, event, mouseEvent, contextMenu){
+                    const nodes = {
+                        'ttN tinyLoader': {
+                            graphNode: null,
+                            width: 315,
+                            connections: {
+                                0: ['ttN conditioning', 'model'],
+                                1: ['ttN KSampler_v2', 'latent'],
+                                2: ['ttN KSampler_v2', 'vae'],
+                                3: ['ttN conditioning', 'clip'],
+                            }
+                        },
+                        'ttN conditioning': {
+                            graphNode: null,
+                            width: 400,
+                            connections: {
+                                0: ['ttN KSampler_v2', 'model'],
+                                1: ['ttN KSampler_v2', 'positive'],
+                                2: ['ttN KSampler_v2', 'negative'],
+                                3: ['ttN KSampler_v2', 'clip'],
+                            }
+                        },
+                        'ttN KSampler_v2': {
+                            graphNode: null,
+                            width: 262,
+                        }
+                    }
+                    that.addGroup(contextMenu, nodes)
+                }
+            },
+            {
+                content: "Basic Pipe",
+                className: "tinyterra-contextmenu-item",
+                callback : async function(value, event, mouseEvent, contextMenu){
+                    const nodes = {
+                        'ttN pipeLoader_v2': {
+                            graphNode: null,
+                            width: 315,
+                            connections: {
+                                0: ['ttN pipeKSampler_v2', 'pipe']
+                            }
+                        },
+                        'ttN pipeKSampler_v2': {
+                            graphNode: null,
+                            width: 262,
+                        }
+                    }
+                    that.addGroup(contextMenu, nodes)
+                }
+            },
+            {
+                content: "Base xyPlot",
+                className: "tinyterra-contextmenu-item",
+                callback : async function(value, event, mouseEvent, contextMenu){
+                    const nodes = {
+                        'ttN tinyLoader': {
+                            graphNode: null,
+                            width: 315,
+                            connections: {
+                                0: ['ttN conditioning', 'model'],
+                                1: ['ttN KSampler_v2', 'latent'],
+                                2: ['ttN KSampler_v2', 'vae'],
+                                3: ['ttN conditioning', 'clip'],
+                            }
+                        },
+                        'ttN conditioning': {
+                            graphNode: null,
+                            width: 400,
+                            connections: {
+                                0: ['ttN KSampler_v2', 'model'],
+                                1: ['ttN KSampler_v2', 'positive'],
+                                2: ['ttN KSampler_v2', 'negative'],
+                                3: ['ttN KSampler_v2', 'clip'],
+                            }
+                        },
+                        'ttN advanced xyPlot': {
+                            graphNode: null,
+                            width: 400,
+                            connections: {
+                                0: ['ttN KSampler_v2', 'adv_xyPlot']
+                            }
+                        },
+                        'ttN KSampler_v2': {
+                            graphNode: null,
+                            width: 262,
+                        }
+                    }
+                    that.addGroup(contextMenu, nodes)
+                }
+            },
+            {
+                content: "Pipe xyPlot",
+                className: "tinyterra-contextmenu-item",
+                callback : async function(value, event, mouseEvent, contextMenu){
+                    const nodes = {
+                        'ttN pipeLoader_v2': {
+                            graphNode: null,
+                            width: 315,
+                            connections: {
+                                0: ['ttN pipeKSampler_v2', 'pipe']
+                            }
+                        },
+                        'ttN advanced xyPlot': {
+                            graphNode: null,
+                            width: 400,
+                            connections: {
+                                0: ['ttN pipeKSampler_v2', 'adv_xyPlot']
+                            }
+                        },
+                        'ttN pipeKSampler_v2': {
+                            graphNode: null,
+                            width: 262,
+                        }
+                    }
+                    that.addGroup(contextMenu, nodes)
+                }
+            },
+            {
                 content: "🌏 Extras",
                 disabled: true,
                 className: "tinyterra-contextmenu-item tinyterra-contextmenu-label",
@@ -148,6 +273,37 @@ class TinyTerra extends EventTarget {
             },
             
         ];
+    }
+    addNode = async (node, pos) => {
+        var canvas = LGraphCanvas.active_canvas;
+        canvas.graph.beforeChange();
+        var node = LiteGraph.createNode(node);
+        if (node) {
+            node.pos = pos;
+            canvas.graph.add(node);
+        }
+        canvas.graph.afterChange();
+        return node
+    }
+    addGroup = async (contextMenu, nodes) => {
+        var first_event = contextMenu.getFirstEvent();
+        var canvas = LGraphCanvas.active_canvas;
+        var canvasOffset = canvas.convertEventToCanvasOffset(first_event);
+
+        for (const [key, value] of Object.entries(nodes)) {
+            var node = await this.addNode(key, canvasOffset); 
+            value.graphNode = node;
+            canvasOffset = [canvasOffset[0] + value.width + 10, canvasOffset[1]];
+        }
+
+        for (const [key, value] of Object.entries(nodes)) {
+            var node = value.graphNode;
+            if (value.connections) {
+                for (const [key2, value2] of Object.entries(value.connections)) {
+                    node.connect(parseInt(key2), nodes[value2[0]].graphNode.id, value2[1]);
+                }
+            }
+        }
     }
     addTTNodeMenu(category, prev_menu, e, callback=null) {
         var canvas = LGraphCanvas.active_canvas;
