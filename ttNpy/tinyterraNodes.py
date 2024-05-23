@@ -691,7 +691,7 @@ class ttNadv_xyPlot:
   
     def xy_plot_process(self):
         if self.x_points is None and self.y_points is None:
-            return None, None, None, None
+            return None, None, None,
 
         regex = re.compile(r'%(.*?);(.*?)%')
 
@@ -2371,7 +2371,7 @@ class ttN_KSampler_v2:
             return {"ui": {"images": results},
                     "result": (model, positive, negative, samples, vae, clip, images, seed, None)}
 
-        def process_xyPlot(model, clip, samples, vae, seed, positive, negative, lora_name, lora_model_strength, lora_clip_strength,
+        def process_xyPlot(model, clip, samp_samples, vae, seed, positive, negative, lora_name, lora_model_strength, lora_clip_strength,
                            steps, cfg, sampler_name, scheduler, denoise,
                            image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, adv_xyPlot):
 
@@ -2384,7 +2384,7 @@ class ttN_KSampler_v2:
             del executor, plotter
 
             if samples is None and images is None:
-                return process_sample_state(model, images, clip, samples, vae, seed, positive, negative, lora_name, lora_model_strength, lora_clip_strength,
+                return process_sample_state(model, images, clip, samp_samples, vae, seed, positive, negative, lora_name, lora_model_strength, lora_clip_strength,
                                  upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop,
                                  steps, cfg, sampler_name, scheduler, denoise,
                                  image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
