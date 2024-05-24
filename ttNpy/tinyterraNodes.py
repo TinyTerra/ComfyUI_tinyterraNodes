@@ -19,6 +19,7 @@ UPSCALE_METHODS = ["None",
                     "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
                     "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
 CROP_METHODS = ["disabled", "center"]
+CUSTOM_SCHEDULERS = ["AYS SD1", "AYS SDXL", "AYS SVD"]
 
 import os
 import re
@@ -53,6 +54,7 @@ from comfy.cli_args import args
 from .adv_encode import advanced_encode
 from comfy.model_patcher import ModelPatcher
 from comfy_extras.chainner_models import model_loading
+from comfy_extras.nodes_align_your_steps import AlignYourStepsScheduler
 from nodes import MAX_RESOLUTION, ControlNetApplyAdvanced
 from nodes import NODE_CLASS_MAPPINGS as COMFY_CLASS_MAPPINGS
 
@@ -365,28 +367,24 @@ class ttNsampler:
         if "noise_mask" in latent:
             noise_mask = latent["noise_mask"]
 
-        preview_format = "JPEG"
-        if preview_format not in ["JPEG", "PNG"]:
-            preview_format = "JPEG"
-
-        previewer = False
         if preview_latent:
-            device = comfy.model_management.get_torch_device()
-            previewer = latent_preview.get_previewer(device, model.model.latent_format)  
+            callback = latent_preview.prepare_callback(model, steps)
+        else:
+            callback = None
 
-        pbar = comfy.utils.ProgressBar(steps)
-        def callback(step, x0, x, total_steps):
-            preview_bytes = None
-            if previewer:
-                preview_bytes = previewer.decode_latent_to_preview_image(preview_format, x0)
-            pbar.update_absolute(step + 1, total_steps, preview_bytes)
-            
         disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
 
-        samples = comfy.sample.sample(model, noise, steps, cfg, sampler_name, scheduler, positive, negative, latent_image,
-                                    denoise=denoise, disable_noise=disable_noise, start_step=start_step, last_step=last_step,
-                                    force_full_denoise=force_full_denoise, noise_mask=noise_mask, callback=callback, disable_pbar=disable_pbar, seed=seed)
-        
+        if scheduler not in CUSTOM_SCHEDULERS:
+            samples = comfy.sample.sample(model, noise, steps, cfg, sampler_name, scheduler, positive, negative, latent_image,
+                                        denoise=denoise, disable_noise=disable_noise, start_step=start_step, last_step=last_step,
+                                        force_full_denoise=force_full_denoise, noise_mask=noise_mask, callback=callback, disable_pbar=disable_pbar, seed=seed)
+        else:
+            sampler = comfy.samplers.sampler_object(sampler_name)
+            model_type = scheduler.split(' ')[1]
+            sigmas = AlignYourStepsScheduler().get_sigmas(model_type, steps, denoise)[0]
+            
+            samples = comfy.sample.sample_custom(model, noise, cfg, sampler, sigmas, positive, negative, latent_image, noise_mask=noise_mask, callback=callback, disable_pbar=disable_pbar, seed=seed)
+
         out = latent.copy()
         out["samples"] = samples
         return out
@@ -1143,7 +1141,7 @@ class ttN_pipeKSampler_v2:
                 "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                 "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
                 "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
+                "scheduler": (comfy.samplers.KSampler.SCHEDULERS + CUSTOM_SCHEDULERS,),
                 "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
                 "save_prefix": ("STRING", {"default": "ComfyUI"}),
@@ -1334,7 +1332,7 @@ class ttN_pipeKSamplerAdvanced_v2:
                 "end_at_step": ("INT", {"default": 10000, "min": 0, "max": 10000}),
                 "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
                 "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
+                "scheduler": (comfy.samplers.KSampler.SCHEDULERS + CUSTOM_SCHEDULERS,),
                 "return_with_leftover_noise": (["disable", "enable"], ),
                 "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
                 "save_prefix": ("STRING", {"default": "ComfyUI"}),
@@ -1575,7 +1573,7 @@ class ttN_pipeKSamplerSDXL_v2:
                 "refiner_cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
                 "refiner_denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
+                "scheduler": (comfy.samplers.KSampler.SCHEDULERS + CUSTOM_SCHEDULERS,),
                 "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
                 "save_prefix": ("STRING", {"default": "ComfyUI"}),
                 "file_type": (OUTPUT_FILETYPES, {"default": "png"}),
@@ -2283,7 +2281,7 @@ class ttN_KSampler_v2:
                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                     "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
                     "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                    "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
+                    "scheduler": (comfy.samplers.KSampler.SCHEDULERS + CUSTOM_SCHEDULERS,),
                     "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                     "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
                     "save_prefix": ("STRING", {"default": "ComfyUI"}),
