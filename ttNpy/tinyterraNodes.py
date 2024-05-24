@@ -2276,46 +2276,46 @@ class ttN_KSampler_v2:
 
     @classmethod
     def INPUT_TYPES(cls):
-        return {"required":
-                {
-                "model": ("MODEL",),
-                "positive": ("CONDITIONING",),
-                "negative": ("CONDITIONING",),
-                "latent": ("LATENT",),
-                "vae": ("VAE",),
-                "clip": ("CLIP",),
+        return {"required": {
+                    "model": ("MODEL",),
+                    "positive": ("CONDITIONING",),
+                    "negative": ("CONDITIONING",),
+                    "latent": ("LATENT",),
+                    "vae": ("VAE",),
 
-                "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
-                "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+                    "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
+                    "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
 
-                "upscale_method": (cls.upscale_methods, {"default": "None"}),
-                "upscale_model_name": (folder_paths.get_filename_list("upscale_models"),),
-                "factor": ("FLOAT", {"default": 2, "min": 0.0, "max": 10.0, "step": 0.25}),
-                "rescale": (["by percentage", "to Width/Height", 'to longer side - maintain aspect', 'None'],),
-                "percent": ("INT", {"default": 50, "min": 0, "max": 1000, "step": 1}),
-                "width": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
-                "height": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
-                "longer_side": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
-                "crop": (cls.crop_methods,),
+                    "upscale_method": (cls.upscale_methods, {"default": "None"}),
+                    "upscale_model_name": (folder_paths.get_filename_list("upscale_models"),),
+                    "factor": ("FLOAT", {"default": 2, "min": 0.0, "max": 10.0, "step": 0.25}),
+                    "rescale": (["by percentage", "to Width/Height", 'to longer side - maintain aspect', 'None'],),
+                    "percent": ("INT", {"default": 50, "min": 0, "max": 1000, "step": 1}),
+                    "width": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
+                    "height": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
+                    "longer_side": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
+                    "crop": (cls.crop_methods,),
 
-                "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
-                "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
-                "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
-                "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
-                "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
-                "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
-                "save_prefix": ("STRING", {"default": "ComfyUI"}),
-                "file_type": (OUTPUT_FILETYPES,{"default": "png"}),
-                "embed_workflow": ("BOOLEAN", {"default": True}),
+                    "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
+                    "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
+                    "sampler_name": (comfy.samplers.KSampler.SAMPLERS,),
+                    "scheduler": (comfy.samplers.KSampler.SCHEDULERS,),
+                    "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                    "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
+                    "save_prefix": ("STRING", {"default": "ComfyUI"}),
+                    "file_type": (OUTPUT_FILETYPES,{"default": "png"}),
+                    "embed_workflow": ("BOOLEAN", {"default": True}),
                 },
-                "optional": 
-                {"seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                "input_image_override": ("IMAGE",),
-                "adv_xyPlot": ("ADV_XYPLOT",),
+                "optional": {
+                    "clip": ("CLIP",),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                    "input_image_override": ("IMAGE",),
+                    "adv_xyPlot": ("ADV_XYPLOT",),
                 },
-                "hidden":
-                {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
-                 "ttNnodeVersion": ttN_pipeKSampler_v2.version},
+                "hidden": {
+                    "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
+                    "ttNnodeVersion": ttN_pipeKSampler_v2.version
+                },
         }
 
     RETURN_TYPES = ("MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT", "IMAGE")
@@ -2324,11 +2324,11 @@ class ttN_KSampler_v2:
     FUNCTION = "sample"
     CATEGORY = "🌏 tinyterra/base"
 
-    def sample(self, model, positive, negative, latent, vae, clip,
+    def sample(self, model, positive, negative, latent, vae,
                 lora_name, lora_strength,
                 steps, cfg, sampler_name, scheduler, image_output, save_prefix, file_type, embed_workflow, denoise=1.0, 
                 input_image_override=None,
-                seed=None, adv_xyPlot=None, upscale_model_name=None, upscale_method=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None,
+                clip=None, seed=None, adv_xyPlot=None, upscale_model_name=None, upscale_method=None, factor=None, rescale=None, percent=None, width=None, height=None, longer_side=None, crop=None,
                 prompt=None, extra_pnginfo=None, my_unique_id=None, start_step=None, last_step=None, force_full_denoise=False, disable_noise=False):
 
         my_unique_id = int(my_unique_id)
@@ -2341,6 +2341,8 @@ class ttN_KSampler_v2:
                                  image_output, save_prefix, file_type, embed_workflow, prompt, extra_pnginfo, my_unique_id, preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise):
             # Load Lora
             if lora_name not in (None, "None"):
+                if clip == None:
+                    raise ValueError(f"tinyKSampler [{my_unique_id}] - Lora requires CLIP model")
                 model, clip = loader.load_lora(lora_name, model, clip, lora_model_strength, lora_clip_strength)
 
             upscale_method = upscale_method.split(' ', 1)
