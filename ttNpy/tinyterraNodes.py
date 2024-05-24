@@ -15,6 +15,10 @@ ttN_version = '2.0.2'
 
 MAX_RESOLUTION=8192
 OUTPUT_FILETYPES = ["png", "jpg", "jpeg", "tiff", "tif", "webp", "bmp"]
+UPSCALE_METHODS = ["None",
+                    "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
+                    "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
+CROP_METHODS = ["disabled", "center"]
 
 import os
 import re
@@ -1115,11 +1119,6 @@ class ttN_pipeLoader_v2:
 
 class ttN_pipeKSampler_v2:
     version = '2.3.1'
-    upscale_methods = ["None",
-                       "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
-                       "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
-    crop_methods = ["disabled", "center"]
-
     def __init__(self):
         pass
 
@@ -1131,7 +1130,7 @@ class ttN_pipeKSampler_v2:
                 "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
                 "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
 
-                "upscale_method": (cls.upscale_methods, {"default": "None"}),
+                "upscale_method": (UPSCALE_METHODS, {"default": "None"}),
                 "upscale_model_name": (folder_paths.get_filename_list("upscale_models"),),
                 "factor": ("FLOAT", {"default": 2, "min": 0.0, "max": 10.0, "step": 0.25}),
                 "rescale": (["by percentage", "to Width/Height", 'to longer side - maintain aspect', 'None'],),
@@ -1139,7 +1138,7 @@ class ttN_pipeKSampler_v2:
                 "width": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                 "height": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                 "longer_side": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
-                "crop": (cls.crop_methods,),
+                "crop": (CROP_METHODS,),
 
                 "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                 "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
@@ -1304,11 +1303,6 @@ class ttN_pipeKSampler_v2:
 
 class ttN_pipeKSamplerAdvanced_v2:
     version = '2.3.0'
-    upscale_methods = ["None",
-                       "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
-                       "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
-    crop_methods = ["disabled", "center"]
-
     def __init__(self):
         pass
 
@@ -1321,7 +1315,7 @@ class ttN_pipeKSamplerAdvanced_v2:
                 "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
                 "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
 
-                "upscale_method": (cls.upscale_methods, {"default": "None"}),
+                "upscale_method": (UPSCALE_METHODS, {"default": "None"}),
                 "upscale_model_name": (folder_paths.get_filename_list("upscale_models"),),
                 "factor": ("FLOAT", {"default": 2, "min": 0.0, "max": 10.0, "step": 0.25}),
                 "rescale": (["by percentage", "to Width/Height", 'to longer side - maintain aspect', 'None'],),
@@ -1329,7 +1323,7 @@ class ttN_pipeKSamplerAdvanced_v2:
                 "width": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                 "height": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                 "longer_side": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
-                "crop": (cls.crop_methods,),
+                "crop": (CROP_METHODS,),
                 
                 "add_noise": (["enable", "disable"], ),
                 "noise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
@@ -1553,11 +1547,6 @@ class ttN_pipeLoaderSDXL_v2:
 
 class ttN_pipeKSamplerSDXL_v2:
     version = '2.3.1'
-    upscale_methods = ["None",
-                       "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
-                       "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
-    crop_methods = ["disabled", "center"]
-
     def __init__(self):
         pass
 
@@ -1569,7 +1558,7 @@ class ttN_pipeKSamplerSDXL_v2:
                 "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
                 "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
 
-                "upscale_method": (cls.upscale_methods, {"default": "None"}),
+                "upscale_method": (UPSCALE_METHODS, {"default": "None"}),
                 "upscale_model_name": (folder_paths.get_filename_list("upscale_models"),),
                 "factor": ("FLOAT", {"default": 2, "min": 0.0, "max": 10.0, "step": 0.25}),
                 "rescale": (["by percentage", "to Width/Height", 'to longer side - maintain aspect', 'None'],),
@@ -1577,7 +1566,7 @@ class ttN_pipeKSamplerSDXL_v2:
                 "width": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                 "height": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                 "longer_side": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
-                "crop": (cls.crop_methods,),
+                "crop": (CROP_METHODS,),
 
                 "base_steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                 "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
@@ -2266,11 +2255,6 @@ class ttN_conditioning:
 
 class ttN_KSampler_v2:
     version = '2.3.1'
-    upscale_methods = ["None",
-                       "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
-                       "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
-    crop_methods = ["disabled", "center"]
-
     def __init__(self):
         pass
 
@@ -2286,7 +2270,7 @@ class ttN_KSampler_v2:
                     "lora_name": (["None"] + folder_paths.get_filename_list("loras"),),
                     "lora_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
 
-                    "upscale_method": (cls.upscale_methods, {"default": "None"}),
+                    "upscale_method": (UPSCALE_METHODS, {"default": "None"}),
                     "upscale_model_name": (folder_paths.get_filename_list("upscale_models"),),
                     "factor": ("FLOAT", {"default": 2, "min": 0.0, "max": 10.0, "step": 0.25}),
                     "rescale": (["by percentage", "to Width/Height", 'to longer side - maintain aspect', 'None'],),
@@ -2294,7 +2278,7 @@ class ttN_KSampler_v2:
                     "width": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                     "height": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                     "longer_side": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
-                    "crop": (cls.crop_methods,),
+                    "crop": (CROP_METHODS,),
 
                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                     "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
