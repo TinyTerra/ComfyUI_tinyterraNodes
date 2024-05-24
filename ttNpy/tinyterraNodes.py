@@ -26,7 +26,6 @@ import re
 import json
 import copy
 import random
-import logging
 import datetime
 from pathlib import Path
 from urllib.request import urlopen
@@ -50,7 +49,6 @@ import comfy.controlnet
 import comfy.model_management
 import comfy_extras.nodes_model_advanced
 from comfy.sd import CLIP, VAE
-from comfy.cli_args import args
 from .adv_encode import advanced_encode
 from comfy.model_patcher import ModelPatcher
 from comfy_extras.chainner_models import model_loading
