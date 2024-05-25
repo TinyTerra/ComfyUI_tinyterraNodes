@@ -1,5 +1,5 @@
 import { app } from "../../scripts/app.js";
-import { tinyterraReloadNode, wait, rebootAPI } from "./utils.js";
+import { tinyterraReloadNode, wait, rebootAPI, getConfig, convertToInput, hideWidget } from "./utils.js";
 import { openFullscreenApp, _setDefaultFullscreenNode } from "./ttNfullscreen.js";
 
 class TinyTerra extends EventTarget {
@@ -107,128 +107,32 @@ class TinyTerra extends EventTarget {
                 }
             },
             {
-                content: "🌏 Groups",
+                content: "🌏 Add Group",
                 disabled: true,
                 className: "tinyterra-contextmenu-item tinyterra-contextmenu-label",
             },
             {
-                content: "Base",
+                content: "Basic Sampling",
                 className: "tinyterra-contextmenu-item",
-                callback : async function(value, event, mouseEvent, contextMenu){
-                    const nodes = {
-                        'ttN tinyLoader': {
-                            graphNode: null,
-                            width: 315,
-                            connections: {
-                                0: ['ttN conditioning', 'model'],
-                                1: ['ttN KSampler_v2', 'latent'],
-                                2: ['ttN KSampler_v2', 'vae'],
-                                3: ['ttN conditioning', 'clip'],
-                            }
-                        },
-                        'ttN conditioning': {
-                            graphNode: null,
-                            width: 400,
-                            connections: {
-                                0: ['ttN KSampler_v2', 'model'],
-                                1: ['ttN KSampler_v2', 'positive'],
-                                2: ['ttN KSampler_v2', 'negative'],
-                                3: ['ttN KSampler_v2', 'clip'],
-                            }
-                        },
-                        'ttN KSampler_v2': {
-                            graphNode: null,
-                            width: 262,
-                        }
-                    }
-                    that.addGroup(contextMenu, nodes)
+                has_submenu: true,
+                callback : function(value, event, mouseEvent, contextMenu){
+                    that.addGroupMenu('basic', contextMenu, mouseEvent)
                 }
             },
             {
-                content: "Basic Pipe",
+                content: "Upscaling",
                 className: "tinyterra-contextmenu-item",
-                callback : async function(value, event, mouseEvent, contextMenu){
-                    const nodes = {
-                        'ttN pipeLoader_v2': {
-                            graphNode: null,
-                            width: 315,
-                            connections: {
-                                0: ['ttN pipeKSampler_v2', 'pipe']
-                            }
-                        },
-                        'ttN pipeKSampler_v2': {
-                            graphNode: null,
-                            width: 262,
-                        }
-                    }
-                    that.addGroup(contextMenu, nodes)
+                has_submenu: true,
+                callback : function(value, event, mouseEvent, contextMenu){
+                    that.addGroupMenu('upscale', contextMenu, mouseEvent)
                 }
             },
             {
-                content: "Base xyPlot",
+                content: "xyPlotting",
                 className: "tinyterra-contextmenu-item",
-                callback : async function(value, event, mouseEvent, contextMenu){
-                    const nodes = {
-                        'ttN tinyLoader': {
-                            graphNode: null,
-                            width: 315,
-                            connections: {
-                                0: ['ttN conditioning', 'model'],
-                                1: ['ttN KSampler_v2', 'latent'],
-                                2: ['ttN KSampler_v2', 'vae'],
-                                3: ['ttN conditioning', 'clip'],
-                            }
-                        },
-                        'ttN conditioning': {
-                            graphNode: null,
-                            width: 400,
-                            connections: {
-                                0: ['ttN KSampler_v2', 'model'],
-                                1: ['ttN KSampler_v2', 'positive'],
-                                2: ['ttN KSampler_v2', 'negative'],
-                                3: ['ttN KSampler_v2', 'clip'],
-                            }
-                        },
-                        'ttN advanced xyPlot': {
-                            graphNode: null,
-                            width: 400,
-                            connections: {
-                                0: ['ttN KSampler_v2', 'adv_xyPlot']
-                            }
-                        },
-                        'ttN KSampler_v2': {
-                            graphNode: null,
-                            width: 262,
-                        }
-                    }
-                    that.addGroup(contextMenu, nodes)
-                }
-            },
-            {
-                content: "Pipe xyPlot",
-                className: "tinyterra-contextmenu-item",
-                callback : async function(value, event, mouseEvent, contextMenu){
-                    const nodes = {
-                        'ttN pipeLoader_v2': {
-                            graphNode: null,
-                            width: 315,
-                            connections: {
-                                0: ['ttN pipeKSampler_v2', 'pipe']
-                            }
-                        },
-                        'ttN advanced xyPlot': {
-                            graphNode: null,
-                            width: 400,
-                            connections: {
-                                0: ['ttN pipeKSampler_v2', 'adv_xyPlot']
-                            }
-                        },
-                        'ttN pipeKSampler_v2': {
-                            graphNode: null,
-                            width: 262,
-                        }
-                    }
-                    that.addGroup(contextMenu, nodes)
+                has_submenu: true,
+                callback : function(value, event, mouseEvent, contextMenu){
+                    that.addGroupMenu('xyPlot', contextMenu, mouseEvent)
                 }
             },
             {
@@ -290,17 +194,36 @@ class TinyTerra extends EventTarget {
         var canvas = LGraphCanvas.active_canvas;
         var canvasOffset = canvas.convertEventToCanvasOffset(first_event);
 
-        for (const [key, value] of Object.entries(nodes)) {
-            var node = await this.addNode(key, canvasOffset); 
-            value.graphNode = node;
-            canvasOffset = [canvasOffset[0] + value.width + 10, canvasOffset[1]];
+        // Create Nodes
+        for (const nodeData of Object.values(nodes)) {
+            var node = await this.addNode(nodeData.nodeType, canvasOffset); 
+            nodeData.graphNode = node;
+            canvasOffset = [canvasOffset[0] + nodeData.width + 10, canvasOffset[1]];
         }
 
-        for (const [key, value] of Object.entries(nodes)) {
-            var node = value.graphNode;
-            if (value.connections) {
-                for (const [key2, value2] of Object.entries(value.connections)) {
-                    node.connect(parseInt(key2), nodes[value2[0]].graphNode.id, value2[1]);
+        // Handle Widget Changes
+        for (const nodeData of Object.values(nodes)) {
+            var node = nodeData.graphNode;
+            if (nodeData.widgets) {
+                for (const [widget, value] of Object.entries(nodeData.widgets)) {
+                    if (value == 'toInput') {
+                        const config = getConfig(widget, node)
+                        convertToInput(node, node.widgets.find((w) => w.name === widget), config);
+                    } else {
+                        if (node) {
+                            node.widgets.find((w) => w.name === widget).value = value
+                        }
+                    }
+                }
+            }
+        }
+
+        // Handle Connections
+        for (const nodeData of Object.values(nodes)) {
+            var node = nodeData.graphNode;
+            if (nodeData.connections) {
+                for (const c of nodeData.connections) {
+                    node.connect(parseInt(c[0]), nodes[c[1]].graphNode.id, c[2]);
                 }
             }
         }
@@ -340,6 +263,265 @@ class TinyTerra extends EventTarget {
             entries.push(entry);
         });
 
+        new LiteGraph.ContextMenu( entries, { event: e, parentMenu: prev_menu }, ref_window );
+    }
+    addGroupMenu(group, prev_menu, e) {
+        const that = this;
+        var canvas = LGraphCanvas.active_canvas;
+        var ref_window = canvas.getCanvasWindow();
+        let entries;
+        switch (group) {
+            case "basic":
+                console.log('basic group pls')
+                entries = [
+                    {   content: "Base ttN",
+                        className: "tinyterra-contextmenu-item",
+                        callback : async function(value, event, mouseEvent, contextMenu){
+                            const nodes = {
+                                'Loader': {
+                                    nodeType: 'ttN tinyLoader',
+                                    graphNode: null,
+                                    width: 315,
+                                    connections: [
+                                        [0, 'Conditioning', 'model'],
+                                        [1, 'KSampler', 'latent'],
+                                        [2, 'KSampler', 'vae'],
+                                        [3, 'Conditioning', 'clip'],
+                                    ],
+                                },
+                                'Conditioning': {
+                                    nodeType: 'ttN conditioning',
+                                    graphNode: null,
+                                    width: 400,
+                                    connections: [
+                                        [0, 'KSampler', 'model'],
+                                        [1, 'KSampler', 'positive'],
+                                        [2, 'KSampler', 'negative'],
+                                        [3, 'KSampler', 'clip'],
+                                    ],
+                                },
+                                'KSampler': {
+                                    nodeType: 'ttN KSampler_v2',
+                                    graphNode: null,
+                                    width: 262,
+                                    widgets: {
+                                        image_output: 'Preview'
+                                    }
+                                }
+                            }
+                            that.addGroup(contextMenu, nodes)
+                        }
+                    },
+                    {   content: "Pipe Basic",
+                        className: "tinyterra-contextmenu-item",
+                        callback : async function(value, event, mouseEvent, contextMenu){
+                            const nodes = {
+                                'Loader': {
+                                    nodeType: 'ttN pipeLoader_v2',
+                                    graphNode: null,
+                                    width: 315,
+                                    connections: [
+                                        [0, 'KSampler', 'pipe']
+                                    ],
+                                },
+                                'KSampler': {
+                                    nodeType: 'ttN pipeKSampler_v2',
+                                    graphNode: null,
+                                    width: 262,
+                                    widgets: {
+                                        image_output: 'Preview'
+                                    }
+                                }
+                            }
+                            that.addGroup(contextMenu, nodes)
+                        }
+                    },
+                ];
+                break;
+
+            case "upscale":
+                entries = [
+                    {   content: "Base upscale",
+                        className: "tinyterra-contextmenu-item",
+                        callback : async function(value, event, mouseEvent, contextMenu){
+                            const nodes = {
+                                'Loader': {
+                                    nodeType: 'ttN tinyLoader',
+                                    graphNode: null,
+                                    width: 315,
+                                    connections: [
+                                        [0, 'Conditioning', 'model'],
+                                        [1, 'KSampler', 'latent'],
+                                        [2, 'KSampler', 'vae'],
+                                        [3, 'Conditioning', 'clip'],
+                                    ],
+                                },
+                                'Conditioning': {
+                                    nodeType: 'ttN conditioning',
+                                    graphNode: null,
+                                    width: 400,
+                                    connections: [
+                                        [0, 'KSampler', 'model'],
+                                        [1, 'KSampler', 'positive'],
+                                        [2, 'KSampler', 'negative'],
+                                        [3, 'KSampler', 'clip'],
+                                    ],
+                                },
+                                'KSampler': {
+                                    nodeType: 'ttN KSampler_v2',
+                                    graphNode: null,
+                                    width: 262,
+                                    connections: [
+                                        [0, 'KSampler2', 'model'],
+                                        [1, 'KSampler2', 'positive'],
+                                        [2, 'KSampler2', 'negative'],
+                                        [3, 'KSampler2', 'latent'],
+                                        [4, 'KSampler2', 'vae'],
+                                        [5, 'KSampler2', 'clip'],
+                                        [6, 'KSampler2', 'input_image_override']
+                                    ],
+                                    widgets: {
+                                        image_output: 'Preview',
+                                    }
+                                },
+                                'KSampler2': {
+                                    nodeType: 'ttN KSampler_v2',
+                                    graphNode: null,
+                                    width: 262,
+                                    widgets: {
+                                        upscale_method: '[hiresFix] nearest-exact',
+                                        image_output: 'Preview',
+                                        denoise: 0.5,
+                                        steps: 15
+                                    }
+                                },
+                            }
+                            that.addGroup(contextMenu, nodes)
+                        }
+                    },
+                    {   content: "Pipe Upscale",
+                        className: "tinyterra-contextmenu-item",
+                        callback : async function(value, event, mouseEvent, contextMenu){
+                            const nodes = {
+                                'loader1': {
+                                    nodeType: 'ttN pipeLoader_v2',
+                                    graphNode: null,
+                                    width: 315,
+                                    connections: [
+                                        [0, 'ksampler', 'pipe']
+                                    ],
+                                },
+                                'ksampler': {
+                                    nodeType: 'ttN pipeKSampler_v2',
+                                    graphNode: null,
+                                    width: 262,
+                                    connections: [
+                                        [0, 'ksampler2', 'pipe']
+                                    ],
+                                    widgets: {
+                                        image_output: 'Preview'
+                                    },
+                                },
+                                'ksampler2': {
+                                    nodeType: 'ttN pipeKSampler_v2',
+                                    graphNode: null,
+                                    width: 262,
+                                    widgets: {
+                                        upscale_method: '[hiresFix] nearest-exact',
+                                        denoise: 0.5,
+                                        seed: 'toInput',
+                                        image_output: 'Preview'
+                                    }
+                                }
+                            }
+                            that.addGroup(contextMenu, nodes)
+                        }
+                    },
+                ];
+                break;
+
+            case "xyPlot":
+                entries = [
+                    {   content: "Base xyPlot",
+                        className: "tinyterra-contextmenu-item",
+                        callback : async function(value, event, mouseEvent, contextMenu){
+                            const nodes = {
+                                'Loader': {
+                                    nodeType: 'ttN tinyLoader',
+                                    graphNode: null,
+                                    width: 315,
+                                    connections: [
+                                        [0, 'Conditioning', 'model'],
+                                        [1, 'KSampler', 'latent'],
+                                        [2, 'KSampler', 'vae'],
+                                        [3, 'Conditioning', 'clip'],
+                                    ],
+                                },
+                                'Conditioning': {
+                                    nodeType: 'ttN conditioning',
+                                    graphNode: null,
+                                    width: 400,
+                                    connections: [
+                                        [0, 'KSampler', 'model'],
+                                        [1, 'KSampler', 'positive'],
+                                        [2, 'KSampler', 'negative'],
+                                        [3, 'KSampler', 'clip'],
+                                    ],
+                                },
+                                'xyPlot': {
+                                    nodeType: 'ttN advanced xyPlot',
+                                    graphNode: null,
+                                    width: 400,
+                                    connections: [
+                                        [0, 'KSampler', 'adv_xyPlot'],
+                                    ],
+                                },
+                                'KSampler': {
+                                    nodeType: 'ttN KSampler_v2',
+                                    graphNode: null,
+                                    width: 262,
+                                    widgets: {
+                                        image_output: 'Preview'
+                                    }
+                                }
+                            }
+                            that.addGroup(contextMenu, nodes)
+                        }
+                    },
+                    {   content: "Pipe xyPlot",
+                        className: "tinyterra-contextmenu-item",
+                        callback : async function(value, event, mouseEvent, contextMenu){
+                            const nodes = {
+                                'Loader': {
+                                    nodeType: 'ttN pipeLoader_v2',
+                                    graphNode: null,
+                                    width: 315,
+                                    connections: [
+                                        [0, 'KSampler', 'pipe'],
+                                    ],
+                                },
+                                'xyPlot': {
+                                    nodeType: 'ttN advanced xyPlot',
+                                    graphNode: null,
+                                    width: 400,
+                                    connections: [
+                                        [0, 'KSampler', 'adv_xyPlot'],
+                                    ],
+                                },
+                                'KSampler': {
+                                    nodeType: 'ttN pipeKSampler_v2',
+                                    graphNode: null,
+                                    width: 262,
+                                    widgets: {
+                                        image_output: 'Preview'
+                                    }
+                                }
+                            }
+                            that.addGroup(contextMenu, nodes)
+                        }
+                    },
+                ]
+        }
         new LiteGraph.ContextMenu( entries, { event: e, parentMenu: prev_menu }, ref_window );
     }
     async initialiseNodeMenu() {
@@ -433,12 +615,12 @@ app.registerExtension({
                 let nodeVersion = nodeData.input.hidden?.ttNnodeVersion ? nodeData.input.hidden.ttNnodeVersion : null;
                 nodeType.ttNnodeVersion = nodeVersion;
                 this.properties['ttNnodeVersion'] = this.properties['ttNnodeVersion'] ? this.properties['ttNnodeVersion'] : nodeVersion;
-                if (this.properties['ttNnodeVersion'] !== nodeVersion) {
+                if ((this.properties['ttNnodeVersion'].split(".")[0] !== nodeVersion.split(".")[0]) || (this.properties['ttNnodeVersion'].split(".")[1] !== nodeVersion.split(".")[1])) {
                     if (!this.properties['origVals']) {
                         this.properties['origVals'] = { bgcolor: this.bgcolor, color: this.color, title: this.title }
                     }
-                    this.bgcolor = "#d82129";
-                    this.color = "#bd000f";
+                    this.bgcolor = "#e76066";
+                    this.color = "#ff0b1e";
                     this.title = this.title.includes("Node Version Mismatch") ? this.title : this.title + " - Node Version Mismatch"
                 } else if (this.properties['origVals']) {
                     this.bgcolor = this.properties.origVals.bgcolor;
