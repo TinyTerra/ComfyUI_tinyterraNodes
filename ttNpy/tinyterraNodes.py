@@ -1379,7 +1379,7 @@ class ttN_pipeKSamplerAdvanced_v2:
                 optional_model, optional_positive, optional_negative, optional_latent, optional_vae, optional_clip, input_image_override, noise_seed, adv_xyPlot, upscale_model_name, upscale_method, factor, rescale, percent, width, height, longer_side, crop, prompt, extra_pnginfo, my_unique_id, start_at_step, end_at_step, force_full_denoise, disable_noise)
 
 class ttN_pipeLoaderSDXL_v2:
-    version = '2.0.0'
+    version = '2.1.0'
     @classmethod
     def INPUT_TYPES(cls):
         aspect_ratios = ["width x height [custom]",
@@ -1443,6 +1443,7 @@ class ttN_pipeLoaderSDXL_v2:
                         "empty_latent_aspect": (aspect_ratios, {"default": "1024 x 1024 [S] 1:1"}),
                         "empty_latent_width": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
                         "empty_latent_height": ("INT", {"default": 1024, "min": 64, "max": MAX_RESOLUTION, "step": 8}),
+                        "batch_size": ("INT", {"default": 1, "min": 1, "max": 64}),
                         "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                         },                
                 "optional": {
@@ -1471,7 +1472,7 @@ class ttN_pipeLoaderSDXL_v2:
                         conditioning_aspect, conditioning_width, conditioning_height, crop_width, crop_height, target_aspect, target_width, target_height,
                         positive_g, positive_l, negative_g, negative_l,
                         positive_ascore, negative_ascore,
-                        empty_latent_aspect, empty_latent_width, empty_latent_height, seed,
+                        empty_latent_aspect, empty_latent_width, empty_latent_height, batch_size, seed,
                         model_override=None, clip_override=None, optional_lora_stack=None, optional_controlnet_stack=None,
                         refiner_model_override=None, refiner_clip_override=None,
                         prepend_positive_g=None, prepend_positive_l=None, prepend_negative_g=None, prepend_negative_l=None,
@@ -1482,7 +1483,7 @@ class ttN_pipeLoaderSDXL_v2:
         vae: VAE | None = None
 
         # Create Empty Latent
-        latent = sampler.emptyLatent(empty_latent_aspect, 1, empty_latent_width, empty_latent_height)
+        latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height)
         samples = {"samples":latent}
 
         model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, clip_skip, model_override, clip_override, optional_lora_stack)
