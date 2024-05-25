@@ -33,12 +33,12 @@ export function wait(ms = 16, value) {
 const CONVERTED_TYPE = "converted-widget";
 const GET_CONFIG = Symbol();
 
-function getConfig(widgetName, node) {
+export function getConfig(widgetName, node) {
     const { nodeData } = node.constructor;
 	return nodeData?.input?.required[widgetName] ?? nodeData?.input?.optional?.[widgetName];
 }
 
-function hideWidget(node, widget, suffix = "") {
+export function hideWidget(node, widget, suffix = "") {
 	widget.origType = widget.type;
 	widget.origComputeSize = widget.computeSize;
 	widget.origSerializeValue = widget.serializeValue;
@@ -65,7 +65,7 @@ function hideWidget(node, widget, suffix = "") {
 	}
 }
 
-function getWidgetType(config) {
+export function getWidgetType(config) {
 	// Special handling for COMBO so we restrict links based on the entries
 	let type = config[0];
 	if (type instanceof Array) {
@@ -74,7 +74,7 @@ function getWidgetType(config) {
 	return { type };
 }
 
-function convertToInput(node, widget, config) {
+export function convertToInput(node, widget, config) {
 	hideWidget(node, widget);
 
 	const { type } = getWidgetType(config);
