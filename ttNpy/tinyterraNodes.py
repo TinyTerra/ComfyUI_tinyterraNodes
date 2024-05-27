@@ -134,6 +134,16 @@ class ttNloader:
         h = hashlib.sha256(s.encode()).digest()
         return (int.from_bytes(h, byteorder='big') & 0xffffffffffffffff)
 
+    def clear_cache(self, prompt, full=False):
+        loader_ids = [f'loader{key}' for key, value in prompt.items() if value['class_type'] in ['ttN pipeLoader_v2', 'ttN pipeLoaderSDXL_v2']]
+
+        if full is True:
+            self.loader_cache = {}
+        else:
+            for key in list(self.loader_cache.keys()):
+                if key not in loader_ids:
+                    self.loader_cache.pop(key)
+            
     def load_checkpoint(self, ckpt_name, config_name=None, clip_skip=0):
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
         if config_name not in [None, "Default"]:
@@ -270,12 +280,25 @@ class ttNloader:
 
         return conditioning, refiner_conditioning
         
-    def load_main3(self, ckpt_name, config_name, vae_name, loras, clip_skip, model_override=None, clip_override=None, optional_lora_stack=None):
+    def load_main3(self, ckpt_name, config_name, vae_name, loras, clip_skip, model_override=None, clip_override=None, optional_lora_stack=None, unique_id=None):
         # Load models
+        cache = self.loader_cache.get(f'loader{unique_id}', None)
+        
         if (model_override is not None) and (clip_override is not None) and (vae_name != "Baked VAE"):
             model, clip, vae = None, None, None
+        elif cache is not None:
+            if cache[0] == ckpt_name and cache[1] == config_name and cache[2] == vae_name:
+                model = cache[3]
+                clip = cache[4]
+                vae = cache[5]
+            else:
+                self.loader_cache.pop(f'loader{unique_id}', None)
+                model, clip, vae = self.load_checkpoint(ckpt_name, config_name, clip_skip)
         else:
             model, clip, vae = self.load_checkpoint(ckpt_name, config_name, clip_skip)
+
+        if unique_id is not None:
+            self.loader_cache[f'loader{unique_id}'] = [ckpt_name, config_name, vae_name, model, clip, vae]
 
         if model_override is not None:
             model = model_override
@@ -1085,7 +1108,8 @@ class ttN_pipeLoader_v2:
         latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height)
         samples = {"samples":latent}
 
-        model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, clip_skip, model_override, clip_override, optional_lora_stack)
+        loader.clear_cache(prompt)
+        model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, clip_skip, model_override, clip_override, optional_lora_stack, my_unique_id)
 
         positive_embedding = loader.embedding_encode(positive, positive_token_normalization, positive_weight_interpretation, clip, seed=seed, title='pipeLoader Positive', my_unique_id=my_unique_id, prepend_text=prepend_positive)
         negative_embedding = loader.embedding_encode(negative, negative_token_normalization, negative_weight_interpretation, clip, seed=seed, title='pipeLoader Negative', my_unique_id=my_unique_id, prepend_text=prepend_negative)
@@ -1488,7 +1512,8 @@ class ttN_pipeLoaderSDXL_v2:
         latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height)
         samples = {"samples":latent}
 
-        model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, clip_skip, model_override, clip_override, optional_lora_stack)
+        loader.clear_cache(prompt)
+        model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, clip_skip, model_override, clip_override, optional_lora_stack, my_unique_id)
 
         if refiner_ckpt_name not in ["None", None]:
             refiner_model, refiner_clip, refiner_vae = loader.load_main3(refiner_ckpt_name, refiner_config_name, vae_name, None, clip_skip, refiner_model_override, refiner_clip_override)
