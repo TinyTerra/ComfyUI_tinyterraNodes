@@ -62,6 +62,7 @@ from .ttNexecutor import xyExecutor
 class ttNloader:
     def __init__(self):
         self.loraDict = {lora.split('\\')[-1]: lora for lora in folder_paths.get_filename_list("loras")}
+        self.loader_cache = {}
 
     @staticmethod
     def nsp_parse(text, seed=0, noodle_key='__', nspterminology=None, pantry_path=None, title=None, my_unique_id=None):
