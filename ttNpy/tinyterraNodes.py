@@ -1060,7 +1060,8 @@ class ttN_pipeLoader_v2:
                     "prepend_positive": ("STRING", {"default": None, "forceInput": True}),
                     "prepend_negative": ("STRING", {"default": None, "forceInput": True}),
                     },
-                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoader_v2.version}, "my_unique_id": "UNIQUE_ID",}
+                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoader_v2.version, "my_unique_id": "UNIQUE_ID",}
+                }
 
     RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT", "INT", "INT", "STRING", "STRING")
     RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed", "width", "height", "pos_string", "neg_string")
@@ -1458,7 +1459,8 @@ class ttN_pipeLoaderSDXL_v2:
                     "prepend_negative_g": ("STRING", {"default": None, "forceInput": True}),
                     "prepend_negative_l": ("STRING", {"default": None, "forceInput": True}),
                     },
-                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoaderSDXL_v2.version}, "my_unique_id": "UNIQUE_ID",}
+                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoaderSDXL_v2.version, "my_unique_id": "UNIQUE_ID",}
+                }
 
     RETURN_TYPES = ("PIPE_LINE_SDXL" ,"MODEL", "CONDITIONING", "CONDITIONING", "VAE", "CLIP", "MODEL", "CONDITIONING", "CONDITIONING", "CLIP", "LATENT", "INT", "INT", "INT", "STRING", "STRING")
     RETURN_NAMES = ("sdxl_pipe","model", "positive", "negative", "vae", "clip", "refiner_model", "refiner_positive", "refiner_negative", "refiner_clip", "latent", "seed", "width", "height", "pos_string", "neg_string")

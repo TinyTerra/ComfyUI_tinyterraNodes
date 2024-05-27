@@ -1271,7 +1271,7 @@ class ttN_TSC_pipeLoader:
                         "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                         },                
                 "optional": {"model_override": ("MODEL",), "clip_override": ("CLIP",), "optional_lora_stack": ("LORA_STACK",),},
-                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_TSC_pipeLoader.version}, "my_unique_id": "UNIQUE_ID",}
+                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_TSC_pipeLoader.version, "my_unique_id": "UNIQUE_ID",}}
 
     RETURN_TYPES = ("PIPE_LINE" ,"MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "INT",)
     RETURN_NAMES = ("pipe","model", "positive", "negative", "latent", "vae", "clip", "seed",)
@@ -1727,7 +1727,7 @@ class ttN_pipeLoaderSDXL:
                         "batch_size": ("INT", {"default": 1, "min": 1, "max": 64}),
                         "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                         },
-                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoaderSDXL.version}, "my_unique_id": "UNIQUE_ID"}
+                "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoaderSDXL.version, "my_unique_id": "UNIQUE_ID"}}
 
     RETURN_TYPES = ("PIPE_LINE_SDXL" ,"MODEL", "CONDITIONING", "CONDITIONING", "VAE", "CLIP", "MODEL", "CONDITIONING", "CONDITIONING", "VAE", "CLIP", "LATENT", "INT",)
     RETURN_NAMES = ("sdxl_pipe","model", "positive", "negative", "vae", "clip", "refiner_model", "refiner_positive", "refiner_negative", "refiner_vae", "refiner_clip", "latent", "seed",)
