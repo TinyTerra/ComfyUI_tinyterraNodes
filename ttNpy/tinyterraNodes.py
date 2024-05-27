@@ -49,9 +49,9 @@ import comfy.controlnet
 import comfy.model_management
 import comfy_extras.nodes_model_advanced
 from comfy.sd import CLIP, VAE
+from spandrel import ModelLoader
 from .adv_encode import advanced_encode
 from comfy.model_patcher import ModelPatcher
-from comfy_extras.chainner_models import model_loading
 from comfy_extras.nodes_align_your_steps import AlignYourStepsScheduler
 from nodes import MAX_RESOLUTION, ControlNetApplyAdvanced
 from nodes import NODE_CLASS_MAPPINGS as COMFY_CLASS_MAPPINGS
@@ -3234,7 +3234,11 @@ class ttN_modelScale:
         # Load Model
         model_path = folder_paths.get_full_path("upscale_models", model_name)
         sd = comfy.utils.load_torch_file(model_path, safe_load=True)
-        upscale_model = model_loading.load_state_dict(sd).eval()
+        try:
+            upscale_model = ModelLoader().load_state_dict(sd).eval()
+        except Exception:   
+            from comfy_extras.chainner_models import model_loading
+            upscale_model = model_loading.load_state_dict(sd).eval()
 
         # Model upscale
         device = comfy.model_management.get_torch_device()
