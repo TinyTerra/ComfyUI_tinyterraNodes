@@ -49,7 +49,7 @@ import comfy.controlnet
 import comfy.model_management
 import comfy_extras.nodes_model_advanced
 from comfy.sd import CLIP, VAE
-from spandrel import ModelLoader
+from spandrel import ModelLoader, ImageModelDescriptor
 from .adv_encode import advanced_encode
 from comfy.model_patcher import ModelPatcher
 from comfy_extras.nodes_align_your_steps import AlignYourStepsScheduler
