@@ -145,16 +145,16 @@ class ttNloader:
                 if key not in loader_ids:
                     self.loader_cache.pop(key)
             
-    def load_checkpoint(self, ckpt_name, config_name=None, clip_skip=0):
+    def load_checkpoint(self, ckpt_name, config_name=None, clip_skip=0, output_vae=True, output_clip=True):
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
         if config_name not in [None, "Default"]:
             config_path = folder_paths.get_full_path("configs", config_name)
-            loaded_ckpt = comfy.sd.load_checkpoint(config_path, ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
+            loaded_ckpt = comfy.sd.load_checkpoint(config_path, ckpt_path, output_vae=output_vae, output_clip=output_clip, embedding_directory=folder_paths.get_folder_paths("embeddings"))
         else:
-            loaded_ckpt = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=folder_paths.get_folder_paths("embeddings"))
+            loaded_ckpt = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=output_vae, output_clip=output_clip, embedding_directory=folder_paths.get_folder_paths("embeddings"))
 
-        clip = loaded_ckpt[1].clone()
-        if clip_skip != 0:
+        clip = loaded_ckpt[1].clone() if loaded_ckpt[1] is not None else None
+        if clip_skip != 0 and clip is not None:
             clip.clip_layer(clip_skip)
 
         # model, clip, vae
@@ -282,26 +282,41 @@ class ttNloader:
         return conditioning, refiner_conditioning
         
     def load_main3(self, ckpt_name, config_name, vae_name, loras, clip_skip, model_override=None, clip_override=None, optional_lora_stack=None, unique_id=None):
-        # Load models
         cache = self.loader_cache.get(f'loader{unique_id}', None)
-        
-        if (model_override is not None) and (clip_override is not None) and (vae_name != "Baked VAE"):
-            model, clip, vae = None, None, None
-        elif cache is not None:
-            if cache[0] == ckpt_name and cache[1] == config_name and cache[2] == vae_name:
-                model = cache[3]
-                clip = cache[4]
-                vae = cache[5]
+
+        model = "override" if model_override is not None else None
+        clip = "override" if clip_override is not None else None
+        vae = None
+
+        if cache is not None and cache[0] == ckpt_name and cache[1] == config_name and cache[2] == vae_name and model is None and clip is None:
+            # Load from cache if it's the same
+            model = cache[3]
+            clip = cache[4]
+            vae = cache[5]
+        elif model is None or clip is None:
+            self.loader_cache.pop(f'loader{unique_id}', None)
+            
+            # Load normally
+            output_vae, output_clip = True, True
+            
+            if vae_name != "Baked VAE":
+                output_vae = False
+            if clip not in [None, "None", "override"]:
+                output_clip = False                
+
+            model, clip, vae = self.load_checkpoint(ckpt_name, config_name, clip_skip, output_vae, output_clip)
+
+        if vae is None:
+            if vae_name != "Baked VAE":
+                vae = self.load_vae(vae_name)
             else:
-                self.loader_cache.pop(f'loader{unique_id}', None)
-                model, clip, vae = self.load_checkpoint(ckpt_name, config_name, clip_skip)
-        else:
-            model, clip, vae = self.load_checkpoint(ckpt_name, config_name, clip_skip)
-
-        if unique_id is not None:
+                _, _, vae = self.load_checkpoint(ckpt_name, config_name, clip_skip, output_vae=True, output_clip=False)
+                
+        if unique_id is not None and model != "override" and clip != "override":
             self.loader_cache[f'loader{unique_id}'] = [ckpt_name, config_name, vae_name, model, clip, vae]
-
+                
         if model_override is not None:
+            self.loader_cache.pop(f'loader{unique_id}', None)
             model = model_override
             del model_override
 
@@ -311,9 +326,6 @@ class ttNloader:
             if clip_skip != 0:
                 clip.clip_layer(clip_skip)
             del clip_override
-
-        if vae_name != "Baked VAE":
-            vae = self.load_vae(vae_name)
 
         if optional_lora_stack is not None:
             for lora in optional_lora_stack:
