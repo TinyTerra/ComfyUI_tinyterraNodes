@@ -3029,6 +3029,32 @@ class ttN_text7BOX_concat:
         concat = delimiter.join(text for text in texts if text)
         return text1, text2, text3, text4, text5, text6, text7, concat
 
+class ttN_textCycleLine:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+                    "text": ("STRING", {"multiline": True, "default": '', "dynamicPrompts": True}),
+                    "index": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                    "index_control": (['increment', 'decrement', 'randomize','fixed'],),
+                    },
+                "hidden": {"ttNnodeVersion": ttN_textCycleLine.version},
+                }
+
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "cycle"
+
+    CATEGORY = "🌏 tinyterra/text"
+
+    def cycle(self, text, index, index_control='randomized'):
+        lines = text.split('\n')
+
+        if index >= len(lines):
+            index = len(lines) - 1
+        return (lines[index],)
 #---------------------------------------------------------------ttN/text END------------------------------------------------------------------------#
 
 
@@ -3364,6 +3390,7 @@ TTN_VERSIONS = {
     "concat": ttN_concat.version,
     "text3BOX_3WAYconcat": ttN_text3BOX_3WAYconcat.version,    
     "text7BOX_concat": ttN_text7BOX_concat.version,
+    "textCycleLine": ttN_textCycleLine.version,
     "imageOutput": ttN_imageOUPUT.version,
     "imageREMBG": ttN_imageREMBG.version,
     "hiresfixScale": ttN_modelScale.version,
@@ -3402,6 +3429,7 @@ NODE_CLASS_MAPPINGS = {
     "ttN concat": ttN_concat,
     "ttN text3BOX_3WAYconcat": ttN_text3BOX_3WAYconcat,    
     "ttN text7BOX_concat": ttN_text7BOX_concat,
+    "ttN textCycleLine": ttN_textCycleLine,
 
     #ttN/image
     "ttN imageOutput": ttN_imageOUPUT,
@@ -3445,6 +3473,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN concat": "textConcat",
     "ttN text7BOX_concat": "7x TXT Loader Concat",
     "ttN text3BOX_3WAYconcat": "3x TXT Loader MultiConcat",
+    "ttN textCycleLine": "textCycleLine",
 
     #ttN/image
     "ttN imageREMBG": "imageRemBG",

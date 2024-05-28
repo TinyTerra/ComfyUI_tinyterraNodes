@@ -3,9 +3,6 @@ import { ComfyWidgets } from "../../scripts/widgets.js";
 
 class SeedControl {
     constructor(node) {
-        this.lastSeed = undefined;
-        this.serializedCtx = {};
-        this.lastSeedValue = null;
         this.node = node;
 
         this.node.properties = this.node.properties || {};
@@ -66,6 +63,80 @@ function overwriteSeedControl(nodeType) {
     }
 }
 
+const HAS_EXECUTED = Symbol();
+class IndexControl {
+    constructor(node) {
+        this.node = node;
+        this.node.properties = this.node.properties || {};
+        for (const [i, w] of this.node.widgets.entries()) {
+            if (w.name === "index") {
+                this.indexWidget = w;
+            }
+            else if (w.name === "index_control") {
+                this.controlWidget = w;
+            } else if (w.name === "text") {
+                this.textWidget = w;
+            }
+        }
+
+        if (!this.indexWidget) {
+            throw new Error("Something's wrong; expected index widget");
+        }
+
+        const applyWidgetControl = () => {
+            var v = this.controlWidget.value;
+    
+            //number
+            let min = this.indexWidget.options.min;
+            let max = this.textWidget.value.split("\n").length - 1;
+            // limit to something that javascript can handle
+            max = Math.min(1125899906842624, max);
+            min = Math.max(-1125899906842624, min);
+    
+            //adjust values based on valueControl Behaviour
+            switch (v) {
+                case "fixed":
+                    break;
+                case "increment":
+                    this.indexWidget.value += 1;
+                    break;
+                case "decrement":
+                    this.indexWidget.value -= 1;
+                    break;
+                case "randomize":
+                    this.indexWidget.value = Math.floor(Math.random() * (max - min + 1)) + min;
+                default:
+                    break;
+            }
+            /*check if values are over or under their respective
+                * ranges and set them to min or max.*/
+            if (this.indexWidget.value < min) this.indexWidget.value = max;
+    
+            if (this.indexWidget.value > max)
+                this.indexWidget.value = min;
+            this.indexWidget.callback(this.indexWidget.value);
+        };
+    
+        this.controlWidget.beforeQueued = () => {
+            // Don't run on first execution
+            if (this.controlWidget[HAS_EXECUTED]) {
+                applyWidgetControl();
+            }
+            this.controlWidget[HAS_EXECUTED] = true;
+        };
+
+        this.indexWidget.linkedWidgets = [this.controlWidget];
+    }
+}
+
+function overwriteIndexControl(nodeType) {
+    const onNodeCreated = nodeType.prototype.onNodeCreated;
+    nodeType.prototype.onNodeCreated = function () {
+        onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
+        this.indexControl = new IndexControl(this);
+    }
+}
+
 app.registerExtension({
     name: "comfy.ttN.widgets",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
@@ -77,5 +148,8 @@ app.registerExtension({
         if (["ttN textDebug", "ttN advPlot range", "ttN debugInput"].includes(nodeData.name)) {
             addTextDisplay(nodeType)
         }
-    }
+        if (nodeData.name.startsWith("ttN textCycle")) {
+            overwriteIndexControl(nodeType)
+        }
+    },
 }); 
