@@ -3262,11 +3262,11 @@ class ttN_modelScale:
         # Load Model
         model_path = folder_paths.get_full_path("upscale_models", model_name)
         sd = comfy.utils.load_torch_file(model_path, safe_load=True)
-        try:
-            upscale_model = ModelLoader().load_state_dict(sd).eval()
-        except Exception:   
-            from comfy_extras.chainner_models import model_loading
-            upscale_model = model_loading.load_state_dict(sd).eval()
+
+        upscale_model = ModelLoader().load_from_state_dict(sd).eval()
+        
+        if not isinstance(upscale_model, ImageModelDescriptor):
+            raise Exception("Upscale model must be a single-image model.")
 
         # Model upscale
         device = comfy.model_management.get_torch_device()
