@@ -10,7 +10,7 @@ class SeedControl {
             if (w.name === "seed" || w.name === "noise_seed") {
                 this.seedWidget = w;
             }
-            else if (w.name === "control_after_generate") {
+            else if (w.name === "control_after_generate" || w.name === "control_before_generate") {
                 this.controlWidget = w;
             }
         }
