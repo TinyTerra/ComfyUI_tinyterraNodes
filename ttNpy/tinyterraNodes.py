@@ -11,7 +11,7 @@
 # Like the pack and want to support me?                     https://www.buymeacoffee.com/tinyterra                                                  #
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
-ttN_version = '2.0.2'
+ttN_version = '2.0.3'
 
 MAX_RESOLUTION=8192
 OUTPUT_FILETYPES = ["png", "jpg", "jpeg", "tiff", "tif", "webp", "bmp"]
@@ -436,10 +436,22 @@ class ttNsampler:
         s["samples"] = comfy.utils.common_upscale(samples["samples"], width, height, upscale_method, crop)
         return (s,)
 
-    def handle_upscale(self, samples: dict, upscale_method: str, factor: float, crop: bool) -> dict:
+    def handle_upscale(self, samples: dict, upscale_method: str, factor: float, crop: bool,
+                       upscale_model_name: str=None, vae: VAE=None, images: np.ndarray=None, rescale: str=None, percent: float=None, width: int=None, height: int=None, longer_side: int=None) -> dict:
         """Upscale the samples if the upscale_method is not set to 'None'."""
-        if upscale_method != "None":
-            samples = self.upscale(samples, upscale_method, factor, crop)[0]
+        upscale_method = upscale_method.split(' ', 1)
+
+        # Upscale samples if enabled
+        if upscale_method[0] == "[latent]":
+            if upscale_method[1] != "None":
+                samples = self.upscale(samples, upscale_method[1], factor, crop)[0]
+        
+        if upscale_method[0] == "[hiresFix]": 
+            if (images is None):
+                images = vae.decode(samples["samples"])
+            hiresfix = ttN_modelScale()
+            samples = hiresfix.upscale(upscale_model_name, vae, images, True if rescale != 'None' else False, upscale_method[1], rescale, percent, width, height, longer_side, crop, "return latent", None, True)
+
         return samples
 
     def get_output(self, pipe: dict) -> Tuple:
@@ -922,8 +934,10 @@ class ttNsave:
         filename = re.sub(r'%date:(.*?)%', lambda m: ttNsave._format_date(m.group(1), datetime.datetime.now()), filename_prefix)
         all_inputs = ttNsave._gather_all_inputs(prompt, my_unique_id)
 
-        filename = re.sub(r'%(.*?)%', lambda m: str(all_inputs.get(m.group(1), '')), filename)
-        
+        #filename = re.sub(r'%(.*?)\s*(?::(\d+))?%', lambda m: re.sub(r'[^a-zA-Z0-9_\-\. ]', '', str(all_inputs.get(m.group(1), ''))[:int(m.group(2)) if m.group(2) else len(str(all_inputs.get(m.group(1), '')))]), filename)
+
+        filename = re.sub(r'%(.*?)%', lambda m: re.sub(r'[^a-zA-Z0-9_\-\. ]', '', str(all_inputs.get(m.group(1), ''))), filename)
+
         subfolder = os.path.dirname(os.path.normpath(filename))
         filename = os.path.basename(os.path.normpath(filename))
 
@@ -937,8 +951,9 @@ class ttNsave:
     def folder_parser(output_dir: str, prompt: Dict[str, dict], my_unique_id: str):
         output_dir = re.sub(r'%date:(.*?)%', lambda m: ttNsave._format_date(m.group(1), datetime.datetime.now()), output_dir)
         all_inputs = ttNsave._gather_all_inputs(prompt, my_unique_id)
-
-        return re.sub(r'%(.*?)%', lambda m: str(all_inputs.get(m.group(1), '')), output_dir)
+        
+        return re.sub(r'%(.*?)%', lambda m: re.sub(r'[^a-zA-Z0-9_\-\. ]', '', str(all_inputs.get(m.group(1), ''))), output_dir)
+        #return re.sub(r'%(.*?)\s*(?::(\d+))?%', lambda m: re.sub(r'[^a-zA-Z0-9_\-\. ]', '', str(all_inputs.get(m.group(1), ''))[:int(m.group(2)) if m.group(2) else len(str(all_inputs.get(m.group(1), '')))]), output_dir)
 
     def images(self, images, filename_prefix, output_type, embed_workflow=True, ext="png", group_id=0):
         FORMAT_MAP = {
@@ -1240,17 +1255,9 @@ class ttN_pipeKSampler_v2:
             if lora_name not in (None, "None"):
                 samp_model, samp_clip = loader.load_lora(lora_name, samp_model, samp_clip, lora_model_strength, lora_clip_strength)
 
-            upscale_method = upscale_method.split(' ', 1)
-
             # Upscale samples if enabled
-            if upscale_method[0] == "[latent]":
-                samp_samples = sampler.handle_upscale(samp_samples, upscale_method[1], factor, crop)
-            
-            if upscale_method[0] == "[hiresFix]": 
-                if (samp_images is None):
-                    samp_images = samp_vae.decode(samp_samples["samples"])
-                hiresfix = ttN_modelScale()
-                samp_samples = hiresfix.upscale(upscale_model_name, samp_vae, samp_images, True if rescale != 'None' else False, upscale_method[1], rescale, percent, width, height, longer_side, crop, "return latent", None, True)
+            if upscale_method != "None":
+                samp_samples = sampler.handle_upscale(samp_samples, upscale_method, factor, crop, upscale_model_name, samp_vae, samp_images, rescale, percent, width, height, longer_side)
 
             samp_samples = sampler.common_ksampler(samp_model, samp_seed, steps, cfg, sampler_name, scheduler, samp_positive, samp_negative, samp_samples, denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
       
@@ -1691,17 +1698,8 @@ class ttN_pipeKSamplerSDXL_v2:
             total_steps = base_steps + refiner_steps
 
             # Upscale samples if enabled
-            upscale_method = upscale_method.split(' ', 1)
-
-            if upscale_method[0] == "[latent]":
-                sdxl_samples = sampler.handle_upscale(sdxl_samples, upscale_method[1], factor, crop)
-            
-            if upscale_method[0] == "[hiresFix]":
-                if (sdxl_images is None):
-                    sdxl_images = sdxl_vae.decode(sdxl_samples["samples"])
-                hiresfix = ttN_modelScale()
-                sdxl_samples = hiresfix.upscale(upscale_model_name, sdxl_vae, sdxl_images, True if rescale != 'None' else False, upscale_method[1], rescale, percent, width, height, longer_side, crop, "return latent", None, True)
-
+            if upscale_method != "None":
+                sdxl_samples = sampler.handle_upscale(sdxl_samples, upscale_method, factor, crop, upscale_model_name, sdxl_vae, sdxl_images, rescale, percent, width, height, longer_side,)
 
             if (refiner_steps > 0) and (sdxl_refiner_model not in [None, "None"]):
                 # Base Sample
@@ -2335,7 +2333,7 @@ class ttN_KSampler_v2:
                 },
                 "hidden": {
                     "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
-                    "ttNnodeVersion": ttN_pipeKSampler_v2.version
+                    "ttNnodeVersion": ttN_KSampler_v2.version
                 },
         }
 
@@ -2366,17 +2364,9 @@ class ttN_KSampler_v2:
                     raise ValueError(f"tinyKSampler [{my_unique_id}] - Lora requires CLIP model")
                 model, clip = loader.load_lora(lora_name, model, clip, lora_model_strength, lora_clip_strength)
 
-            upscale_method = upscale_method.split(' ', 1)
-
             # Upscale samples if enabled
-            if upscale_method[0] == "[latent]":
-                samples = sampler.handle_upscale(samples, upscale_method[1], factor, crop)
-            
-            if upscale_method[0] == "[hiresFix]": 
-                if (images is None):
-                    images = vae.decode(samples["samples"])
-                hiresfix = ttN_modelScale()
-                samples = hiresfix.upscale(upscale_model_name, vae, images, True if rescale != 'None' else False, upscale_method[1], rescale, percent, width, height, longer_side, crop, "return latent", None, True)
+            if upscale_method != "None":
+                samples = sampler.handle_upscale(samples, upscale_method, factor, crop, upscale_model_name, vae, images, rescale, percent, width, height, longer_side)
 
             samples = sampler.common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, samples, denoise=denoise, preview_latent=preview_latent, start_step=start_step, last_step=last_step, force_full_denoise=force_full_denoise, disable_noise=disable_noise)
       
