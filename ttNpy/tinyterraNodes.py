@@ -48,6 +48,7 @@ import comfy.model_base
 import comfy.controlnet
 import comfy.model_management
 import comfy_extras.nodes_model_advanced
+import comfy_extras.nodes_upscale_model
 from comfy.sd import CLIP, VAE
 from spandrel import ModelLoader, ImageModelDescriptor
 from .adv_encode import advanced_encode
@@ -3288,26 +3289,10 @@ class ttN_modelScale:
 
     def upscale(self, model_name, vae, image, rescale_after_model, rescale_method, rescale, percent, width, height, longer_side, crop, image_output, save_prefix, output_latent, prompt=None, extra_pnginfo=None, my_unique_id=None):
         # Load Model
-        model_path = folder_paths.get_full_path("upscale_models", model_name)
-        sd = comfy.utils.load_torch_file(model_path, safe_load=True)
-
-        upscale_model = ModelLoader().load_from_state_dict(sd).eval()
-        
-        if not isinstance(upscale_model, ImageModelDescriptor):
-            raise Exception("Upscale model must be a single-image model.")
+        upscale_model = comfy_extras.nodes_upscale_model.UpscaleModelLoader().load_model(model_name)[0]
 
         # Model upscale
-        device = comfy.model_management.get_torch_device()
-        upscale_model.to(device)
-        in_img = image.movedim(-1,-3).to(device)
-
-        tile = 128 + 64
-        overlap = 8
-        steps = in_img.shape[0] * comfy.utils.get_tiled_scale_steps(in_img.shape[3], in_img.shape[2], tile_x=tile, tile_y=tile, overlap=overlap)
-        pbar = comfy.utils.ProgressBar(steps)
-        s = comfy.utils.tiled_scale(in_img, lambda a: upscale_model(a), tile_x=tile, tile_y=tile, overlap=overlap, upscale_amount=upscale_model.scale, pbar=pbar)
-        upscale_model.cpu()
-        s = torch.clamp(s.movedim(-3,-1), min=0, max=1.0)
+        s = comfy_extras.nodes_upscale_model.ImageUpscaleWithModel().upscale(upscale_model, image)[0]
 
         # Post Model Rescale
         if rescale_after_model == True:
