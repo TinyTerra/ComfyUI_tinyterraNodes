@@ -2259,7 +2259,7 @@ class ttN_conditioning:
                     "prepend_positive": ("STRING", {"default": None, "forceInput": True}),
                     "prepend_negative": ("STRING", {"default": None, "forceInput": True}),
                     },
-                "hidden": {"ttNnodeVersion": ttN_conditioning.version}, "my_unique_id": "UNIQUE_ID",}
+                "hidden": {"ttNnodeVersion": ttN_conditioning.version, "my_unique_id": "UNIQUE_ID"},}
 
     RETURN_TYPES = ("MODEL", "CONDITIONING", "CONDITIONING", "CLIP", "STRING", "STRING")
     RETURN_NAMES = ("model", "positive", "negative", "clip", "pos_string", "neg_string")
