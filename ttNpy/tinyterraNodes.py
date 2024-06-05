@@ -525,12 +525,17 @@ class ttNadv_xyPlot:
 
     @staticmethod
     def get_font(font_size):
+        font = None
         if os.path.exists(ttNpaths.font_path):
             try:
-                return ImageFont.truetype(str(Path(ttNpaths.font_path)), font_size)
+                font = ImageFont.truetype(str(Path(ttNpaths.font_path)), font_size)
             except:
                 pass
-        return ImageFont.load_default()
+            
+        if font is None:
+            font = ImageFont.load_default(font_size)
+        
+        return font
     
     @staticmethod
     def rearrange_tensors(latent, num_cols, num_rows):

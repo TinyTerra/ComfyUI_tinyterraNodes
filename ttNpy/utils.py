@@ -70,7 +70,7 @@ class ttNl:
 
 class ttNpaths:
     ComfyUI = folder_paths.base_path
-    tinyterraNodes = Path(__file__).parent
+    tinyterraNodes = Path(__file__).parent.parent
     font_path = os.path.join(tinyterraNodes, 'arial.ttf')
 
 class AnyType(str):
