@@ -1155,7 +1155,7 @@ class ttN_pipeLoader_v2:
 
         if optional_controlnet_stack is not None:
             for cnt in optional_controlnet_stack:
-                positive_embedding, negative_embedding = loader.load_controlNet(self, positive_embedding, negative_embedding, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4])
+                positive_embedding, negative_embedding = loader.load_controlNet(positive_embedding, negative_embedding, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4])
 
         image = None
 
@@ -1572,8 +1572,8 @@ class ttN_pipeLoaderSDXL_v2:
 
         if optional_controlnet_stack is not None:
             for cnt in optional_controlnet_stack:
-                positive_embedding, negative_embedding = loader.load_controlNet(self, positive_embedding, negative_embedding, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4])
-                refiner_positive_embedding, refiner_negative_embedding = loader.load_controlNet(self, refiner_positive_embedding, refiner_negative_embedding, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4])
+                positive_embedding, negative_embedding = loader.load_controlNet(positive_embedding, negative_embedding, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4])
+                refiner_positive_embedding, refiner_negative_embedding = loader.load_controlNet(refiner_positive_embedding, refiner_negative_embedding, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4])
 
         image = None
 
