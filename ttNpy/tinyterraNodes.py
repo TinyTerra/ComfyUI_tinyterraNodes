@@ -1153,7 +1153,7 @@ class ttN_pipeLoader_v2:
         positive_embedding = loader.embedding_encode(positive, positive_token_normalization, positive_weight_interpretation, clip, seed=seed, title='pipeLoader Positive', my_unique_id=my_unique_id, prepend_text=prepend_positive)
         negative_embedding = loader.embedding_encode(negative, negative_token_normalization, negative_weight_interpretation, clip, seed=seed, title='pipeLoader Negative', my_unique_id=my_unique_id, prepend_text=prepend_negative)
 
-        if optional_controlnet_stack is not None:
+        if optional_controlnet_stack is not None and len(optional_controlnet_stack) > 0:
             for cnt in optional_controlnet_stack:
                 positive_embedding, negative_embedding = loader.load_controlNet(positive_embedding, negative_embedding, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4])
 
@@ -1573,7 +1573,6 @@ class ttN_pipeLoaderSDXL_v2:
         if optional_controlnet_stack is not None:
             for cnt in optional_controlnet_stack:
                 positive_embedding, negative_embedding = loader.load_controlNet(positive_embedding, negative_embedding, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4])
-                refiner_positive_embedding, refiner_negative_embedding = loader.load_controlNet(refiner_positive_embedding, refiner_negative_embedding, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4])
 
         image = None
 
