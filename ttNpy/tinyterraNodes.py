@@ -13,15 +13,6 @@
 
 ttN_version = '2.0.3'
 
-MAX_RESOLUTION=8192
-OUTPUT_FILETYPES = ["png", "jpg", "jpeg", "tiff", "tif", "webp", "bmp"]
-UPSCALE_METHODS = ["None",
-                    "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
-                    "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
-UPSCALE_MODELS = folder_paths.get_filename_list("upscale_models") if len(folder_paths.get_filename_list("upscale_models")) > 0 else ["None"]
-CROP_METHODS = ["disabled", "center"]
-CUSTOM_SCHEDULERS = ["AYS SD1", "AYS SDXL", "AYS SVD"]
-
 import os
 import re
 import json
@@ -60,6 +51,14 @@ from nodes import NODE_CLASS_MAPPINGS as COMFY_CLASS_MAPPINGS
 
 from .utils import CC, ttNl, ttNpaths, AnyType
 from .ttNexecutor import xyExecutor
+
+OUTPUT_FILETYPES = ["png", "jpg", "jpeg", "tiff", "tif", "webp", "bmp"]
+UPSCALE_METHODS = ["None",
+                    "[latent] nearest-exact", "[latent] bilinear", "[latent] area", "[latent] bicubic", "[latent] lanczos", "[latent] bislerp",
+                    "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
+UPSCALE_MODELS = folder_paths.get_filename_list("upscale_models") + ["None"]
+CROP_METHODS = ["disabled", "center"]
+CUSTOM_SCHEDULERS = ["AYS SD1", "AYS SDXL", "AYS SVD"]
 
 class ttNloader:
     def __init__(self):
