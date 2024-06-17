@@ -272,7 +272,6 @@ class TinyTerra extends EventTarget {
         let entries;
         switch (group) {
             case "basic":
-                console.log('basic group pls')
                 entries = [
                     {   content: "Base ttN",
                         className: "tinyterra-contextmenu-item",
@@ -328,6 +327,30 @@ class TinyTerra extends EventTarget {
                                     nodeType: 'ttN pipeKSampler_v2',
                                     graphNode: null,
                                     width: 262,
+                                    widgets: {
+                                        image_output: 'Preview'
+                                    }
+                                }
+                            }
+                            that.addGroup(contextMenu, nodes)
+                        }
+                    },
+                    {   content: "Pipe SDXL",
+                        className: "tinyterra-contextmenu-item",
+                        callback : async function(value, event, mouseEvent, contextMenu){
+                            const nodes = {
+                                'Loader': {
+                                    nodeType: 'ttN pipeLoaderSDXL_v2',
+                                    graphNode: null,
+                                    width: 365,
+                                    connections: [
+                                        [0, 'KSampler', 'sdxl_pipe']
+                                    ],
+                                },
+                                'KSampler': {
+                                    nodeType: 'ttN pipeKSamplerSDXL_v2',
+                                    graphNode: null,
+                                    width: 365,
                                     widgets: {
                                         image_output: 'Preview'
                                     }
