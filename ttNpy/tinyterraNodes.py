@@ -795,7 +795,6 @@ class ttNadv_xyPlot:
             return prompt
 
         for _, nodes in self.z_points.items():
-            print('ZNODES', nodes)
             z_label = nodes["label"]
             z_prompt = copy.deepcopy(base_prompt)
             z_prompt = update_prompt(z_prompt, nodes)
