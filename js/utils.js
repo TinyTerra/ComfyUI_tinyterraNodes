@@ -146,7 +146,7 @@ export function tinyterraReloadNode(node) {
             if (ow.type === CONVERTED_TYPE) {
                 const config = getConfig(ow.name, oldNode)
                 const WidgetToConvert = newNode.widgets.find((nw) => nw.name === ow.name);
-                if (WidgetToConvert && !newNode.inputs.find((i) => i.name === ow.name)) {
+                if (WidgetToConvert && !newNode?.inputs?.find((i) => i.name === ow.name)) {
                     convertToInput(newNode, WidgetToConvert, config);
                 }
             }
