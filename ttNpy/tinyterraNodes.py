@@ -505,10 +505,12 @@ class ttNadv_xyPlot:
         self.adv_xyPlot = adv_xyPlot
         self.x_points = adv_xyPlot.get("x_plot", None)
         self.y_points = adv_xyPlot.get("y_plot", None)
+        self.z_points = adv_xyPlot.get("z_plot", None)
         self.save_individuals = adv_xyPlot.get("save_individuals", False)
         self.image_output = prompt[str(unique_id)]["inputs"]["image_output"]
         self.x_labels = []
         self.y_labels = []
+        self.z_labels = []
 
         self.grid_spacing = adv_xyPlot["grid_spacing"]
         self.max_width, self.max_height = 0, 0
@@ -521,9 +523,13 @@ class ttNadv_xyPlot:
     def reset(self):
         self.executor.reset()
         self.executor = None
+        self.clear_caches()
+
+    def clear_caches(self):
         self.latent_list = []
         self.image_list = []
         self.ui_list = []
+        self.num = 0
 
     @staticmethod
     def get_font(font_size):
@@ -549,7 +555,7 @@ class ttNadv_xyPlot:
         return new_latent
 
     @staticmethod
-    def _getNodesToKeep(nodeID, prompt):
+    def _get_nodes_to_keep(nodeID, prompt):
         nodes_to_keep = OrderedDict([(nodeID, None)])
 
         toCheck = [nodeID]
@@ -628,15 +634,15 @@ class ttNadv_xyPlot:
     def calculate_background_dimensions(self):
         border_size = int((self.max_width//8)*1.5) if self.y_points is not None or self.x_points is not None else 0
         bg_width = self.num_cols * (self.max_width + self.grid_spacing) - self.grid_spacing + border_size * (self.y_points != None)
-        bg_height = self.num_rows * (self.max_height + self.grid_spacing) - self.grid_spacing + border_size * (self.x_points != None)
+        bg_height = self.num_rows * (self.max_height + self.grid_spacing) - self.grid_spacing + border_size * (self.x_points != None) + border_size * (self.z_points["1"]["label"] != None)
 
         x_offset_initial = border_size if self.y_points is not None else 0
         y_offset = border_size if self.x_points is not None else 0
 
         return bg_width, bg_height, x_offset_initial, y_offset
     
-    def getRelevantPrompt(self):
-        nodes_to_keep = self._getNodesToKeep(self.unique_id, self.prompt)
+    def get_relevant_prompt(self):
+        nodes_to_keep = self._get_nodes_to_keep(self.unique_id, self.prompt)
         new_prompt = {node_id: self.prompt[node_id] for node_id in nodes_to_keep}
         
         if self.save_individuals == True:
@@ -651,7 +657,7 @@ class ttNadv_xyPlot:
             
         return new_prompt
 
-    def plot_images(self):
+    def plot_images(self, z_label):
         bg_width, bg_height, x_offset_initial, y_offset = self.calculate_background_dimensions()
 
         background = Image.new('RGBA', (int(bg_width), int(bg_height)), color=(255, 255, 255, 255))
@@ -679,6 +685,12 @@ class ttNadv_xyPlot:
                     label_y = y_offset + (img.height - label_bg.height) // 2
                     background.alpha_composite(label_bg, (label_x, label_y))
 
+                # Handle Z label
+                if z_label is not None:
+                    label_bg = self.create_label(background, z_label, int(48 * img.height / 512))
+                    label_y = background.height - label_bg.height - (label_bg.height) // 2
+                    background.alpha_composite(label_bg, (0, label_y))
+                    
                 x_offset += img.width + self.grid_spacing
 
             y_offset += img.height + self.grid_spacing
@@ -696,18 +708,15 @@ class ttNadv_xyPlot:
         else:
             return initial_font_size
     
-    def execute_prompt(self, prompt, extra_data, x_label, y_label):
+    def execute_prompt(self, prompt, extra_data, x_label, y_label, z_label):
         valid = execution.validate_prompt(prompt)
         
         if valid[0]:
-            ttNl(f'{CC.GREY}X: {x_label}, Y: {y_label}').t(f'Plot Values {self.num}/{self.total} ->').p()
+            ttNl(f'{CC.GREY}X: {x_label}, Y: {y_label} Z: {z_label}').t(f'Plot Values {self.num}/{self.total} ->').p()
 
             self.executor.execute(prompt, self.num, extra_data, valid[2])
 
             self.latent_list.append(self.executor.outputs[self.unique_id][-6][0]["samples"])
-            #ui_out = self.executor.outputs_ui[self.unique_id].get('images')
-            #if ui_out is not None and len(ui_out) > 0:
-            #    self.ui_list.append(ui_out[0])
 
             image = self.executor.outputs[self.unique_id][-3][0]
             pil_image = ttNsampler.tensor2pil(image)
@@ -756,78 +765,82 @@ class ttNadv_xyPlot:
 
         regex = re.compile(r'%(.*?);(.*?)%')
 
-        x_label, y_label = None, None
-        base_prompt = self.getRelevantPrompt()    
+        x_label, y_label, z_label = None, None, None
+        base_prompt = self.get_relevant_prompt()
 
-        for xpoint, nodes in self.x_points.items():
-            x_label = nodes["label"]
-            self.x_labels.append(x_label)
-            x_prompt = copy.deepcopy(base_prompt)
-            
+        if self.z_points is None:
+            self.z_points = {'1': {'label': None}}
+
+        plot_images = []
+        pil_images = []
+        images = []
+        latents = []
+
+        def update_prompt(prompt, nodes):
             for node_id, inputs in nodes.items():
                 if node_id == 'label':
                     continue
                 try:
-                    x_node_inputs = x_prompt[node_id]["inputs"]
+                    node_inputs = prompt[node_id]["inputs"]
                 except KeyError:
                     raise KeyError(f'Node with ID: [{node_id}] not found in prompt for xyPlot')
-                x_class_type = x_prompt[node_id]["class_type"]
-                x_class_def = COMFY_CLASS_MAPPINGS[x_class_type]
-                x_input_types = x_class_def.INPUT_TYPES()
+                class_type = prompt[node_id]["class_type"]
+                class_def = COMFY_CLASS_MAPPINGS[class_type]
+                input_types = class_def.INPUT_TYPES()
                 
                 for input_name, value in inputs.items():
-                    input_name, value = self._parse_value(input_name, value, x_node_inputs, x_input_types, regex)               
-                    x_node_inputs[input_name] = value
-                    
-            if self.y_points:
-                for ypoint, nodes in self.y_points.items():
-                    y_label = nodes["label"]
-                    self.y_labels.append(y_label)
-                    y_prompt = copy.deepcopy(x_prompt)
-                    
-                    for node_id, inputs in nodes.items():
-                        if node_id == 'label':
-                            continue
-                        try:
-                            y_node_inputs = y_prompt[node_id]["inputs"]
-                        except KeyError:
-                            raise KeyError(f'Node with ID: [{node_id}] not found in prompt for xyPlot')
-                        y_class_type = y_prompt[node_id]["class_type"]
-                        y_class_def = COMFY_CLASS_MAPPINGS[y_class_type]
-                        y_input_types = y_class_def.INPUT_TYPES()
+                    input_name, value = self._parse_value(input_name, value, node_inputs, input_types, regex)
+                    node_inputs[input_name] = value
+
+            return prompt
+
+        for _, nodes in self.z_points.items():
+            print('ZNODES', nodes)
+            z_label = nodes["label"]
+            z_prompt = copy.deepcopy(base_prompt)
+            z_prompt = update_prompt(z_prompt, nodes)
+
+            for _, nodes in self.x_points.items():
+                x_label = nodes["label"]
+                self.x_labels.append(x_label)
+                x_prompt = copy.deepcopy(z_prompt)
+                x_prompt = update_prompt(x_prompt, nodes)
                         
-                        for input_name, value in inputs.items():
-                            input_name, value = self._parse_value(input_name, value, y_node_inputs, y_input_types, regex)
-                            y_node_inputs[input_name] = value
-                            
+                if self.y_points:
+                    for _, nodes in self.y_points.items():
+                        y_label = nodes["label"]
+                        self.y_labels.append(y_label)
+                        y_prompt = copy.deepcopy(x_prompt)
+                        y_prompt = update_prompt(y_prompt, nodes)
+                                
+                        self.num += 1
+                        self.execute_prompt(y_prompt, self.extra_pnginfo, x_label, y_label, z_label)
+                else:
                     self.num += 1
-                    self.execute_prompt(y_prompt, self.extra_pnginfo, x_label, y_label)
-            else:
-                self.num += 1
-                self.execute_prompt(x_prompt, self.extra_pnginfo, x_label, y_label)
+                    self.execute_prompt(x_prompt, self.extra_pnginfo, x_label, y_label, z_label)
 
-        # Rearrange latent array to match preview image grid
-        self.latent_list = self.rearrange_tensors(self.latent_list, self.num_cols, self.num_rows)
+            # Rearrange latent array to match preview image grid
+            latents.extend(self.rearrange_tensors(self.latent_list, self.num_cols, self.num_rows))
 
-        #if self.image_output in ["Preview", "Save"]:
-        #    rearranged_ui_list = self.rearrange_tensors(self.ui_list, self.num_cols, self.num_rows)
-        #else:
-        #    rearranged_ui_list = []
+            # Plot images
+            plot_images.append(self.plot_images(z_label))
+
+            # Rearrange images for outputs
+            pil_images.extend(self.rearrange_tensors(self.image_list, self.num_cols, self.num_rows))
+
+            self.clear_caches()
 
         # Concatenate the tensors along the first dimension (dim=0)
-        self.latent_list = torch.cat(self.latent_list, dim=0)
-        plot_image = self.plot_images()
+        latents = torch.cat(latents, dim=0)
 
-        self.image_list = self.rearrange_tensors(self.image_list, self.num_cols, self.num_rows)
-
-        images = []
-        for image in self.image_list:
+        for image in pil_images:
             images.append(sampler.pil2tensor(image))
 
+        plot_out = torch.cat(plot_images, dim=0)
         images_out = torch.cat(images, dim=0)
-        samples = {"samples": self.latent_list}
+        samples = {"samples": latents}
         
-        return plot_image, images_out, samples
+        return plot_out, images_out, samples
 
 class ttNsave:
     def __init__(self, my_unique_id=0, prompt=None, extra_pnginfo=None, number_padding=5, overwrite_existing=False, output_dir=folder_paths.get_temp_directory()):
@@ -2440,10 +2453,10 @@ class ttN_KSampler_v2:
 
 #-------------------------------------------------------------ttN/xyPlot START----------------------------------------------------------------------#
 class ttN_advanced_XYPlot:
-    version = '1.1.0'
+    version = '1.2.0'
     plotPlaceholder = "_PLOT\nExample:\n\n<axis number:label1>\n[node_ID:widget_Name='value']\n\n<axis number2:label2>\n[node_ID:widget_Name='value2']\n[node_ID:widget2_Name='value']\n[node_ID2:widget_Name='value']\n\netc..."
 
-    def get_plot_points(plot_data, unique_id):
+    def get_plot_points(plot_data, unique_id, plot_Line):
         if plot_data is None or plot_data.strip() == '':
             return None
         else:
@@ -2470,7 +2483,7 @@ class ttN_advanced_XYPlot:
                         for point in line[1].split('['):
                             if point.strip() != '':
                                 node_id = point.split(':', 1)[0]
-                                axis_dict[num][node_id] = {}
+                                axis_dict[num].setdefault(node_id, {})
                                 input_name = point.split(':', 1)[1].split('=')[0]
                                 value = point.split("'")[1].split("'")[0]
                                 values_label.append((value, input_name, node_id))
@@ -2489,7 +2502,7 @@ class ttN_advanced_XYPlot:
                             axis_dict[num]['label'] = ', '.join(new_label)
                         
             except ValueError:
-                ttNl('Invalid Plot - defaulting to None...').t(f'advanced_XYPlot[{unique_id}]').warn().p()
+                ttNl('Invalid Plot - defaulting to None...').t(f'advanced_XYPlot[{unique_id}] {plot_Line} Axis').warn().p()
                 return None
             return axis_dict
 
@@ -2506,11 +2519,10 @@ class ttN_advanced_XYPlot:
                 
                 "x_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'X' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
                 "y_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'Y' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
+                "z_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'Z' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
             },
             "hidden": {
-                "prompt": ("PROMPT",),
-                "extra_pnginfo": ("EXTRA_PNGINFO",),
-                "my_unique_id": ("MY_UNIQUE_ID",),
+                "my_unique_id": "UNIQUE_ID",
                 "ttNnodeVersion": ttN_advanced_XYPlot.version,
             },
         }
@@ -2521,9 +2533,10 @@ class ttN_advanced_XYPlot:
 
     CATEGORY = "🌏 tinyterra/xyPlot"
     
-    def plot(self, grid_spacing, save_individuals, flip_xy, x_plot=None, y_plot=None, prompt=None, extra_pnginfo=None, my_unique_id=None):
-        x_plot = ttN_advanced_XYPlot.get_plot_points(x_plot, my_unique_id)
-        y_plot = ttN_advanced_XYPlot.get_plot_points(y_plot, my_unique_id)
+    def plot(self, grid_spacing, save_individuals, flip_xy, x_plot=None, y_plot=None, z_plot=None, my_unique_id=None):
+        x_plot = ttN_advanced_XYPlot.get_plot_points(x_plot, my_unique_id, 'X')
+        y_plot = ttN_advanced_XYPlot.get_plot_points(y_plot, my_unique_id, 'Y')
+        z_plot = ttN_advanced_XYPlot.get_plot_points(z_plot, my_unique_id, 'Z')
 
         if x_plot == {}:
             x_plot = None
@@ -2535,6 +2548,7 @@ class ttN_advanced_XYPlot:
 
         xy_plot = {"x_plot": x_plot,
                    "y_plot": y_plot,
+                   "z_plot": z_plot,
                    "grid_spacing": grid_spacing,
                    "save_individuals": save_individuals,}
         
