@@ -4,9 +4,9 @@
 
 **Enjoy my nodes and would like to [help keep me awake](https://buymeacoffee.com/tinyterra)?**
 
-![tinyterra_pipeSDXL](workflows/tinyterra_pipeSDXL.png)
-![tinyterra_trueHRFix](workflows/tinyterra_trueHRFix.png) 
-![tinyterra_trueHRFix](workflows/tinyterra_xyPlot.png)
+![tinyterra_pipeSDXL](images/tinyterra_pipeSDXL.png)
+![tinyterra_trueHRFix](images/tinyterra_trueHRFix.png) 
+![tinyterra_trueHRFix](images/tinyterra_xyPlot.png)
 
 ## Installation
 Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
@@ -99,6 +99,11 @@ For Example:
 + Append to original value
     + if you include .append to the widget name it will append the xyPlot value to the original instead of overwriting it.
     + For example: [1:loras.append='\<lora:add_detail.safetensors:0.8>']
++ Z-Axis support for multi plotting
+    + Creates extra xyPlots with the z-axis value changes as a base
++ Node based plotting to avoid requiring manually writing syntax
+    + advPlot range for easily created int/float ranges
+    + advPlot string for deliminated string 'ranges'
 
 **Auto Complete**
 
@@ -176,7 +181,7 @@ or %input_name>input_name>widget_name% (for inputting nodes) <br>
   
 (Includes [ADV_CLIP_emb](https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb))
 
-![pipeLoader](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/deb74ef1-43a7-4fd5-9cdd-b4487eaee6f0)
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/deb74ef1-43a7-4fd5-9cdd-b4487eaee6f0"  width="50%">
 
    </details>
 
@@ -186,7 +191,7 @@ or %input_name>input_name>widget_name% (for inputting nodes) <br>
 
 Embedded with Advanced CLIP Text Encode with an additional pipe output
 
-![pipeKSampler](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/0f33d9aa-65ea-4b4f-88fd-033e7c4f1e2a)
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/0f33d9aa-65ea-4b4f-88fd-033e7c4f1e2a"  width="50%">
 
 
 Old node layout:
@@ -203,7 +208,7 @@ With pipeLoader and pipeKSampler:
 
 Embedded with Advanced CLIP Text Encode with an additional pipe output
 
-![pipeKSampler Advanced](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/31dd3860-6cb0-417b-9912-f3f5a37df68b)
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/31dd3860-6cb0-417b-9912-f3f5a37df68b"  width="50%">
   </details>
 
   <details>
@@ -211,7 +216,7 @@ Embedded with Advanced CLIP Text Encode with an additional pipe output
 
 SDXL Loader and Advanced CLIP Text Encode with an additional pipe output
 
-![pipeLoaderSDXL](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/cb6e43f8-a1c7-47f8-aab7-d403908bf83b)
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/cb6e43f8-a1c7-47f8-aab7-d403908bf83b"  width="50%">
 
    </details>
 
@@ -220,7 +225,7 @@ SDXL Loader and Advanced CLIP Text Encode with an additional pipe output
 
 SDXL Sampler (base and refiner in one) and Advanced CLIP Text Encode with an additional pipe output
 
-![pipeLoaderSDXL](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/cb6e43f8-a1c7-47f8-aab7-d403908bf83b)
+<img src="https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/cb6e43f8-a1c7-47f8-aab7-d403908bf83b"  width="50%">
 
 Old node layout:
 
