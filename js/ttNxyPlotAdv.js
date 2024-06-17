@@ -293,7 +293,7 @@ function setPlotNodeOptions(currentNode, targetID=null) {
     }
 }
 
-function setPlotWidgetOptions(currentNode) {
+function setPlotWidgetOptions(currentNode, searchType) {
     const { value } = currentNode.widgets.find(w => w.name === 'node');
     const nodeIdRegex = /\[(\d+)\]/;
     const match = value.match(nodeIdRegex);
@@ -302,8 +302,15 @@ function setPlotWidgetOptions(currentNode) {
 
     const optionNode = app.graph._nodes_by_id[nodeId];
     if (!optionNode) return;
+
     const widgetsList = Object.values(optionNode.widgets)
-        .filter(w => w.type === 'number')
+        .filter(
+            function(w) {
+                if (searchType) {
+                    return searchType.includes(w.type)
+                }
+            }
+        )
         .map((w) => w.name);
         
     if (widgetsList) {
@@ -335,28 +342,31 @@ function setPlotWidgetOptions(currentNode) {
 
     const widgetWidget = currentNode.widgets.find(w => w.name === 'widget');
     const widgetWidgetValue = widgetWidget.value;
-    const rangeModeWidget = currentNode.widgets.find(w => w.name === 'range_mode');
-    const rangeModeWidgetValue = rangeModeWidget.value;
 
-    if (int_widgets.includes(widgetWidgetValue)) {
-        rangeModeWidget.options.values = ['step_int', 'num_steps_int']
-        if (rangeModeWidgetValue === 'num_steps_float') {
-            rangeModeWidget.value = 'num_steps_int'
+    if (searchType.includes('number')) {
+        const rangeModeWidget = currentNode.widgets.find(w => w.name === 'range_mode');
+        const rangeModeWidgetValue = rangeModeWidget.value;
+
+        if (int_widgets.includes(widgetWidgetValue)) {
+            rangeModeWidget.options.values = ['step_int', 'num_steps_int']
+            if (rangeModeWidgetValue === 'num_steps_float') {
+                rangeModeWidget.value = 'num_steps_int'
+            }
+            if (rangeModeWidgetValue === 'step_float') {
+                rangeModeWidget.value = 'step_int'
+            }
+        } else if (float_widgets.includes(widgetWidgetValue)) {
+            rangeModeWidget.options.values = ['step_float', 'num_steps_float']
+            rangeModeWidget.value.replace('int', 'float')
+            if (rangeModeWidgetValue === 'num_steps_int') {
+                rangeModeWidget.value = 'num_steps_float'
+            }
+            if (rangeModeWidgetValue === 'step_int') {
+                rangeModeWidget.value = 'step_float'
+            }
+        } else {
+            rangeModeWidget.options.values = ['step_int', 'num_steps_int', 'step_float', 'num_steps_float']
         }
-        if (rangeModeWidgetValue === 'step_float') {
-            rangeModeWidget.value = 'step_int'
-        }
-    } else if (float_widgets.includes(widgetWidgetValue)) {
-        rangeModeWidget.options.values = ['step_float', 'num_steps_float']
-        rangeModeWidget.value.replace('int', 'float')
-        if (rangeModeWidgetValue === 'num_steps_int') {
-            rangeModeWidget.value = 'num_steps_float'
-        }
-        if (rangeModeWidgetValue === 'step_int') {
-            rangeModeWidget.value = 'step_float'
-        }
-    } else {
-        rangeModeWidget.options.values = ['step_int', 'num_steps_int', 'step_float', 'num_steps_float']
     }
 }
 
@@ -365,15 +375,11 @@ const getSetWidgets = [
     "widget",
 ]
 
-const getSetNodes = [
-    "advPlot range",
-]
-
-function getSetters(node) {
+function getSetters(node, searchType) {
 	if (node.widgets) {
 		for (const w of node.widgets) {
 			if (getSetWidgets.includes(w.name)) {
-				setPlotWidgetOptions(node);
+				setPlotWidgetOptions(node, searchType);
 				let widgetValue = w.value;
 
 				// Define getters and setters for widget values
@@ -384,7 +390,7 @@ function getSetters(node) {
 					set(newVal) {
 						if (newVal !== widgetValue) {
 							widgetValue = newVal;
-							setPlotWidgetOptions(node);
+							setPlotWidgetOptions(node, searchType);
 						}
 					}
 				});
@@ -400,8 +406,7 @@ function getSetters(node) {
             if (newVal !== mouseOver) {
                 mouseOver = newVal;
                 if (mouseOver) {
-                    //console.log('im over this', node)
-                    setPlotWidgetOptions(node);
+                    setPlotWidgetOptions(node, searchType);
                     setPlotNodeOptions(node);
                 }
             }
@@ -437,8 +442,11 @@ app.registerExtension({
 		if (node_title === "advanced xyPlot") {
 			dropdownCreator(node);
 		}
-        if (getSetNodes.includes(node_title)) {
-            getSetters(node);
+        if (node_title === "advPlot range") {
+            getSetters(node, ['number',]);
+        }
+        if (node_title === "advPlot string") {
+            getSetters(node, ['text', 'customtext']);
         }
 	},
 });

@@ -2668,6 +2668,60 @@ class ttN_advPlot_range:
 
         return {"ui": {"text": out}, "result": (out,)}
 
+class ttN_advPlot_string:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "node": ([AnyType("Connect to xyPlot for options"),],{}),
+                "widget": ([AnyType("Select node for options"),],{}),
+
+                "text": ("STRING", {"default":"","multiline": True}),
+                "delimiter": ("STRING", {"default":"\\n","multiline": False}),
+                "label_type": (['Values', 'Title and Values', 'ID, Title and Values'],{"default": "Values"}),
+            },
+            "hidden": {
+                "ttNnodeVersion": ttN_advPlot_range.version,
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("plot_text",)
+    FUNCTION = "plot"
+    OUTPUT_NODE = True
+
+    CATEGORY = "🌏 tinyterra/xyPlot"
+
+    def plot(self, node, widget, text, delimiter, label_type):
+        if '[' in node and ']' in node:
+            nodeid = node.split('[', 1)[1].split(']', 1)[0]
+        else:
+            return {"ui": {"text": ''}, "result": ('',)}
+        
+        label_map = {
+            'Values': 'v_label',
+            'Title and Values': 'tv_label',
+            'ID, Title and Values': 'idtv_label',
+        }
+        label = label_map[label_type]
+
+        plot_text = []
+        
+        delimiter = delimiter.replace('\\n', '\n')
+        vals = text.split(delimiter)
+
+        for i, val in enumerate(vals):
+            line = f"[{nodeid}:{widget}='{val}']"
+            plot_text.append(f"<{i+1}:{label}>")
+            plot_text.append(line)
+            
+        out = '\n'.join(plot_text)
+
+        return {"ui": {"text": out}, "result": (out,)}
 #--------------------------------------------------------------ttN/xyPlot END-----------------------------------------------------------------------#
 
 
@@ -3367,6 +3421,7 @@ TTN_VERSIONS = {
     "advanced xyPlot": ttN_advanced_XYPlot.version,
 #    "advPlot merge": ttN_advPlot_merge.version,
     "advPlot range": ttN_advPlot_range.version,
+    "advPlot string": ttN_advPlot_string.version,
     "pipeEncodeConcat": ttN_pipeEncodeConcat.version,
     "multiLoraStack": ttN_pipeLoraStack.version,
     "multiModelMerge": ttN_multiModelMerge.version,
@@ -3399,6 +3454,7 @@ NODE_CLASS_MAPPINGS = {
     "ttN advanced xyPlot": ttN_advanced_XYPlot,
 #    "ttN advPlot merge": ttN_advPlot_merge,
     "ttN advPlot range": ttN_advPlot_range,
+    "ttN advPlot string": ttN_advPlot_string,
     "ttN pipeEDIT": ttN_pipe_EDIT,
     "ttN pipe2BASIC": ttN_pipe_2BASIC,
     "ttN pipe2DETAILER": ttN_pipe_2DETAILER,
@@ -3448,6 +3504,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN advanced xyPlot": "advanced xyPlot",
 #    "ttN advPlot merge": "advPlot merge",
     "ttN advPlot range": "advPlot range",
+    "ttN advPlot string": "advPlot string",
     
     #ttN/misc
     "ttN multiModelMerge": "multiModelMerge",
