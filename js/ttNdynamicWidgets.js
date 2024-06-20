@@ -310,7 +310,7 @@ function widgetLogic(node, widget) {
 			break;
 
 		case 'mode':
-            if (node.type === "ttN pipeLoraStack") {
+            if (node.getTitle() === "pipeLoraStack") {
                 let number_to_show2 = findWidgetByName(node, 'num_loras')?.value + 1
                 for (let i = 0; i < number_to_show2; i++) {
                     if (widget.value === "simple") {
@@ -324,7 +324,7 @@ function widgetLogic(node, widget) {
                 }
                 updateNodeHeight(node)
                 break;
-            } else if (node.type === "ttN advPlot combo") {
+            } else if (node.getTitle() === "advPlot combo") {
                 if (widget.value === 'all') {
                     toggleWidget(node, findWidgetByName(node, 'start_from'))
                     toggleWidget(node, findWidgetByName(node, 'end_with'))

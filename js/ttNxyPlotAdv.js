@@ -413,11 +413,8 @@ function getSetters(node, searchType) {
 		
         const selectWidget = node.widgets.find(w => w.name === 'select')
         if (selectWidget) {
-            console.log('here');
             let widgetValue = selectWidget.value;
             let selectedWidget = node.widgets.find(w => w.name === 'selection');
-            let selectedValue = selectedWidget.inputEl.value;
-            console.log(selectedValue);
 
             Object.defineProperty(selectWidget, 'value', {
                 get() {
