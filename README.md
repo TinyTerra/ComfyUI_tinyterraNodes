@@ -274,9 +274,20 @@ pipeKSampler input to generate xy plots using sampler and loader values. (Any va
 <details>
   <summary>advPlot range</summary>
   
-adv_xyPlot input to generate plot syntax across a rang of values. 
+adv_xyPlot input to generate plot syntax across a range of values. 
    </details>
 
+<details>
+  <summary>advPlot string</summary>
+  
+adv_xyPlot input to generate plot syntax for strings via a delimiter. 
+   </details>
+
+<details>
+  <summary>advPlot combo</summary>
+  
+adv_xyPlot input to generate plot syntax for combos with various modes. 
+   </details>
 
 ## ttN/image
   

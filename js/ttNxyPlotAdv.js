@@ -320,30 +320,32 @@ function setPlotWidgetOptions(currentNode, searchType) {
             }
         }
     }
-    const int_widgets = [
-        'seed',
-        'clip_skip',
-        'steps',
-        'start_at_step',
-        'end_at_step',
-        'empty_latent_width',
-        'empty_latent_height',
-        'noise_seed',
-    ]
-    const float_widgets = [
-        'cfg',
-        'denoise',
-        'strength_model',
-        'strength_clip',
-        'strength',
-        'scale_by',
-        'lora_strength'
-    ]
+
 
     const widgetWidget = currentNode.widgets.find(w => w.name === 'widget');
     const widgetWidgetValue = widgetWidget.value;
 
     if (searchType.includes('number')) {
+        const int_widgets = [
+            'seed',
+            'clip_skip',
+            'steps',
+            'start_at_step',
+            'end_at_step',
+            'empty_latent_width',
+            'empty_latent_height',
+            'noise_seed',
+        ]
+        const float_widgets = [
+            'cfg',
+            'denoise',
+            'strength_model',
+            'strength_clip',
+            'strength',
+            'scale_by',
+            'lora_strength'
+        ]
+
         const rangeModeWidget = currentNode.widgets.find(w => w.name === 'range_mode');
         const rangeModeWidgetValue = rangeModeWidget.value;
 
@@ -368,34 +370,71 @@ function setPlotWidgetOptions(currentNode, searchType) {
             rangeModeWidget.options.values = ['step_int', 'num_steps_int', 'step_float', 'num_steps_float']
         }
     }
+    if (searchType.includes('combo')) {
+        const optionsWidget = optionNode.widgets.find(w => w.name === widgetWidgetValue)
+        if (optionsWidget) {
+            const values = optionsWidget.options.values
+            currentNode.widgets.find(w => w.name === 'start_from').options.values = values
+            currentNode.widgets.find(w => w.name === 'end_with').options.values = values
+            currentNode.widgets.find(w => w.name === 'select').options.values = values
+        }
+    }
 }
 
 const getSetWidgets = [
     "node",
     "widget",
+    "start_from",
+    "end_with",
 ]
 
 function getSetters(node, searchType) {
 	if (node.widgets) {
-		for (const w of node.widgets) {
-			if (getSetWidgets.includes(w.name)) {
-				setPlotWidgetOptions(node, searchType);
-				let widgetValue = w.value;
+        const gswidgets = node.widgets.filter(function(widget) {
+            return getSetWidgets.includes(widget.name);
+          });
+		for (const w of gswidgets) {
+            setPlotWidgetOptions(node, searchType);
+            let widgetValue = w.value;
 
-				// Define getters and setters for widget values
-				Object.defineProperty(w, 'value', {
-					get() {
-						return widgetValue;
-					},
-					set(newVal) {
-						if (newVal !== widgetValue) {
-							widgetValue = newVal;
-							setPlotWidgetOptions(node, searchType);
-						}
-					}
-				});
-			}
-		}
+            // Define getters and setters for widget values
+            Object.defineProperty(w, 'value', {
+                get() {
+                    return widgetValue;
+                },
+                set(newVal) {
+                    if (newVal !== widgetValue) {
+                        widgetValue = newVal;
+                        setPlotWidgetOptions(node, searchType);
+                    }
+                }
+            });
+        }
+		
+        const selectWidget = node.widgets.find(w => w.name === 'select')
+        if (selectWidget) {
+            console.log('here');
+            let widgetValue = selectWidget.value;
+            let selectedWidget = node.widgets.find(w => w.name === 'selection');
+            let selectedValue = selectedWidget.inputEl.value;
+            console.log(selectedValue);
+
+            Object.defineProperty(selectWidget, 'value', {
+                get() {
+                    return widgetValue;
+                },
+                set(newVal) {
+                    if (newVal !== widgetValue) {
+                        widgetValue = newVal;
+                        if (selectedWidget.inputEl.value.trim() === '') {
+                            selectedWidget.inputEl.value = newVal;
+                        } else {
+                            selectedWidget.inputEl.value += "\n" + newVal;
+                        }
+                    }
+                }
+            })
+        }
     }
     let mouseOver = node.mouseOver;
     Object.defineProperty(node, 'mouseOver', {
@@ -447,6 +486,9 @@ app.registerExtension({
         }
         if (node_title === "advPlot string") {
             getSetters(node, ['text', 'customtext']);
+        }
+        if (node_title === "advPlot combo") {
+            getSetters(node, ['combo',]);
         }
 	},
 });

@@ -310,19 +310,38 @@ function widgetLogic(node, widget) {
 			break;
 
 		case 'mode':
-			let number_to_show2 = findWidgetByName(node, 'num_loras')?.value + 1
-			for (let i = 0; i < number_to_show2; i++) {
-				if (widget.value === "simple") {
-					toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_strength'), true)
-					toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_model_strength'))
-					toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_clip_strength'))
-				} else {
-					toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_strength'))
-					toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_model_strength'), true)
-					toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_clip_strength'), true)}
-			}
-			updateNodeHeight(node)
-			break;
+            if (node.type === "ttN pipeLoraStack") {
+                let number_to_show2 = findWidgetByName(node, 'num_loras')?.value + 1
+                for (let i = 0; i < number_to_show2; i++) {
+                    if (widget.value === "simple") {
+                        toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_strength'), true)
+                        toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_model_strength'))
+                        toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_clip_strength'))
+                    } else {
+                        toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_strength'))
+                        toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_model_strength'), true)
+                        toggleWidget(node, findWidgetByName(node, 'lora_'+i+'_clip_strength'), true)}
+                }
+                updateNodeHeight(node)
+                break;
+            } else if (node.type === "ttN advPlot combo") {
+                if (widget.value === 'all') {
+                    toggleWidget(node, findWidgetByName(node, 'start_from'))
+                    toggleWidget(node, findWidgetByName(node, 'end_with'))
+                    toggleWidget(node, findWidgetByName(node, 'select'))
+                    toggleWidget(node, findWidgetByName(node, 'selection'))
+                } else if (widget.value === 'range') {
+                    toggleWidget(node, findWidgetByName(node, 'start_from'), true)
+                    toggleWidget(node, findWidgetByName(node, 'end_with'), true)
+                    toggleWidget(node, findWidgetByName(node, 'select'))
+                    toggleWidget(node, findWidgetByName(node, 'selection'))
+                } else {
+                    toggleWidget(node, findWidgetByName(node, 'start_from'))
+                    toggleWidget(node, findWidgetByName(node, 'end_with'))
+                    toggleWidget(node, findWidgetByName(node, 'select'), true)
+                    toggleWidget(node, findWidgetByName(node, 'selection'), true)
+                }
+            }
 
 		case 'empty_latent_aspect':
 			if (widget.value !== 'width x height [custom]') {
@@ -475,7 +494,8 @@ const getSetTitles = [
     "tinyKSampler",
     "debugInput",
     "tinyLoader",
-    "advPlot range"
+    "advPlot range",
+    "advPlot combo",
 ];
 
 function getSetters(node) {

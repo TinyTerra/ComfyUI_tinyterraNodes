@@ -30,6 +30,7 @@ import hashlib
 from PIL import Image, ImageDraw, ImageFont
 from PIL.PngImagePlugin import PngInfo
 
+import nodes
 import comfy.sd
 import execution
 import comfy.utils
@@ -2735,6 +2736,84 @@ class ttN_advPlot_string:
         out = '\n'.join(plot_text)
 
         return {"ui": {"text": out}, "result": (out,)}
+
+class ttN_advPlot_combo:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "node": ([AnyType("Connect to xyPlot for options"),],{}),
+                "widget": ([AnyType("Select node for options"),],{}),
+
+                "mode": (['all', 'range', 'select'],),
+                "start_from": ([AnyType("Select widget for options"),],),
+                "end_with": ([AnyType("Select widget for options"),],),
+                
+                "select": ([AnyType("Select widget for options"),],),
+                "selection": ("STRING", {"default":"","multiline": True}),
+                
+                "label_type": (['Values', 'Title and Values', 'ID, Title and Values'],{"default": "Values"}),
+            },
+            "hidden": {
+                "ttNnodeVersion": ttN_advPlot_range.version, "prompt": "PROMPT",
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("plot_text",)
+    FUNCTION = "plot"
+    OUTPUT_NODE = True
+
+    CATEGORY = "🌏 tinyterra/xyPlot"
+
+    def plot(self, node, widget, mode, start_from, end_with, select, selection, label_type, prompt=None):
+        if '[' in node and ']' in node:
+            nodeid = node.split('[', 1)[1].split(']', 1)[0]
+        else:
+            return {"ui": {"text": ''}, "result": ('',)}
+        
+        label_map = {
+            'Values': 'v_label',
+            'Title and Values': 'tv_label',
+            'ID, Title and Values': 'idtv_label',
+        }
+        label = label_map[label_type]
+
+        plot_text = []
+
+        class_type = prompt[nodeid]['class_type']
+        class_def = nodes.NODE_CLASS_MAPPINGS[class_type]
+        valid_inputs = class_def.INPUT_TYPES()
+        options = valid_inputs["required"][widget][0] or valid_inputs["optional"][widget][0]
+
+        vals = []
+        if mode == 'all':
+            vals = options
+        elif mode == 'range':
+            start_index = options.index(start_from)
+            stop_index = options.index(end_with) + 1
+            if start_index > stop_index:
+                start_index, stop_index = stop_index, start_index
+            vals = options[start_index:stop_index]
+        elif mode == 'select':
+            selection = selection.split('\n')
+            for s in selection:
+                s.strip()
+                if s in options:
+                    vals.append(s)
+
+        for i, val in enumerate(vals):
+            line = f"[{nodeid}:{widget}='{val}']"
+            plot_text.append(f"<{i+1}:{label}>")
+            plot_text.append(line)
+            
+        out = '\n'.join(plot_text)
+
+        return {"ui": {"text": out}, "result": (out,)}
 #--------------------------------------------------------------ttN/xyPlot END-----------------------------------------------------------------------#
 
 
@@ -3435,6 +3514,7 @@ TTN_VERSIONS = {
 #    "advPlot merge": ttN_advPlot_merge.version,
     "advPlot range": ttN_advPlot_range.version,
     "advPlot string": ttN_advPlot_string.version,
+    "advPlot combo": ttN_advPlot_combo.version,
     "pipeEncodeConcat": ttN_pipeEncodeConcat.version,
     "multiLoraStack": ttN_pipeLoraStack.version,
     "multiModelMerge": ttN_multiModelMerge.version,
@@ -3468,6 +3548,7 @@ NODE_CLASS_MAPPINGS = {
 #    "ttN advPlot merge": ttN_advPlot_merge,
     "ttN advPlot range": ttN_advPlot_range,
     "ttN advPlot string": ttN_advPlot_string,
+    "ttN advPlot combo": ttN_advPlot_combo,
     "ttN pipeEDIT": ttN_pipe_EDIT,
     "ttN pipe2BASIC": ttN_pipe_2BASIC,
     "ttN pipe2DETAILER": ttN_pipe_2DETAILER,
@@ -3518,6 +3599,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 #    "ttN advPlot merge": "advPlot merge",
     "ttN advPlot range": "advPlot range",
     "ttN advPlot string": "advPlot string",
+    "ttN advPlot combo": "advPlot combo",   
     
     #ttN/misc
     "ttN multiModelMerge": "multiModelMerge",
