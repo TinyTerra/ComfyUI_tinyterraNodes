@@ -1,7 +1,7 @@
 import { app } from "../../scripts/app.js";
 import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttNdropdown.js";
 
-const widgets_to_ignore = ['control_after_generate', 'empty_latent_aspect', 'empty_latent_width', 'empty_latent_height']
+const widgets_to_ignore = ['control_after_generate', 'empty_latent_aspect', 'empty_latent_width', 'empty_latent_height', 'batch_size']
 
 function getWidgetsOptions(node) {
     const widgetsOptions = {}
@@ -42,7 +42,13 @@ function getWidgetsOptions(node) {
         }
         let valueDict = {}
         if (w.options.values) {
-            for (const v of w.options.values) {
+            let vals = w.options.values;
+
+            if (typeof w.options.values === 'function') {
+                vals = w.options.values()
+            }
+
+            for (const v of vals) {
                 valueDict[v] = null
             }
         }
@@ -286,10 +292,9 @@ function setPlotNodeOptions(currentNode, targetID=null) {
         return
     }
     const widgets_dict = getNodesWidgetsDict(xyPlotNode)
-    for (const w of currentNode.widgets) {
-        if (w.name === 'node') {
-            w.options.values = Object.keys(widgets_dict)
-        }
+    const currentWidget = currentNode.widgets.find(w => w.name === 'node');
+    if (currentWidget) {
+        currentWidget.options.values = Object.keys(widgets_dict)
     }
 }
 
