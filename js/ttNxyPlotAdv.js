@@ -83,7 +83,7 @@ function _recursiveGetInputIDs(node) {
     while (IDsToCheck.length > 0) {
         const currentID = IDsToCheck.pop();
         const currentNode = node.graph._nodes_by_id[currentID];
-        if (currentNode.getTitle() === 'advanced xyPlot') {
+        if (currentNode.type === "ttN advanced xyPlot") {
             continue
         }
         _addInputIDs(currentNode, inputIDs, IDsToCheck);
@@ -118,7 +118,7 @@ function getNodesWidgetsDict(xyNode, plotLines=false) {
     for (const iID of inputIDS) {
         const iNode = app.graph._nodes_by_id[iID];
         const iNodeTitle = iNode.getTitle()
-        if (iNodeTitle === 'advanced xyPlot') {
+        if (iNode.type === 'ttN advanced xyPlot') {
             continue
         }
         const options = getWidgetsOptions(iNode)

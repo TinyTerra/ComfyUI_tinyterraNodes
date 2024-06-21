@@ -46,7 +46,6 @@ from comfy.sd import CLIP, VAE
 from spandrel import ModelLoader, ImageModelDescriptor
 from .adv_encode import advanced_encode
 from comfy.model_patcher import ModelPatcher
-from comfy_extras.nodes_align_your_steps import AlignYourStepsScheduler
 from nodes import MAX_RESOLUTION, ControlNetApplyAdvanced
 from nodes import NODE_CLASS_MAPPINGS as COMFY_CLASS_MAPPINGS
 
@@ -59,7 +58,7 @@ UPSCALE_METHODS = ["None",
                     "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
 UPSCALE_MODELS = folder_paths.get_filename_list("upscale_models") + ["None"]
 CROP_METHODS = ["disabled", "center"]
-CUSTOM_SCHEDULERS = ["AYS SD1", "AYS SDXL", "AYS SVD"]
+CUSTOM_SCHEDULERS = ["AYS SD1", "AYS SDXL", "AYS SVD", "GITS"]
 
 class ttNloader:
     def __init__(self):
@@ -416,8 +415,16 @@ class ttNsampler:
                                         force_full_denoise=force_full_denoise, noise_mask=noise_mask, callback=callback, disable_pbar=disable_pbar, seed=seed)
         else:
             sampler = comfy.samplers.sampler_object(sampler_name)
-            model_type = scheduler.split(' ')[1]
-            sigmas = AlignYourStepsScheduler().get_sigmas(model_type, steps, denoise)[0]
+
+            if scheduler.startswith("AYS"):
+                from comfy_extras.nodes_align_your_steps import AlignYourStepsScheduler
+                
+                model_type = scheduler.split(' ')[1]
+                sigmas = AlignYourStepsScheduler().get_sigmas(model_type, steps, denoise)[0]
+            elif scheduler.startswith("GITS"):
+                from comfy_extras.nodes_gits import GITSScheduler
+                
+                sigmas = GITSScheduler().get_sigmas(1.2, steps, denoise)[0]
             
             samples = comfy.sample.sample_custom(model, noise, cfg, sampler, sigmas, positive, negative, latent_image, noise_mask=noise_mask, callback=callback, disable_pbar=disable_pbar, seed=seed)
 
