@@ -58,7 +58,7 @@ UPSCALE_METHODS = ["None",
                     "[hiresFix] nearest-exact", "[hiresFix] bilinear", "[hiresFix] area", "[hiresFix] bicubic", "[hiresFix] lanczos", "[hiresFix] bislerp"]
 UPSCALE_MODELS = folder_paths.get_filename_list("upscale_models") + ["None"]
 CROP_METHODS = ["disabled", "center"]
-CUSTOM_SCHEDULERS = ["AYS SD1", "AYS SDXL", "AYS SVD", "GITS"]
+CUSTOM_SCHEDULERS = ["AYS SD1", "AYS SDXL", "AYS SVD", "GITS SD1"]
 
 class ttNloader:
     def __init__(self):
