@@ -656,7 +656,7 @@ app.registerExtension({
         }
     },
     nodeCreated(node) {
-        if (["pipeLoader", "pipeLoaderSDXL"].includes(node.getTitle())) {
+        if (["pipeLoader", "pipeLoaderSDXL"].includes(node.constructor.title)) {
             for (let widget of node.widgets) {
                 if (widget.name === "control_after_generate") {
                     widget.value = "fixed"

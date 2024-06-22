@@ -8,6 +8,7 @@ const doesInputWithNameExist = (node, name) => node.inputs ? node.inputs.some((i
 
 function updateNodeHeight(node) {
 	node.setSize([node.size[0], node.computeSize()[1]]);
+    app.canvas.dirty_canvas = true;
 }
 
 function toggleWidget(node, widget, show = false, suffix = "") {
@@ -310,7 +311,7 @@ function widgetLogic(node, widget) {
 			break;
 
 		case 'mode':
-            if (node.getTitle() === "pipeLoraStack") {
+            if (node.constructor.title === "pipeLoraStack") {
                 let number_to_show2 = findWidgetByName(node, 'num_loras')?.value + 1
                 for (let i = 0; i < number_to_show2; i++) {
                     if (widget.value === "simple") {
@@ -324,7 +325,7 @@ function widgetLogic(node, widget) {
                 }
                 updateNodeHeight(node)
                 break;
-            } else {
+            } else if (node.constructor.title === "advPlot combo") {
                 if (widget.value === 'all') {
                     toggleWidget(node, findWidgetByName(node, 'start_from'))
                     toggleWidget(node, findWidgetByName(node, 'end_with'))
@@ -525,7 +526,7 @@ app.registerExtension({
 	name: "comfy.ttN.dynamicWidgets",
 	
 	nodeCreated(node) {
-		const nodeTitle = node.getTitle();
+		const nodeTitle = node.constructor.title;
 		if (getSetTitles.includes(nodeTitle)) {
 			getSetters(node);
 		}

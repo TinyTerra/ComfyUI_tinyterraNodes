@@ -203,7 +203,7 @@ app.registerExtension({
 		}
 	},
 	nodeCreated(node) {
-		if (node.getTitle() === "xyPlot") {
+		if (node.constructor.title === "xyPlot") {
 			addGetSetters(node);
 			dropdownCreator(node);
 			

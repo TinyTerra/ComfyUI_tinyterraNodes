@@ -12,7 +12,7 @@ function getWidgetsOptions(node) {
         const current_value = w.value
         if (widgets_to_ignore.includes(w.name)) continue
         //console.log(`WIDGET ${w.name}, ${w.type}, ${w.options}`) 
-        if (w.name === 'seed' || (w.name === 'value' && node.getTitle().toLowerCase() == 'seed')) {
+        if (w.name === 'seed' || (w.name === 'value' && node.constructor.title.toLowerCase() == 'seed')) {
             widgetsOptions[w.name] = {'Random Seed': `${w.options.max}/${w.options.min}/${w.options.step}`}
             continue
         }
@@ -106,7 +106,7 @@ function getNodesWidgetsDict(xyNode, plotLines=false) {
 
     const plotNodeLink = xyNodeLinks[0]
     const plotNodeID = xyNode.graph.links[plotNodeLink].target_id
-    const plotNodeTitle = xyNode.graph._nodes_by_id[plotNodeID].getTitle()
+    const plotNodeTitle = xyNode.graph._nodes_by_id[plotNodeID].constructor.title
     const plotNode = app.graph._nodes_by_id[plotNodeID]
 
     const options = getWidgetsOptions(plotNode)
@@ -117,8 +117,8 @@ function getNodesWidgetsDict(xyNode, plotLines=false) {
     const inputIDS = _recursiveGetInputIDs(plotNode)
     for (const iID of inputIDS) {
         const iNode = app.graph._nodes_by_id[iID];
-        const iNodeTitle = iNode.getTitle()
-        if (iNode.type === 'ttN advanced xyPlot') {
+        const iNodeTitle = iNode.constructor.title
+        if (iNodeTitle === 'advanced xyPlot') {
             continue
         }
         const options = getWidgetsOptions(iNode)
@@ -258,7 +258,7 @@ function findUpstreamXYPlot(targetID) {
     if (!currentNode) {
         return
     }
-    if (currentNode.getTitle() === 'advanced xyPlot') {
+    if (currentNode.constructor.title === 'advanced xyPlot') {
         return currentNode;
     } else {
         if (!currentNode.outputs) {
@@ -478,7 +478,7 @@ app.registerExtension({
         }*/
     },
 	nodeCreated(node) {
-        const node_title = node.getTitle();
+        const node_title = node.constructor.title;
 
 		if (node_title === "advanced xyPlot") {
 			dropdownCreator(node);

@@ -280,7 +280,7 @@ app.registerExtension({
         _initializeAutocompleteList(nsp_keys, '__');
     },
     nodeCreated(node) {
-        if (node.widgets && node.getTitle() !== "xyPlot") {
+        if (node.widgets && !["xyPlot", "advanced xyPlot"].includes(node.constructor.title)) {
             const relevantWidgets = node.widgets.filter(_isRelevantWidget);
             relevantWidgets.forEach(_attachInputHandler);
             const lorasWidgets = node.widgets.filter(_isLorasWidget);
