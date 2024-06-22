@@ -324,7 +324,7 @@ function widgetLogic(node, widget) {
                 }
                 updateNodeHeight(node)
                 break;
-            } else if (node.getTitle() === "advPlot combo") {
+            } else {
                 if (widget.value === 'all') {
                     toggleWidget(node, findWidgetByName(node, 'start_from'))
                     toggleWidget(node, findWidgetByName(node, 'end_with'))
