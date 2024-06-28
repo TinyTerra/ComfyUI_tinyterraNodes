@@ -976,6 +976,7 @@ class ttNsave:
 
         output_dir = os.path.join(output_dir, subfolder)
         
+        filename = re.sub(r'[^a-zA-Z0-9_\-\. ]', '', filename)[:255-number_padding-len(ext)-2]
         filename = ttNsave._get_filename_with_padding(output_dir, filename, number_padding, group_id, ext)
 
         return filename, subfolder
