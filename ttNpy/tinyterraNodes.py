@@ -2551,7 +2551,7 @@ class ttN_advanced_XYPlot:
         if y_plot == {}:
             y_plot = None
 
-        if flip_xy == "True":
+        if flip_xy == True:
             x_plot, y_plot = y_plot, x_plot
 
         xy_plot = {"x_plot": x_plot,
