@@ -976,7 +976,7 @@ class ttNsave:
 
         output_dir = os.path.join(output_dir, subfolder)
         
-        filename = re.sub(r'[^a-zA-Z0-9_\-\. ]', '', filename)[:255-number_padding-len(ext)-2]
+        filename = re.sub(r'[^a-zA-Z0-9_\-\. ]', '', filename)[:240-len(ext)]
         filename = ttNsave._get_filename_with_padding(output_dir, filename, number_padding, group_id, ext)
 
         return filename, subfolder
@@ -2553,7 +2553,7 @@ class ttN_advanced_XYPlot:
         if y_plot == {}:
             y_plot = None
 
-        if flip_xy == "True":
+        if flip_xy == True:
             x_plot, y_plot = y_plot, x_plot
 
         xy_plot = {"x_plot": x_plot,
