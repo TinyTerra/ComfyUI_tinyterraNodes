@@ -2488,15 +2488,17 @@ class ttN_advanced_XYPlot:
                         line = line.split('>', 1)
                         num, label = line[0].split(':', 1)
                         axis_dict[num] = {"label": label}
-                        for point in line[1].split('['):
-                            if point.strip() != '':
-                                node_id = point.split(':', 1)[0]
-                                axis_dict[num].setdefault(node_id, {})
-                                input_name = point.split(':', 1)[1].split('=')[0]
-                                value = point.split("'")[1].split("'")[0]
-                                values_label.append((value, input_name, node_id))
-                                
-                                axis_dict[num][node_id][input_name] = value
+                        for point in line[1].split("']"):
+                            if point.strip() == '':
+                                continue
+                            
+                            node_id = point.split(':', 1)[0].split('[')[1]
+                            axis_dict[num].setdefault(node_id, {})
+                            input_name = point.split(':', 1)[1].split('=', 1)[0]
+                            value = point.split("'", 1 )[1]
+                            values_label.append((value, input_name, node_id))
+                            
+                            axis_dict[num][node_id][input_name] = value
                                 
                         if label in ['v_label', 'tv_label', 'idtv_label']:
                             new_label = []
