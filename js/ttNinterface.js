@@ -400,7 +400,9 @@ app.registerExtension({
     },
 
     beforeRegisterNodeDef(nodeType, nodeData, app) {
+	originalGetSlotMenuOptions = nodeType.prototype.getSlotMenuOptions;
         nodeType.prototype.getSlotMenuOptions = (slot) => {
+	    originalGetSlotMenuOptions?.apply(this, slot);
             let menu_info = [];
             if (
                 slot &&
