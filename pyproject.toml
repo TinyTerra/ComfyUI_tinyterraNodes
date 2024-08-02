@@ -2,7 +2,7 @@
 name = "comfyui_tinyterranodes"
 description = "Customizable xyPlot, various pipe nodes, fullscreen image viewer based on node history, dynamic widgets, interface customization, and more."
 version = "2.0.3"
-license = "LICENSE"
+license = { file = "LICENSE" }
 
 [project.urls]
 Repository = "https://github.com/TinyTerra/ComfyUI_tinyterraNodes"
