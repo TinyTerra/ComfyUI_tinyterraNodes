@@ -140,17 +140,17 @@ class TinyTerra extends EventTarget {
                 disabled: true,
                 className: "tinyterra-contextmenu-item tinyterra-contextmenu-label",
             },
-            {
-                content: "⚙️ Settings (tinyterra)",
-                disabled: true, //!!this.settingsDialog,
-                className: "tinyterra-contextmenu-item",
-                callback: (...args) => {
-                    this.settingsDialog = new tinyterraConfigDialog().show();
-                    this.settingsDialog.addEventListener("close", (e) => {
-                        this.settingsDialog = null;
-                    });
-                },
-            },
+            // {
+            //     content: "⚙️ Settings (tinyterra)",
+            //     disabled: true, //!!this.settingsDialog,
+            //     className: "tinyterra-contextmenu-item",
+            //     callback: (...args) => {
+            //         this.settingsDialog = new tinyterraConfigDialog().show();
+            //         this.settingsDialog.addEventListener("close", (e) => {
+            //             this.settingsDialog = null;
+            //         });
+            //     },
+            // },
             {
                 content: "🛑 Reboot Comfy",
                 className: "tinyterra-contextmenu-item",
