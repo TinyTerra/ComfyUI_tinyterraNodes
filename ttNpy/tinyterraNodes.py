@@ -158,7 +158,7 @@ class ttNloader:
 
         clip = loaded_ckpt[1].clone() if loaded_ckpt[1] is not None else None
         if clip_skip != 0 and clip is not None:
-            if sampler.get_model_type() in ['FLUX', 'FLOW']:
+            if sampler.get_model_type(loaded_ckpt[0]) in ['FLUX', 'FLOW']:
                 raise Exception('FLOW and FLUX do not support clip_skip. Set clip_skip to 0.')
             clip.clip_layer(clip_skip)
 
@@ -327,7 +327,7 @@ class ttNloader:
             clip = clip_override.clone()
 
             if clip_skip != 0:
-                if sampler.get_model_type() in ['FLUX', 'FLOW']:
+                if sampler.get_model_type(model) in ['FLUX', 'FLOW']:
                     raise Exception('FLOW and FLUX do not support clip_skip. Set clip_skip to 0.')
                 clip.clip_layer(clip_skip)
             del clip_override
