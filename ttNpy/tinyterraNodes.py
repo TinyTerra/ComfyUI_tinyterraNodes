@@ -158,8 +158,8 @@ class ttNloader:
 
         clip = loaded_ckpt[1].clone() if loaded_ckpt[1] is not None else None
         if clip_skip != 0 and clip is not None:
-            if sampler.get_model_type(loaded_ckpt[0]) == 'FLUX':
-                raise Exception('Flux does not support clip_skip. Set clip_skip to 0.')
+            if sampler.get_model_type() in ['FLUX', 'FLOW']:
+                raise Exception('FLOW and FLUX do not support clip_skip. Set clip_skip to 0.')
             clip.clip_layer(clip_skip)
 
         # model, clip, vae
@@ -327,8 +327,8 @@ class ttNloader:
             clip = clip_override.clone()
 
             if clip_skip != 0:
-                if sampler.get_model_type() == 'FLUX':
-                    raise Exception('Flux does not support clip_skip. Set clip_skip to 0.')
+                if sampler.get_model_type() in ['FLUX', 'FLOW']:
+                    raise Exception('FLOW and FLUX do not support clip_skip. Set clip_skip to 0.')
                 clip.clip_layer(clip_skip)
             del clip_override
 
@@ -1183,7 +1183,7 @@ class ttN_pipeLoader_v2:
         model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, clip_skip, model_override, clip_override, optional_lora_stack, my_unique_id)
 
         # Create Empty Latent
-        sd3 = True if sampler.get_model_type(model) in ['FLUX', 'SD3'] else False
+        sd3 = True if sampler.get_model_type(model) in ['FLUX', 'FLOW'] else False
         latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height, sd3)
         samples = {"samples":latent}
         
@@ -1580,7 +1580,7 @@ class ttN_pipeLoaderSDXL_v2:
         model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, clip_skip, model_override, clip_override, optional_lora_stack, my_unique_id)
 
         # Create Empty Latent
-        sd3 = True if sampler.get_model_type(model) in ['FLUX', 'SD3'] else False
+        sd3 = True if sampler.get_model_type(model) in ['FLUX', 'FLOW'] else False
         latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height, sd3)
         samples = {"samples":latent}
     
@@ -2268,7 +2268,7 @@ class ttN_tinyLoader:
         model, clip, vae = loader.load_checkpoint(ckpt_name, config_name, clip_skip)
 
         # Create Empty Latent
-        sd3 = True if sampler.get_model_type(model) in ['FLUX', 'SD3'] else False
+        sd3 = True if sampler.get_model_type(model) in ['FLUX', 'FLOW'] else False
         latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height, sd3)
         samples = {"samples": latent}
 
