@@ -1155,8 +1155,8 @@ class ttN_pipeLoader_v2:
                     "clip_override": ("CLIP",), 
                     "optional_lora_stack": ("LORA_STACK",),
                     "optional_controlnet_stack": ("CONTROL_NET_STACK",),
-                    "prepend_positive": ("STRING", {"default": None, "forceInput": True}),
-                    "prepend_negative": ("STRING", {"default": None, "forceInput": True}),
+                    "prepend_positive": ("STRING", {"forceInput": True}),
+                    "prepend_negative": ("STRING", {"forceInput": True}),
                     },
                 "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoader_v2.version, "my_unique_id": "UNIQUE_ID",}
                 }
@@ -1546,10 +1546,10 @@ class ttN_pipeLoaderSDXL_v2:
                     "optional_controlnet_stack": ("CONTROL_NET_STACK",),
                     "refiner_model_override": ("MODEL",),
                     "refiner_clip_override": ("CLIP",),
-                    "prepend_positive_g": ("STRING", {"default": None, "forceInput": True}),
-                    "prepend_positive_l": ("STRING", {"default": None, "forceInput": True}),
-                    "prepend_negative_g": ("STRING", {"default": None, "forceInput": True}),
-                    "prepend_negative_l": ("STRING", {"default": None, "forceInput": True}),
+                    "prepend_positive_g": ("STRING", {"forceInput": True}),
+                    "prepend_positive_l": ("STRING", {"forceInput": True}),
+                    "prepend_negative_g": ("STRING", {"forceInput": True}),
+                    "prepend_negative_l": ("STRING", {"forceInput": True}),
                     },
                 "hidden": {"prompt": "PROMPT", "ttNnodeVersion": ttN_pipeLoaderSDXL_v2.version, "my_unique_id": "UNIQUE_ID",}
                 }
@@ -2290,23 +2290,23 @@ class ttN_conditioning:
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": { 
-                        "model": ("MODEL",),
-                        "clip": ("CLIP",),
+                    "model": ("MODEL",),
+                    "clip": ("CLIP",),
 
-                        "loras": ("STRING", {"placeholder": "<lora:loraName:weight:optClipWeight>", "multiline": True}),
+                    "loras": ("STRING", {"placeholder": "<lora:loraName:weight:optClipWeight>", "multiline": True}),
 
-                        "positive": ("STRING", {"default": "Positive","multiline": True, "dynamicPrompts": True}),
-                        "positive_token_normalization": (["none", "mean", "length", "length+mean"],),
-                        "positive_weight_interpretation": (["comfy", "A1111", "compel", "comfy++", "down_weight"],),
+                    "positive": ("STRING", {"default": "Positive","multiline": True, "dynamicPrompts": True}),
+                    "positive_token_normalization": (["none", "mean", "length", "length+mean"],),
+                    "positive_weight_interpretation": (["comfy", "A1111", "compel", "comfy++", "down_weight"],),
 
-                        "negative": ("STRING", {"default": "Negative", "multiline": True, "dynamicPrompts": True}),
-                        "negative_token_normalization": (["none", "mean", "length", "length+mean"],),
-                        "negative_weight_interpretation": (["comfy", "A1111", "compel", "comfy++", "down_weight"],),
-                        },                
+                    "negative": ("STRING", {"default": "Negative", "multiline": True, "dynamicPrompts": True}),
+                    "negative_token_normalization": (["none", "mean", "length", "length+mean"],),
+                    "negative_weight_interpretation": (["comfy", "A1111", "compel", "comfy++", "down_weight"],),
+                    },
                 "optional": {
                     "optional_lora_stack": ("LORA_STACK",),
-                    "prepend_positive": ("STRING", {"default": None, "forceInput": True}),
-                    "prepend_negative": ("STRING", {"default": None, "forceInput": True}),
+                    "prepend_positive": ("STRING", {"forceInput": True}),
+                    "prepend_negative": ("STRING", {"forceInput": True}),
                     },
                 "hidden": {"ttNnodeVersion": ttN_conditioning.version, "my_unique_id": "UNIQUE_ID"},}
 
@@ -3571,7 +3571,7 @@ NODE_CLASS_MAPPINGS = {
     "ttN pipeLoaderSDXL_v2": ttN_pipeLoaderSDXL_v2,
     "ttN pipeKSamplerSDXL_v2": ttN_pipeKSamplerSDXL_v2,
     "ttN advanced xyPlot": ttN_advanced_XYPlot,
-#    "ttN advPlot merge": ttN_advPlot_merge,
+#   "ttN advPlot merge": ttN_advPlot_merge,
     "ttN advPlot range": ttN_advPlot_range,
     "ttN advPlot string": ttN_advPlot_string,
     "ttN advPlot combo": ttN_advPlot_combo,
@@ -3608,6 +3608,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN tinyLoader": "tinyLoader",
     "ttN conditioning": "tinyConditioning",
     "ttN KSampler_v2": "tinyKSampler",
+    
     #ttN/pipe    
     "ttN pipeLoader_v2": "pipeLoader",
     "ttN pipeKSampler_v2": "pipeKSampler",
@@ -3622,7 +3623,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 
     #ttN/xyPlot
     "ttN advanced xyPlot": "advanced xyPlot",
-#    "ttN advPlot merge": "advPlot merge",
+#   "ttN advPlot merge": "advPlot merge",
     "ttN advPlot range": "advPlot range",
     "ttN advPlot string": "advPlot string",
     "ttN advPlot combo": "advPlot combo",   
