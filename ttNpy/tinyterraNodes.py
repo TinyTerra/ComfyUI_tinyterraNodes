@@ -37,11 +37,13 @@ import comfy.utils
 import folder_paths
 import comfy.samplers
 import latent_preview
-import comfy.model_base
 import comfy.controlnet
 import comfy.model_management
-import comfy_extras.nodes_model_advanced
+import comfy.supported_models
+import comfy.supported_models_base
+from comfy.model_base import BaseModel
 import comfy_extras.nodes_upscale_model
+import comfy_extras.nodes_model_advanced
 from comfy.sd import CLIP, VAE
 from spandrel import ModelLoader, ImageModelDescriptor
 from .adv_encode import advanced_encode
@@ -156,6 +158,8 @@ class ttNloader:
 
         clip = loaded_ckpt[1].clone() if loaded_ckpt[1] is not None else None
         if clip_skip != 0 and clip is not None:
+            if sampler.get_model_type(loaded_ckpt[0]) == 'FLUX':
+                raise Exception('Flux does not support clip_skip. Set clip_skip to 0.')
             clip.clip_layer(clip_skip)
 
         # model, clip, vae
@@ -187,8 +191,6 @@ class ttNloader:
     def load_lora(self, lora_name, model, clip, strength_model, strength_clip):
         if strength_model == 0 and strength_clip == 0:
             return (model, clip)
-
-        #print('LORA NAME', lora_name)
 
         lora_path = folder_paths.get_full_path("loras", lora_name)
         if lora_path is None or not os.path.exists(lora_path):
@@ -325,6 +327,8 @@ class ttNloader:
             clip = clip_override.clone()
 
             if clip_skip != 0:
+                if sampler.get_model_type() == 'FLUX':
+                    raise Exception('Flux does not support clip_skip. Set clip_skip to 0.')
                 clip.clip_layer(clip_skip)
             del clip_override
 
@@ -382,11 +386,20 @@ class ttNsampler:
             parts.append('None')
         return parts
 
-    def emptyLatent(self, empty_latent_aspect: str, batch_size:int, width:int = None, height:int = None) -> torch.Tensor:
+    @staticmethod
+    def get_model_type(model):
+        base: BaseModel = model.model
+        return str(base.model_type).split('.')[1].strip()
+
+    def emptyLatent(self, empty_latent_aspect: str, batch_size:int, width:int = None, height:int = None, sd3: bool = False) -> torch.Tensor:
         if empty_latent_aspect and empty_latent_aspect != "width x height [custom]":
             width, height = empty_latent_aspect.replace(' ', '').split('[')[0].split('x')
 
-        latent = torch.zeros([batch_size, 4, int(height) // 8, int(width) // 8], device=self.device)
+        if sd3:
+            latent = torch.ones([batch_size, 16, int(height) // 8, int(width) // 8], device=self.device) * 0.0609
+        else:
+            latent = torch.zeros([batch_size, 4, int(height) // 8, int(width) // 8], device=self.device)
+
         return latent
 
     def common_ksampler(self, model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent, denoise=1.0, disable_noise=False, start_step=None, last_step=None, force_full_denoise=False, preview_latent=True, disable_pbar=False):
@@ -1166,13 +1179,14 @@ class ttN_pipeLoader_v2:
         clip: CLIP | None = None
         vae: VAE | None = None
 
-        # Create Empty Latent
-        latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height)
-        samples = {"samples":latent}
-
         loader.clear_cache(prompt)
         model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, clip_skip, model_override, clip_override, optional_lora_stack, my_unique_id)
 
+        # Create Empty Latent
+        sd3 = True if sampler.get_model_type(model) in ['FLUX', 'SD3'] else False
+        latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height, sd3)
+        samples = {"samples":latent}
+        
         positive_embedding = loader.embedding_encode(positive, positive_token_normalization, positive_weight_interpretation, clip, seed=seed, title='pipeLoader Positive', my_unique_id=my_unique_id, prepend_text=prepend_positive)
         negative_embedding = loader.embedding_encode(negative, negative_token_normalization, negative_weight_interpretation, clip, seed=seed, title='pipeLoader Negative', my_unique_id=my_unique_id, prepend_text=prepend_negative)
 
@@ -1562,18 +1576,18 @@ class ttN_pipeLoaderSDXL_v2:
         clip: CLIP | None = None
         vae: VAE | None = None
 
-        # Create Empty Latent
-        latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height)
-        samples = {"samples":latent}
-
         loader.clear_cache(prompt)
         model, clip, vae = loader.load_main3(ckpt_name, config_name, vae_name, loras, clip_skip, model_override, clip_override, optional_lora_stack, my_unique_id)
 
+        # Create Empty Latent
+        sd3 = True if sampler.get_model_type(model) in ['FLUX', 'SD3'] else False
+        latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height, sd3)
+        samples = {"samples":latent}
+    
         if refiner_ckpt_name not in ["None", None]:
             refiner_model, refiner_clip, refiner_vae = loader.load_main3(refiner_ckpt_name, refiner_config_name, vae_name, None, clip_skip, refiner_model_override, refiner_clip_override)
         else:
             refiner_model, refiner_clip, refiner_vae = None, None, None
-
 
         if empty_latent_aspect and empty_latent_aspect != "width x height [custom]":
             empty_latent_width, empty_latent_height = empty_latent_aspect.replace(' ', '').split('[')[0].split('x')
@@ -2251,11 +2265,13 @@ class ttN_tinyLoader:
         clip: CLIP | None = None
         vae: VAE | None = None
 
+        model, clip, vae = loader.load_checkpoint(ckpt_name, config_name, clip_skip)
+
         # Create Empty Latent
-        latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height)
+        sd3 = True if sampler.get_model_type(model) in ['FLUX', 'SD3'] else False
+        latent = sampler.emptyLatent(empty_latent_aspect, batch_size, empty_latent_width, empty_latent_height, sd3)
         samples = {"samples": latent}
 
-        model, clip, vae = loader.load_checkpoint(ckpt_name, config_name, clip_skip)
         if vae_name != "Baked VAE":
             vae = loader.load_vae(vae_name)
 
