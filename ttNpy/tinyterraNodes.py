@@ -1084,23 +1084,18 @@ class ttNsave:
 
         return results
 
-    def textfile(self, text, filename_prefix, output_type, group_id=0, ext='txt'):
-        if output_type == "Hide":
-            return []
-        if output_type in ("Save", "Hide/Save"):
-            output_dir = self.output_dir if self.output_dir != folder_paths.get_temp_directory() else folder_paths.get_output_directory()
-        if output_type == "Preview":
-            filename_prefix = 'ttNpreview'
+    def textfile(self, text, filename_prefix, ext='txt'):
+        output_dir = self.output_dir if self.output_dir != folder_paths.get_temp_directory() else folder_paths.get_output_directory()
 
-        filename = ttNsave.filename_parser(output_dir, filename_prefix, self.prompt, self.my_unique_id, self.number_padding, group_id, ext)
+        filename, subfolder = ttNsave.filename_parser(output_dir, filename_prefix, self.prompt, self.my_unique_id, self.number_padding, 0, ext)
 
-        file_path = os.path.join(output_dir, filename)
+        file_path = os.path.join(output_dir, subfolder, filename)
 
         if self.overwrite_existing or not os.path.isfile(file_path):
             with open(file_path, 'w') as f:
                 f.write(text)
         else:
-            ttNl(f"File {file_path} already exists... Skipping").error().p()   
+            ttNl(f"File {file_path} already exists... Skipping").error().p()
 
 loader = ttNloader()
 sampler = ttNsampler()
@@ -3229,6 +3224,39 @@ class ttN_textCycleLine:
         if index >= len(lines):
             index = len(lines) - 1
         return (lines[index],)
+
+class ttN_textOUPUT:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+    
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { 
+                "text": ("STRING", {"multiline": True}),
+                "output_path": ("STRING", {"default": folder_paths.get_output_directory(), "multiline": False}),
+                "save_prefix": ("STRING", {"default": "ComfyUI"}),
+                "number_padding": (["None", 2, 3, 4, 5, 6, 7, 8, 9],{"default": 5}),
+                "file_type": (["txt", "md", "rtf", "log", "ini", "csv"], {"default": "txt"}),
+                "overwrite_existing": ("BOOLEAN", {"default": False}),
+                },
+                "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
+                            "ttNnodeVersion": ttN_imageOUPUT.version},
+            }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text",)
+    FUNCTION = "output"
+    CATEGORY = "🌏 tinyterra/text"
+    OUTPUT_NODE = True
+
+    def output(self, text, output_path, save_prefix, number_padding, file_type, overwrite_existing, prompt, extra_pnginfo, my_unique_id):
+        ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo, number_padding, overwrite_existing, output_path)
+        ttN_save.textfile(text, save_prefix, file_type)
+
+        # Output image results to ui and node outputs
+        return {"ui": {"text": text},
+                "result": (text,)}
 #---------------------------------------------------------------ttN/text END------------------------------------------------------------------------#
 
 
@@ -3537,7 +3565,7 @@ TTN_VERSIONS = {
     "pipe2BASIC": ttN_pipe_2BASIC.version,
     "pipe2DETAILER": ttN_pipe_2DETAILER.version,
     "advanced xyPlot": ttN_advanced_XYPlot.version,
-#    "advPlot merge": ttN_advPlot_merge.version,
+#   "advPlot merge": ttN_advPlot_merge.version,
     "advPlot range": ttN_advPlot_range.version,
     "advPlot string": ttN_advPlot_string.version,
     "advPlot combo": ttN_advPlot_combo.version,
@@ -3551,6 +3579,7 @@ TTN_VERSIONS = {
     "text3BOX_3WAYconcat": ttN_text3BOX_3WAYconcat.version,    
     "text7BOX_concat": ttN_text7BOX_concat.version,
     "textCycleLine": ttN_textCycleLine.version,
+    "textOutput": ttN_textOUPUT.version,
     "imageOutput": ttN_imageOUPUT.version,
     "imageREMBG": ttN_imageREMBG.version,
     "hiresfixScale": ttN_modelScale.version,
@@ -3592,6 +3621,7 @@ NODE_CLASS_MAPPINGS = {
     "ttN text3BOX_3WAYconcat": ttN_text3BOX_3WAYconcat,    
     "ttN text7BOX_concat": ttN_text7BOX_concat,
     "ttN textCycleLine": ttN_textCycleLine,
+    "ttN textOutput": ttN_textOUPUT,
 
     #ttN/image
     "ttN imageOutput": ttN_imageOUPUT,
@@ -3639,6 +3669,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ttN text7BOX_concat": "7x TXT Loader Concat",
     "ttN text3BOX_3WAYconcat": "3x TXT Loader MultiConcat",
     "ttN textCycleLine": "textCycleLine",
+    "ttN textOutput": "textOutput",
 
     #ttN/image
     "ttN imageREMBG": "imageRemBG",
