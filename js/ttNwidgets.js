@@ -144,7 +144,7 @@ app.registerExtension({
                 overwriteSeedControl(nodeType)
             }
         }
-        if (["ttN textDebug", "ttN advPlot range", "ttN advPlot string", "ttN advPlot combo", "ttN debugInput"].includes(nodeData.name)) {
+        if (["ttN textDebug", "ttN advPlot range", "ttN advPlot string", "ttN advPlot combo", "ttN debugInput", "ttN textOutput"].includes(nodeData.name)) {
             addTextDisplay(nodeType)
         }
         if (nodeData.name.startsWith("ttN textCycle")) {

@@ -3226,13 +3226,14 @@ class ttN_textCycleLine:
         return (lines[index],)
 
 class ttN_textOUPUT:
-    version = '1.0.0'
+    version = '1.0.1'
     def __init__(self):
         pass
     
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": { 
+        return {"required": {
+                "text_output": (["Preview", "Save"],{"default": "Preview"}),
                 "text": ("STRING", {"multiline": True}),
                 "output_path": ("STRING", {"default": folder_paths.get_output_directory(), "multiline": False}),
                 "save_prefix": ("STRING", {"default": "ComfyUI"}),
@@ -3250,11 +3251,12 @@ class ttN_textOUPUT:
     CATEGORY = "🌏 tinyterra/text"
     OUTPUT_NODE = True
 
-    def output(self, text, output_path, save_prefix, number_padding, file_type, overwrite_existing, prompt, extra_pnginfo, my_unique_id):
-        ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo, number_padding, overwrite_existing, output_path)
-        ttN_save.textfile(text, save_prefix, file_type)
+    def output(self, text_output, text, output_path, save_prefix, number_padding, file_type, overwrite_existing, prompt, extra_pnginfo, my_unique_id):
+        if text_output == 'Save':
+            ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo, number_padding, overwrite_existing, output_path)
+            ttN_save.textfile(text, save_prefix, file_type)
 
-        # Output image results to ui and node outputs
+        # Output text results to ui and node outputs
         return {"ui": {"text": text},
                 "result": (text,)}
 #---------------------------------------------------------------ttN/text END------------------------------------------------------------------------#

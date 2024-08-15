@@ -26,6 +26,7 @@ function toggleWidget(node, widget, show = false, suffix = "") {
 
 	const height = show ? Math.max(node.computeSize()[1], origSize[1]) : node.size[1];
 	node.setSize([node.size[0], height]);
+    app.canvas.dirty_canvas = true
 }
 
 function widgetLogic(node, widget) {
@@ -252,6 +253,21 @@ function widgetLogic(node, widget) {
 			}
 			break;
 
+        case 'text_output':
+            if (widget.value === "Preview") {
+                toggleWidget(node, findWidgetByName(node, 'save_prefix'))
+                toggleWidget(node, findWidgetByName(node, 'output_path'))
+                toggleWidget(node, findWidgetByName(node, 'number_padding'))
+                toggleWidget(node, findWidgetByName(node, 'overwrite_existing'))
+                toggleWidget(node, findWidgetByName(node, 'file_type'))
+            } else if (widget.value === "Save") {
+                toggleWidget(node, findWidgetByName(node, 'save_prefix'), true)
+                toggleWidget(node, findWidgetByName(node, 'output_path'), true)
+                toggleWidget(node, findWidgetByName(node, 'number_padding'), true)
+                toggleWidget(node, findWidgetByName(node, 'overwrite_existing'), true)
+                toggleWidget(node, findWidgetByName(node, 'file_type'), true)
+            }
+            
 		case 'add_noise':
 			if (widget.value === "disable") {
 				toggleWidget(node, findWidgetByName(node, 'noise_seed'))
@@ -471,7 +487,7 @@ function widgetLogic(node, widget) {
 const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 
 						'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 
 						'refiner_lora1_name', 'refiner_lora2_name', 'refiner_steps', 'upscale_method', 
-						'image_output', 'add_noise', 
+						'image_output', 'text_output', 'add_noise', 
 						'ckpt_B_name', 'ckpt_C_name', 'save_model', 'refiner_ckpt_name',
 						'num_loras', 'mode', 'toggle', 'empty_latent_aspect', 'conditioning_aspect', 'target_aspect', 'sampler_state',
                         'print_to_console', 'sampling', 'range_mode', 'file_type']
@@ -497,6 +513,7 @@ const getSetTitles = [
     "tinyLoader",
     "advPlot range",
     "advPlot combo",
+    "textOutput",
 ];
 
 function getSetters(node) {
