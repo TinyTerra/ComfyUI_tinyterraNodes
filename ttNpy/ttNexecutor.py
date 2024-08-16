@@ -5,7 +5,68 @@ import copy
 import logging
 import sys
 import traceback
-from execution import full_type_name, get_input_data, get_output_data
+from execution import full_type_name
+
+def get_input_data(inputs, class_def, unique_id, outputs={}, prompt={}, extra_data={}):
+    valid_inputs = class_def.INPUT_TYPES()
+    input_data_all = {}
+    for x in inputs:
+        input_data = inputs[x]
+        if isinstance(input_data, list):
+            input_unique_id = input_data[0]
+            output_index = input_data[1]
+            if input_unique_id not in outputs:
+                input_data_all[x] = (None,)
+                continue
+            obj = outputs[input_unique_id][output_index]
+            input_data_all[x] = obj
+        else:
+            if ("required" in valid_inputs and x in valid_inputs["required"]) or ("optional" in valid_inputs and x in valid_inputs["optional"]):
+                input_data_all[x] = [input_data]
+
+    if "hidden" in valid_inputs:
+        h = valid_inputs["hidden"]
+        for x in h:
+            if h[x] == "PROMPT":
+                input_data_all[x] = [prompt]
+            if h[x] == "EXTRA_PNGINFO":
+                input_data_all[x] = [extra_data.get('extra_pnginfo', None)]
+            if h[x] == "UNIQUE_ID":
+                input_data_all[x] = [unique_id]
+    return input_data_all
+
+def get_output_data(obj, input_data_all):
+    results = []
+    uis = []
+    return_values = map_node_over_list(obj, input_data_all, obj.FUNCTION, allow_interrupt=True)
+
+    for r in return_values:
+        if isinstance(r, dict):
+            if 'ui' in r:
+                uis.append(r['ui'])
+            if 'result' in r:
+                results.append(r['result'])
+        else:
+            results.append(r)
+
+    output = []
+    if len(results) > 0:
+        # check which outputs need concatenating
+        output_is_list = [False] * len(results[0])
+        if hasattr(obj, "OUTPUT_IS_LIST"):
+            output_is_list = obj.OUTPUT_IS_LIST
+
+        # merge node execution results
+        for i, is_list in zip(range(len(results[0])), output_is_list):
+            if is_list:
+                output.append([x for o in results for x in o[i]])
+            else:
+                output.append([o[i] for o in results])
+
+    ui = dict()    
+    if len(uis) > 0:
+        ui = {k: [y for x in uis for y in x[k]] for k in uis[0].keys()}
+    return output, ui
 
 class ttN_advanced_XYPlot:
     version = '1.1.0'
