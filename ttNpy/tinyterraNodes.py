@@ -3343,7 +3343,7 @@ class ttN_debugInput:
                     "console_color": (["Black", "Red", "Green", "Yellow", "Blue", "Violet", "Cyan", "White", "Grey", "LightRed", "LightGreen", "LightYellow", "LightBlue", "LightViolet", "LightCyan", "LightWhite"], {"default": "Red"}),
                     },
                 "optional": {
-                    "debug": ("", {"default": None}),
+                    "debug": (AnyType("*"), {"default": None}),
                     }
         }
 
