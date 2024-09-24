@@ -513,6 +513,7 @@ const getSetTitles = [
     "tinyLoader",
     "advPlot range",
     "advPlot combo",
+    "advPlot images",
     "textOutput",
 ];
 

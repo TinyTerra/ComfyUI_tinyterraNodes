@@ -737,9 +737,16 @@ class ttNadv_xyPlot:
 
             self.executor.execute(prompt, self.num, extra_data, valid[2])
 
-            self.latent_list.append(self.executor.outputs[self.unique_id][-6][0]["samples"])
+            if len(self.executor.outputs[self.unique_id]) > 2:
+                self.latent_list.append(self.executor.outputs[self.unique_id][-6][0]["samples"])
 
-            image = self.executor.outputs[self.unique_id][-3][0]
+                image = self.executor.outputs[self.unique_id][-3][0]
+            else:
+                current_node = prompt[self.unique_id]
+                input_link = current_node["inputs"]["image"]
+                
+                image = self.executor.outputs[input_link[0]][input_link[1]][0]
+                
             pil_image = ttNsampler.tensor2pil(image)
             self.image_list.append(pil_image)
 
@@ -840,7 +847,8 @@ class ttNadv_xyPlot:
                     self.execute_prompt(x_prompt, self.extra_pnginfo, x_label, y_label, z_label)
 
             # Rearrange latent array to match preview image grid
-            latents.extend(self.rearrange_tensors(self.latent_list, self.num_cols, self.num_rows))
+            if len(self.latent_list) > 0:
+                latents.extend(self.rearrange_tensors(self.latent_list, self.num_cols, self.num_rows))
 
             # Plot images
             plot_images.append(self.plot_images(z_label))
@@ -851,7 +859,8 @@ class ttNadv_xyPlot:
             self.clear_caches()
 
         # Concatenate the tensors along the first dimension (dim=0)
-        latents = torch.cat(latents, dim=0)
+        if len(latents) > 0:
+            latents = torch.cat(latents, dim=0)
 
         for image in pil_images:
             images.append(sampler.pil2tensor(image))
@@ -2580,6 +2589,62 @@ class ttN_Plotting(ttN_advanced_XYPlot):
         xy_plot = None
         return (xy_plot, )
 
+class ttN_advPlot_images:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "enabled": ('BOOLEAN',{'default': True}),
+                "image": ('IMAGE',{}),
+                "image_output": (["Hide", "Preview", "Save", "Hide/Save", "Disabled"],),
+                "save_prefix": ("STRING", {"default": "ComfyUI"}),
+                "file_type": (OUTPUT_FILETYPES,{"default": "png"}),
+                "embed_workflow": ("BOOLEAN", {"default": True}),
+            },
+            "optional": {
+                "adv_xyPlot": ("ADV_XYPLOT",),
+            },
+            "hidden": {
+                "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "my_unique_id": "UNIQUE_ID",
+                "ttNnodeVersion": ttN_advPlot_images.version,
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "IMAGE")
+    RETURN_NAMES = ("images", "plot_image")
+    FUNCTION = "plot"
+    OUTPUT_NODE = True
+
+    CATEGORY = "🌏 tinyterra/xyPlot"
+
+    def plot(self, enabled, image, adv_xyPlot, image_output, save_prefix, file_type, embed_workflow, prompt=None, extra_pnginfo=None, my_unique_id=None):
+        if enabled == False or adv_xyPlot is None:
+            return (image, None)
+        
+        my_unique_id = int(my_unique_id)
+        ttN_save = ttNsave(my_unique_id, prompt, extra_pnginfo)
+        
+        #random.seed(seed)
+            
+        executor = xyExecutor()
+        plotter = ttNadv_xyPlot(adv_xyPlot, my_unique_id, prompt, extra_pnginfo, save_prefix, image_output, executor)
+        plot_image, images, samples = plotter.xy_plot_process()
+        plotter.reset()
+        del executor, plotter
+
+        plot_result = ttN_save.images(plot_image, save_prefix, image_output, embed_workflow, file_type)
+        #plot_result.extend(ui_results)
+
+        if image_output in ("Hide", "Hide/Save"):
+            return (images, plot_image)
+
+        return {"ui": {"images": plot_result}, "result": (images, plot_image)}
+
+
 '''
 class ttN_advPlot_merge:
     version = '1.0.0'
@@ -3567,6 +3632,7 @@ TTN_VERSIONS = {
     "pipe2BASIC": ttN_pipe_2BASIC.version,
     "pipe2DETAILER": ttN_pipe_2DETAILER.version,
     "advanced xyPlot": ttN_advanced_XYPlot.version,
+    'advPlot images': ttN_advPlot_images.version,
 #   "advPlot merge": ttN_advPlot_merge.version,
     "advPlot range": ttN_advPlot_range.version,
     "advPlot string": ttN_advPlot_string.version,
@@ -3602,6 +3668,7 @@ NODE_CLASS_MAPPINGS = {
     "ttN pipeLoaderSDXL_v2": ttN_pipeLoaderSDXL_v2,
     "ttN pipeKSamplerSDXL_v2": ttN_pipeKSamplerSDXL_v2,
     "ttN advanced xyPlot": ttN_advanced_XYPlot,
+    "ttN advPlot images": ttN_advPlot_images,
 #   "ttN advPlot merge": ttN_advPlot_merge,
     "ttN advPlot range": ttN_advPlot_range,
     "ttN advPlot string": ttN_advPlot_string,
@@ -3655,6 +3722,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 
     #ttN/xyPlot
     "ttN advanced xyPlot": "advanced xyPlot",
+    "ttN advPlot images": "advPlot images",
 #   "ttN advPlot merge": "advPlot merge",
     "ttN advPlot range": "advPlot range",
     "ttN advPlot string": "advPlot string",

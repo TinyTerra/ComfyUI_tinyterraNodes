@@ -52,11 +52,13 @@ Navigate to the **_ComfyUI/custom_nodes_** directory with cmd, and run:
   + 'esc' => _Close Fullscreen Mode_
   + Show UI with mouse hover in Slideshow mode
 
-**Advanced XYPlot**
-+ pipeKSampler/SDXL input to generate xy plots using any previous input nodes.
+**Advanced XY(Z)Plot**
++ pipeKSampler/SDXL input to generate xyz plots using any previous input nodes.
     + _(Any values not set by xyPlot will be taken from the corresponding nodes)_
 
 + Advanced xyPlot can take multiple variables for each axis somewhat programmatically.
+
++ Any image input - Use the 'advPlot images' node to create an xyplot from any image input.
 
 Syntax:
 ```
@@ -269,6 +271,12 @@ Convert ttN pipe line to detailer pipe (to be compatible with [ImpactPack](https
 pipeKSampler input to generate xy plots using sampler and loader values. (Any values not set by xyPlot will be taken from the corresponding nodes)
 
 ![adv_xyPlot](https://github.com/TinyTerra/ComfyUI_tinyterraNodes/assets/115619949/4443f88e-5e95-413b-9eb1-caf643b19ba1)
+   </details>
+
+<details>
+  <summary>advPlot images</summary>
+  
+Node to generate xyz plots from any image inputs. 
    </details>
 
 <details>
