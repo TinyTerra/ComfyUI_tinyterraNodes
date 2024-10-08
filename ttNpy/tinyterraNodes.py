@@ -2061,7 +2061,7 @@ class ttN_pipeEncodeConcat:
             conditioning_to = [[conditioning_to, {"pooled_output": pooled}]]
 
             if len(conditioning_from) > 1:
-                ttNl.warn("encode and concat conditioning_from contains more than 1 cond, only the first one will actually be applied to conditioning_to")
+                ttNl("encode and concat conditioning_from contains more than 1 cond, only the first one will actually be applied to conditioning_to").t(f'pipeEncodeConcat[{my_unique_id}]').warn().p()
 
             cond_from = conditioning_from[0][0]
 
