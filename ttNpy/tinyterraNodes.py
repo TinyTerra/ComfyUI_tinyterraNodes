@@ -2815,6 +2815,8 @@ class ttN_advPlot_string:
         vals = text.split(delimiter)
 
         for i, val in enumerate(vals):
+            if val.strip() == '':
+                continue
             line = f"[{nodeid}:{widget}='{val}']"
             plot_text.append(f"<{i+1}:{label}>")
             plot_text.append(line)
