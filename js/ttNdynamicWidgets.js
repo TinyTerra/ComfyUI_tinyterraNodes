@@ -481,6 +481,13 @@ function widgetLogic(node, widget) {
                 toggleWidget(node, findWidgetByName(node, 'embed_workflow'))
             }
             break;
+
+        case 'replace_mode':
+            if (widget.value == true) {
+                toggleWidget(node, findWidgetByName(node, 'search_string'), true)
+            } else {
+                toggleWidget(node, findWidgetByName(node, 'search_string'))
+            }
 	}
 }
 
@@ -490,7 +497,7 @@ const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output',
 						'image_output', 'text_output', 'add_noise', 
 						'ckpt_B_name', 'ckpt_C_name', 'save_model', 'refiner_ckpt_name',
 						'num_loras', 'mode', 'toggle', 'empty_latent_aspect', 'conditioning_aspect', 'target_aspect', 'sampler_state',
-                        'print_to_console', 'sampling', 'range_mode', 'file_type']
+                        'print_to_console', 'sampling', 'range_mode', 'file_type', 'replace_mode']
 const getSetTitles = [
     "hiresfixScale",
     "pipeLoader",
@@ -514,6 +521,7 @@ const getSetTitles = [
     "advPlot range",
     "advPlot combo",
     "advPlot images",
+    "advPlot string",
     "textOutput",
 ];
 

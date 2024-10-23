@@ -2769,7 +2769,7 @@ class ttN_advPlot_range:
         return {"ui": {"text": out}, "result": (out,)}
 
 class ttN_advPlot_string:
-    version = '1.0.0'
+    version = '1.1.0'
     def __init__(self):
         pass
 
@@ -2780,6 +2780,8 @@ class ttN_advPlot_string:
                 "node": ([AnyType("Connect to xyPlot for options"),],{}),
                 "widget": ([AnyType("Select node for options"),],{}),
 
+                "replace_mode": ("BOOLEAN",{"default": False}),
+                "search_string": ("STRING",{"default":""}),
                 "text": ("STRING", {"default":"","multiline": True}),
                 "delimiter": ("STRING", {"default":"\\n","multiline": False}),
                 "label_type": (['Values', 'Title and Values', 'ID, Title and Values'],{"default": "Values"}),
@@ -2796,7 +2798,7 @@ class ttN_advPlot_string:
 
     CATEGORY = "🌏 tinyterra/xyPlot"
 
-    def plot(self, node, widget, text, delimiter, label_type):
+    def plot(self, node, widget, replace_mode, search_string, text, delimiter, label_type):
         if '[' in node and ']' in node:
             nodeid = node.split('[', 1)[1].split(']', 1)[0]
         else:
@@ -2817,7 +2819,10 @@ class ttN_advPlot_string:
         for i, val in enumerate(vals):
             if val.strip() == '':
                 continue
-            line = f"[{nodeid}:{widget}='{val}']"
+            if replace_mode:
+                line = f"[{nodeid}:{widget}='%{search_string};{val}%']"
+            else:
+                line = f"[{nodeid}:{widget}='{val}']"
             plot_text.append(f"<{i+1}:{label}>")
             plot_text.append(line)
             
