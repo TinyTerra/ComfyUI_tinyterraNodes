@@ -105,7 +105,7 @@ For Example:
     + Creates extra xyPlots with the z-axis value changes as a base
 + Node based plotting to avoid requiring manually writing syntax
     + advPlot range for easily created int/float ranges
-    + advPlot string for deliminated string 'ranges'
+    + advPlot string for delimited string 'ranges'
 
 **Auto Complete**
 
@@ -145,7 +145,7 @@ or %input_name>input_name>widget_name% (for inputting nodes) <br>
   <details><summary>Example:
   </summary>
 
-  ![tinyterra_prefixParsing](workflows/tinyterra_prefixParsing.png)
+  ![tinyterra_prefixParsing](images/tinyterra_prefixParsing.png)
   </details>
 
 **Node Versioning**
@@ -357,7 +357,7 @@ Text input, to display text inside the node, with optional print to console.
 <details>
   <summary>7x TXT Loader Concat</summary>
 
-7 TextBOX inputs concatenated with spaces into a single output, AND seperate text outputs.
+7 TextBOX inputs concatenated with spaces into a single output, AND separate text outputs.
 + _**inputs -** text1, text2, text3, text4, text5, text6, text7 (STRING's), delimiter_
 + _**Outputs -** text1, text2, text3, text4, text5, text6, text7, concat (STRING's)_
    </details>
@@ -365,7 +365,7 @@ Text input, to display text inside the node, with optional print to console.
 <details>
   <summary>3x TXT Loader MultiConcat</summary>
 
-3 TextBOX inputs with seperate text outputs AND multiple concatenation variations (concatenated with spaces).
+3 TextBOX inputs with separate text outputs AND multiple concatenation variations (concatenated with spaces).
 + _**inputs -** text1, text2, text3 (STRING's), delimiter_
 + _**Outputs -** text1, text2, text3, 1 & 2, 1 & 3, 2 & 3, concat (STRING's)_
    </details>
