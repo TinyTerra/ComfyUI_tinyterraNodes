@@ -2657,61 +2657,6 @@ class ttN_advPlot_images:
 
         return {"ui": {"images": plot_result}, "result": (images, plot_image)}
 
-
-'''
-class ttN_advPlot_merge:
-    version = '1.0.0'
-    def __init__(self):
-        pass
-
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "label_type": (['Values', 'Title and Values', 'ID, Title and Values'],{"default": "Values"}),
-            },
-            "optional": {
-                "values1": ("TTN_XY_VALUES",),
-                "values2": ("TTN_XY_VALUES",),
-                "values3": ("TTN_XY_VALUES",),
-                "values4": ("TTN_XY_VALUES",),
-                "values5": ("TTN_XY_VALUES",),
-                "values6": ("TTN_XY_VALUES",),
-                "values7": ("TTN_XY_VALUES",),
-            },
-        }
-
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("plot_text",)
-    FUNCTION = "plot"
-
-    CATEGORY = "🌏 tinyterra/xyPlot"
-
-    def plot(self, label_type, values1={}, values2={}, values3={}, values4={}, values5={}, values6={}, values7={}):
-        label_map = {
-            'Values': 'v_label',
-            'Title and Values': 'tv_label',
-            'ID, Title and Values': 'idtv_label',
-        }
-        label = label_map[label_type]
-
-        number_of_lines = max(len(values1), len(values2), len(values3), len(values4), len(values5), len(values6), len(values7))
-        if number_of_lines == 0:
-            return ''
-        lines = []
-        for num in range(1, number_of_lines + 1):
-            line = f'<{num}:{label}>'
-            lines.append(line)
-            for vals in [values1, values2, values3, values4, values5, values6, values7]:
-                if len(vals) >= num:
-                    val_line = vals.get(num, None)
-                    if val_line is not None:
-                        lines.append(val_line)
-
-        final = '\n'.join(lines)
-        return (final, )
-'''
-
 class ttN_advPlot_range:
     version = '1.1.0'
     def __init__(self):
@@ -2919,6 +2864,59 @@ class ttN_advPlot_combo:
             
         out = '\n'.join(plot_text)
 
+        return {"ui": {"text": out}, "result": (out,)}
+
+class ttN_advPlot_merge:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "label_type": (['Values', 'Title and Values', 'ID, Title and Values'],{"default": "Values"}),
+            },
+            "optional": {
+                "plot_text1": ("STRING", {"forceInput": True,}),
+                "plot_text2": ("STRING",{"forceInput": True,}),
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("plot_text",)
+    FUNCTION = "plot"
+
+    CATEGORY = "🌏 tinyterra/xyPlot"
+
+    def plot(self, label_type, plot_text1='', plot_text2='', ):
+        label_map = {
+            'Values': 'v_label',
+            'Title and Values': 'tv_label',
+            'ID, Title and Values': 'idtv_label',
+        }
+        label = label_map.get(label_type, 'v_label')
+
+        text1 = plot_text1.split("<") if plot_text1 else []
+        text2 = plot_text2.split("<") if plot_text2 else []
+
+        number_of_lines = max(len(text1) - 1, len(text2) - 1, 0)
+        if number_of_lines == 0:
+            return ''
+        
+        lines = []
+        for num in range(1, number_of_lines + 1):
+            lines.append(f'<{num}:{label}>\n')
+
+            for text in (text1, text2):
+                if num < len(text):
+                    parts = text[num].split('>\n', 1)
+                    if len(parts) == 2:
+                        lines.append(parts[1])
+                        if not parts[1].endswith('\n'):
+                            lines.append('\n')
+
+        out = ''.join(lines)
         return {"ui": {"text": out}, "result": (out,)}
 #--------------------------------------------------------------ttN/xyPlot END-----------------------------------------------------------------------#
 
@@ -3653,10 +3651,10 @@ TTN_VERSIONS = {
     "pipe2DETAILER": ttN_pipe_2DETAILER.version,
     "advanced xyPlot": ttN_advanced_XYPlot.version,
     'advPlot images': ttN_advPlot_images.version,
-#   "advPlot merge": ttN_advPlot_merge.version,
     "advPlot range": ttN_advPlot_range.version,
     "advPlot string": ttN_advPlot_string.version,
     "advPlot combo": ttN_advPlot_combo.version,
+    "advPlot merge": ttN_advPlot_merge.version,
     "pipeEncodeConcat": ttN_pipeEncodeConcat.version,
     "multiLoraStack": ttN_pipeLoraStack.version,
     "multiModelMerge": ttN_multiModelMerge.version,
@@ -3689,10 +3687,10 @@ NODE_CLASS_MAPPINGS = {
     "ttN pipeKSamplerSDXL_v2": ttN_pipeKSamplerSDXL_v2,
     "ttN advanced xyPlot": ttN_advanced_XYPlot,
     "ttN advPlot images": ttN_advPlot_images,
-#   "ttN advPlot merge": ttN_advPlot_merge,
     "ttN advPlot range": ttN_advPlot_range,
     "ttN advPlot string": ttN_advPlot_string,
     "ttN advPlot combo": ttN_advPlot_combo,
+    "ttN advPlot merge": ttN_advPlot_merge,
     "ttN pipeEDIT": ttN_pipe_EDIT,
     "ttN pipe2BASIC": ttN_pipe_2BASIC,
     "ttN pipe2DETAILER": ttN_pipe_2DETAILER,
@@ -3743,10 +3741,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     #ttN/xyPlot
     "ttN advanced xyPlot": "advanced xyPlot",
     "ttN advPlot images": "advPlot images",
-#   "ttN advPlot merge": "advPlot merge",
     "ttN advPlot range": "advPlot range",
     "ttN advPlot string": "advPlot string",
-    "ttN advPlot combo": "advPlot combo",   
+    "ttN advPlot combo": "advPlot combo",  
+    "ttN advPlot merge": "advPlot merge", 
     
     #ttN/misc
     "ttN multiModelMerge": "multiModelMerge",

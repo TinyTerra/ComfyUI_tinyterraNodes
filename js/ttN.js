@@ -638,7 +638,7 @@ app.registerExtension({
                 let nodeVersion = nodeData.input.hidden?.ttNnodeVersion ? nodeData.input.hidden.ttNnodeVersion : null;
                 nodeType.ttNnodeVersion = nodeVersion;
                 this.properties['ttNnodeVersion'] = this.properties['ttNnodeVersion'] ? this.properties['ttNnodeVersion'] : nodeVersion;
-                if ((this.properties['ttNnodeVersion'].split(".")[0] !== nodeVersion.split(".")[0]) || (this.properties['ttNnodeVersion'].split(".")[1] !== nodeVersion.split(".")[1])) {
+                if ((this.properties['ttNnodeVersion']?.split(".")[0] !== nodeVersion?.split(".")[0]) || (this.properties['ttNnodeVersion']?.split(".")[1] !== nodeVersion?.split(".")[1])) {
                     if (!this.properties['origVals']) {
                         this.properties['origVals'] = { bgcolor: this.bgcolor, color: this.color, title: this.title }
                     }
