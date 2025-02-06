@@ -653,7 +653,9 @@ app.registerExtension({
                 }
                 app.ui.settings.setSettingValue('pysssss.ModelInfo.LoraNodes', pysLoras)
             }
-            localStorage.setItem("ttN.pysssss", true)
+            if (pysCheckpoints && pysLoras) {
+                localStorage.setItem("ttN.pysssss", true)
+            }
         }
     },
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
