@@ -133,8 +133,8 @@ if os.path.exists(web_extension_path):
 js_files = {
     "interface": "enable_interface",
     "fullscreen": "enable_fullscreen",
-    "embed_autocomplete": "enable_embed_autocomplete",
-    "dynamic_widgets": "enable_dynamic_widgets",
+    "embedAC": "enable_embed_autocomplete",
+    "dynamicWidgets": "enable_dynamic_widgets",
 }
 for js_file, config_key in js_files.items():
     file_path = os.path.join(js_path, f"ttN{js_file}.js")
