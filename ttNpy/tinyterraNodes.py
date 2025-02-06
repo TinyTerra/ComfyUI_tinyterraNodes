@@ -529,6 +529,7 @@ class ttNadv_xyPlot:
         self.z_points = adv_xyPlot.get("z_plot", None)
         self.save_individuals = adv_xyPlot.get("save_individuals", False)
         self.image_output = prompt[str(unique_id)]["inputs"]["image_output"]
+        self.invert_bg = adv_xyPlot.get("invert_bg", False)
         self.x_labels = []
         self.y_labels = []
         self.z_labels = []
@@ -604,7 +605,12 @@ class ttNadv_xyPlot:
         font_size = min(max_font_size, font_size)
         font_size = max(min_font_size, font_size)
 
-        label_bg = Image.new('RGBA', (label_width, 0), color=(255, 255, 255, 0))  # Temporary height
+        if self.invert_bg:
+            fill_color = 'white'
+        else:
+            fill_color = 'black'
+
+        label_bg = Image.new('RGBA', (label_width, 0), color=(0, 0, 0, 0))  # Temporary height
         d = ImageDraw.Draw(label_bg)
 
         font = self.get_font(font_size)
@@ -636,7 +642,7 @@ class ttNadv_xyPlot:
         line_height = int(font_size * 1.2)  # Increased line height for spacing
         label_height = len(lines) * line_height
 
-        label_bg = Image.new('RGBA', (label_width, label_height), color=(255, 255, 255, 0))
+        label_bg = Image.new('RGBA', (label_width, label_height), color=(0, 0, 0, 0))
         d = ImageDraw.Draw(label_bg)
 
         current_y = 0
@@ -648,7 +654,7 @@ class ttNadv_xyPlot:
             text_x = (label_width - text_width) // 2
             text_y = current_y
             current_y += line_height
-            d.text((text_x, text_y), line, fill='black', font=font)
+            d.text((text_x, text_y), line, fill=fill_color, font=font)
 
         return label_bg
 
@@ -681,7 +687,12 @@ class ttNadv_xyPlot:
     def plot_images(self, z_label):
         bg_width, bg_height, x_offset_initial, y_offset = self.calculate_background_dimensions()
 
-        background = Image.new('RGBA', (int(bg_width), int(bg_height)), color=(255, 255, 255, 255))
+        if self.invert_bg:
+             bg_color = (0, 0, 0, 255) 
+        else:
+            bg_color = (255, 255, 255, 255)
+
+        background = Image.new('RGBA', (int(bg_width), int(bg_height)), color=bg_color)
 
         for row_index in range(self.num_rows):
             x_offset = x_offset_initial
@@ -2481,7 +2492,7 @@ class ttN_KSampler_v2:
 
 #-------------------------------------------------------------ttN/xyPlot START----------------------------------------------------------------------#
 class ttN_advanced_XYPlot:
-    version = '1.2.0'
+    version = '1.2.1'
     plotPlaceholder = "_PLOT\nExample:\n\n<axis number:label1>\n[node_ID:widget_Name='value']\n\n<axis number2:label2>\n[node_ID:widget_Name='value2']\n[node_ID:widget2_Name='value']\n[node_ID2:widget_Name='value']\n\netc..."
 
     def get_plot_points(plot_data, unique_id, plot_Line):
@@ -2550,6 +2561,7 @@ class ttN_advanced_XYPlot:
                 "x_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'X' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
                 "y_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'Y' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
                 "z_plot": ("STRING",{"default": '', "multiline": True, "placeholder": 'Z' + ttN_advanced_XYPlot.plotPlaceholder, "pysssss.autocomplete": False}),
+                "invert_background": ("BOOLEAN", {"default": False}),
             },
             "hidden": {
                 "my_unique_id": "UNIQUE_ID",
@@ -2563,7 +2575,7 @@ class ttN_advanced_XYPlot:
 
     CATEGORY = "🌏 tinyterra/xyPlot"
     
-    def plot(self, grid_spacing, save_individuals, flip_xy, x_plot=None, y_plot=None, z_plot=None, my_unique_id=None):
+    def plot(self, grid_spacing, save_individuals, flip_xy, x_plot=None, y_plot=None, z_plot=None, my_unique_id=None, invert_background=False):
         x_plot = ttN_advanced_XYPlot.get_plot_points(x_plot, my_unique_id, 'X')
         y_plot = ttN_advanced_XYPlot.get_plot_points(y_plot, my_unique_id, 'Y')
         z_plot = ttN_advanced_XYPlot.get_plot_points(z_plot, my_unique_id, 'Z')
@@ -2580,7 +2592,8 @@ class ttN_advanced_XYPlot:
                    "y_plot": y_plot,
                    "z_plot": z_plot,
                    "grid_spacing": grid_spacing,
-                   "save_individuals": save_individuals,}
+                   "save_individuals": save_individuals,
+                   "invert_bg": invert_background}
         
         return (xy_plot, )
 
