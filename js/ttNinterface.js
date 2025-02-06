@@ -266,7 +266,7 @@ app.registerExtension({
 
         LGraphCanvas.prototype.ttNfixNodeSize = function(node){
             setTimeout(() => {
-                node.onResize(node.size);
+                node.onResize?.(node.size);
             }, 0);
         };
 
