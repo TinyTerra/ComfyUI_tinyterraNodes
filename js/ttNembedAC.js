@@ -145,7 +145,7 @@ function _isLorasWidget(widget) {
 }
 
 function findPysssss(lora=false) {
-    const found = JSON.parse(localStorage.getItem("Comfy.Settings.pysssss.AutoCompleter")) || false;
+    const found = JSON.parse(app.ui.settings.getSettingValue('pysssss.AutoCompleter')) || false;
     if (found && lora) {
         return JSON.parse(localStorage.getItem("pysssss.AutoCompleter.ShowLoras")) || false;
     }

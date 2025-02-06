@@ -630,6 +630,32 @@ window.tinyterra = tinyterra;
 
 app.registerExtension({
     name: "comfy.ttN",
+    setup() {
+        if (!localStorage.getItem("ttN.pysssss")) {
+            const ttNckpts = ['ttN pipeLoader_v2', "ttN pipeLoaderSDXL_v2", "ttN tinyLoader"]
+            let pysCheckpoints = app.ui.settings.getSettingValue('pysssss.ModelInfo.CheckpointNodes')
+            if (pysCheckpoints) {
+                for (let ckpt of ttNckpts) {
+                    if (!pysCheckpoints.includes(ckpt)) {
+                        pysCheckpoints = `${pysCheckpoints},${ckpt}`
+                    }
+                }
+                app.ui.settings.setSettingValue('pysssss.ModelInfo.CheckpointNodes', pysCheckpoints)
+            }
+
+            const ttNloras = ['ttN KSampler_v2', 'ttN pipeKSampler_v2', 'ttN pipeKSamplerAdvanced_v2', 'ttN pipeKSamplerSDXL_v2', ]
+            let pysLoras = app.ui.settings.getSettingValue('pysssss.ModelInfo.LoraNodes')
+            if (pysLoras) {
+                for (let lora of ttNloras) {
+                    if (!pysLoras.includes(lora)) {
+                        pysLoras = `${pysLoras},${lora}`
+                    }
+                }
+                app.ui.settings.setSettingValue('pysssss.ModelInfo.LoraNodes', pysLoras)
+            }
+            localStorage.setItem("ttN.pysssss", true)
+        }
+    },
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (nodeData.name.startsWith("ttN")) {
             const origOnConfigure = nodeType.prototype.onConfigure;
