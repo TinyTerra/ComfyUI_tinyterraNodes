@@ -617,10 +617,18 @@ class TinyTerra extends EventTarget {
         this.downKeys["^" + e.key.toLocaleUpperCase()] = false
     }
     injectTtnCss() {
-        let link = document.createElement("link");
+        const link = document.createElement("link");
         link.rel = "stylesheet";
         link.type = "text/css";
         link.href = "extensions/ComfyUI_tinyterraNodes/ttN.css";
+
+        link.onerror = function () {
+            if (this.href.includes("comfyui_tinyterranodes")) {
+                console.error("tinyterraNodes: Failed to load CSS file. Please check nodepack folder name.");
+                return;
+            }
+            this.href = "extensions/comfyui_tinyterranodes/ttN.css"
+        }
         document.head.appendChild(link);
     }
 }
