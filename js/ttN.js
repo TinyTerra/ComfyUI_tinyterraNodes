@@ -617,11 +617,14 @@ class TinyTerra extends EventTarget {
         this.downKeys["^" + e.key.toLocaleUpperCase()] = false
     }
     injectTtnCss() {
-        let link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.type = "text/css";
-        link.href = "extensions/ComfyUI_tinyterraNodes/ttN.css";
-        document.head.appendChild(link);
+        const folders = ['ComfyUI_tinyterraNodes','comfyui_tinyterranodes']
+        folders.forEach((folder) => {
+            let link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.type = "text/css";
+            link.href = `extensions/${folder}/ttN.css`;
+            document.head.appendChild(link);
+        })
     }
 }
 
