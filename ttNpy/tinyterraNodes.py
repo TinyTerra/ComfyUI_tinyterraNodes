@@ -833,29 +833,36 @@ class ttNadv_xyPlot:
 
             return prompt
 
+        def execute_y_plot(prompt, x_label, z_label):
+            for _, nodes in self.y_points.items():
+                y_label = nodes["label"]
+                self.y_labels.append(y_label)
+                y_prompt = copy.deepcopy(prompt)
+                y_prompt = update_prompt(y_prompt, nodes)
+                        
+                self.num += 1
+                self.execute_prompt(y_prompt, self.extra_pnginfo, x_label, y_label, z_label)
+
         for _, nodes in self.z_points.items():
             z_label = nodes["label"]
             z_prompt = copy.deepcopy(base_prompt)
             z_prompt = update_prompt(z_prompt, nodes)
 
-            for _, nodes in self.x_points.items():
-                x_label = nodes["label"]
-                self.x_labels.append(x_label)
-                x_prompt = copy.deepcopy(z_prompt)
-                x_prompt = update_prompt(x_prompt, nodes)
-                        
-                if self.y_points:
-                    for _, nodes in self.y_points.items():
-                        y_label = nodes["label"]
-                        self.y_labels.append(y_label)
-                        y_prompt = copy.deepcopy(x_prompt)
-                        y_prompt = update_prompt(y_prompt, nodes)
-                                
+            if self.x_points:
+                for _, nodes in self.x_points.items():
+                    x_label = nodes["label"]
+                    self.x_labels.append(x_label)
+                    x_prompt = copy.deepcopy(z_prompt)
+                    x_prompt = update_prompt(x_prompt, nodes)
+                            
+                    if self.y_points:
+                        execute_y_plot(x_prompt, x_label, z_label)
+                    else:
                         self.num += 1
-                        self.execute_prompt(y_prompt, self.extra_pnginfo, x_label, y_label, z_label)
-                else:
-                    self.num += 1
-                    self.execute_prompt(x_prompt, self.extra_pnginfo, x_label, y_label, z_label)
+                        self.execute_prompt(x_prompt, self.extra_pnginfo, x_label, y_label, z_label)
+            
+            elif self.y_points:
+                execute_y_plot(z_prompt, None, z_label)
 
             # Rearrange latent array to match preview image grid
             if len(self.latent_list) > 0:
