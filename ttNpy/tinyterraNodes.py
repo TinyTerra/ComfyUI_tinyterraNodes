@@ -48,7 +48,7 @@ from comfy.sd import CLIP, VAE
 from spandrel import ModelLoader, ImageModelDescriptor
 from .adv_encode import advanced_encode
 from comfy.model_patcher import ModelPatcher
-from nodes import MAX_RESOLUTION, ControlNetApplyAdvanced
+from nodes import MAX_RESOLUTION, ControlNetApplyAdvanced, ConditioningZeroOut
 from nodes import NODE_CLASS_MAPPINGS as COMFY_CLASS_MAPPINGS
 
 from .utils import CC, ttNl, ttNpaths, AnyType
@@ -2301,7 +2301,7 @@ class ttN_tinyLoader:
         return (model, samples, vae, clip, empty_latent_width, empty_latent_height)
 
 class ttN_conditioning:
-    version = '1.0.0'
+    version = '1.0.1'
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": { 
@@ -2317,6 +2317,7 @@ class ttN_conditioning:
                     "negative": ("STRING", {"default": "Negative", "multiline": True, "dynamicPrompts": True}),
                     "negative_token_normalization": (["none", "mean", "length", "length+mean"],),
                     "negative_weight_interpretation": (["comfy", "A1111", "compel", "comfy++", "down_weight"],),
+                    "zero_out_empty": ("BOOLEAN", {"default": False}),
                     },
                 "optional": {
                     "optional_lora_stack": ("LORA_STACK",),
@@ -2333,7 +2334,7 @@ class ttN_conditioning:
 
     def condition(self, model, clip, loras,
                        positive, positive_token_normalization, positive_weight_interpretation, 
-                       negative, negative_token_normalization, negative_weight_interpretation, 
+                       negative, negative_token_normalization, negative_weight_interpretation, zero_out_empty,
                        optional_lora_stack=None, prepend_positive=None, prepend_negative=None,
                        my_unique_id=None):
 
@@ -2347,8 +2348,12 @@ class ttN_conditioning:
         positive_embedding = loader.embedding_encode(positive, positive_token_normalization, positive_weight_interpretation, clip, title='ttN Conditioning Positive', my_unique_id=my_unique_id, prepend_text=prepend_positive)
         negative_embedding = loader.embedding_encode(negative, negative_token_normalization, negative_weight_interpretation, clip, title='ttN Conditioning Negative', my_unique_id=my_unique_id, prepend_text=prepend_negative)
 
-        final_positive = (prepend_positive + ' ' if prepend_positive else '') + (positive + ' ' if positive else '')
-        final_negative = (prepend_negative + ' ' if prepend_negative else '') + (negative + ' ' if negative else '')
+        final_positive = (prepend_positive + ' ' if prepend_positive else '') + (positive if positive else '')
+        final_negative = (prepend_negative + ' ' if prepend_negative else '') + (negative if negative else '')
+
+        if zero_out_empty:
+            positive_embedding = positive_embedding if final_positive.strip() != '' else ConditioningZeroOut().zero_out(positive_embedding)[0]
+            negative_embedding = negative_embedding if final_negative.strip() != '' else ConditioningZeroOut().zero_out(negative_embedding)[0]
 
         return (model, positive_embedding, negative_embedding, clip, final_positive, final_negative)
 
