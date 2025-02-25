@@ -241,7 +241,7 @@ class ttNloader:
         
         return model, clip
         
-    def embedding_encode(self, text, token_normalization, weight_interpretation, clip, seed=None, title=None, my_unique_id=None, prepend_text=None):
+    def embedding_encode(self, text, token_normalization, weight_interpretation, clip, seed=None, title=None, my_unique_id=None, prepend_text=None, zero_out=False):
         text = f'{prepend_text} {text}' if prepend_text is not None else text
         if seed is None:
             seed = self.string_to_seed(text)
@@ -249,7 +249,12 @@ class ttNloader:
         text = self.nsp_parse(text, seed, title=title, my_unique_id=my_unique_id)
 
         embedding, pooled = advanced_encode(clip, text, token_normalization, weight_interpretation, w_max=1.0, apply_to_pooled='enable')
-        return [[embedding, {"pooled_output": pooled}]]
+        conditioning = [[embedding, {"pooled_output": pooled}]]
+
+        if zero_out is True and text.strip() == '':
+            return ConditioningZeroOut().zero_out(conditioning)[0]
+        else:
+            return conditioning
 
     def embedding_encodeXL(self, text, clip, seed=0, title=None, my_unique_id=None, prepend_text=None, text2=None, prepend_text2=None, width=None, height=None, crop_width=0, crop_height=0, target_width=None, target_height=None, refiner_clip=None, ascore=None):
         text = f'{prepend_text} {text}' if prepend_text is not None else text
@@ -2308,7 +2313,7 @@ class ttN_tinyLoader:
         return (model, samples, vae, clip, empty_latent_width, empty_latent_height)
 
 class ttN_conditioning:
-    version = '1.0.1'
+    version = '1.0.2'
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": { 
@@ -2352,15 +2357,13 @@ class ttN_conditioning:
         if loras not in [None, "None"]:
             model, clip = loader.load_lora_text(loras, model, clip)
 
-        positive_embedding = loader.embedding_encode(positive, positive_token_normalization, positive_weight_interpretation, clip, title='ttN Conditioning Positive', my_unique_id=my_unique_id, prepend_text=prepend_positive)
-        negative_embedding = loader.embedding_encode(negative, negative_token_normalization, negative_weight_interpretation, clip, title='ttN Conditioning Negative', my_unique_id=my_unique_id, prepend_text=prepend_negative)
+        positive_embedding = loader.embedding_encode(positive, positive_token_normalization, positive_weight_interpretation, clip, title='ttN Conditioning Positive',
+                                                     my_unique_id=my_unique_id, prepend_text=prepend_positive, zero_out=zero_out_empty)
+        negative_embedding = loader.embedding_encode(negative, negative_token_normalization, negative_weight_interpretation, clip, title='ttN Conditioning Negative',
+                                                     my_unique_id=my_unique_id, prepend_text=prepend_negative, zero_out=zero_out_empty)
 
         final_positive = (prepend_positive + ' ' if prepend_positive else '') + (positive if positive else '')
         final_negative = (prepend_negative + ' ' if prepend_negative else '') + (negative if negative else '')
-
-        if zero_out_empty:
-            positive_embedding = positive_embedding if final_positive.strip() != '' else ConditioningZeroOut().zero_out(positive_embedding)[0]
-            negative_embedding = negative_embedding if final_negative.strip() != '' else ConditioningZeroOut().zero_out(negative_embedding)[0]
 
         return (model, positive_embedding, negative_embedding, clip, final_positive, final_negative)
 
