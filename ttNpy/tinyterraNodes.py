@@ -1475,9 +1475,8 @@ class ttN_pipeKSamplerAdvanced_v2:
                 "ttNnodeVersion": ttN_pipeKSamplerAdvanced_v2.version
                 },
             }
-
-    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT", )
-    RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "image", "seed", )
+    RETURN_TYPES = ("PIPE_LINE", "MODEL", "CONDITIONING", "CONDITIONING", "LATENT", "VAE", "CLIP", "IMAGE", "INT", "IMAGE")
+    RETURN_NAMES = ("pipe", "model", "positive", "negative", "latent","vae", "clip", "images", "seed", "plot_image")
     OUTPUT_NODE = True
     FUNCTION = "adv_sample"
     CATEGORY = "🌏 tinyterra/pipe"
