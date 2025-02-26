@@ -753,7 +753,7 @@ class ttNadv_xyPlot:
 
             self.executor.execute(prompt, self.num, extra_data, valid[2])
 
-            if len(self.executor.outputs[self.unique_id]) > 2:
+            if len(self.executor.outputs.get(self.unique_id, [])) > 2:
                 self.latent_list.append(self.executor.outputs[self.unique_id][-6][0]["samples"])
 
                 image = self.executor.outputs[self.unique_id][-3][0]
