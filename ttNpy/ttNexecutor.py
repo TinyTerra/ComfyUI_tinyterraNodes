@@ -426,6 +426,8 @@ class xyExecutor:
         for o in to_delete:
             d = self.outputs.pop(o)
             del d
+        
+        raise Exception(ex)
 
     def execute(self, prompt, prompt_id, extra_data={}, execute_outputs=[]):
         nodes.interrupt_processing(False)
