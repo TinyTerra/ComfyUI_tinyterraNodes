@@ -11,7 +11,7 @@
 # Like the pack and want to support me?                     https://www.buymeacoffee.com/tinyterra                                                  #
 #---------------------------------------------------------------------------------------------------------------------------------------------------#
 
-ttN_version = '2.0.3'
+ttN_version = '2.0.7'
 
 import os
 import re
