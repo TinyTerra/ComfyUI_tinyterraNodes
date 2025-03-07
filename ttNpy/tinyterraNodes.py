@@ -802,7 +802,7 @@ class ttNadv_xyPlot:
                             value = False
                         value = bool(value)
                     elif type(ivalues[0]) == list:
-                        if value not in ivalues:
+                        if value not in ivalues[0]:
                             raise KeyError(f'"{value}" not a valid value for input "{iname}" in xyplot')
                         
         return input_name, value
