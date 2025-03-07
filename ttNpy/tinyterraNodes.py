@@ -801,6 +801,10 @@ class ttNadv_xyPlot:
                         elif value.lower() == 'false':
                             value = False
                         value = bool(value)
+                    elif type(ivalues[0]) == list:
+                        if value not in ivalues:
+                            raise KeyError(f'"{value}" not a valid value for input "{iname}" in xyplot')
+                        
         return input_name, value
   
     def xy_plot_process(self):
