@@ -764,7 +764,7 @@ class ttNadv_xyPlot:
             result_container = {}
 
             def run_coroutine():
-                coro = execution.validate_prompt(prompt_id, prompt)
+                coro = execution.validate_prompt(prompt_id, prompt, None)
                 result_container["result"] = asyncio.run(coro)
 
             thread = threading.Thread(target=run_coroutine)
@@ -774,7 +774,7 @@ class ttNadv_xyPlot:
             valid = result_container["result"]
         else:
             # Safe to run directly
-            valid = loop.run_until_complete(execution.validate_prompt(prompt_id, prompt))
+            valid = loop.run_until_complete(execution.validate_prompt(prompt_id, prompt, None))
         
         if valid[0]:
             ttNl(f'{CC.GREY}X: {x_label}, Y: {y_label} Z: {z_label}').t(f'Plot Values {self.num}/{self.total} ->').p()
