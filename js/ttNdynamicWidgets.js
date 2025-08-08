@@ -4,7 +4,7 @@ let origProps = {};
 
 const findWidgetByName = (node, name) => node.widgets.find((w) => w.name === name);
 
-const doesInputWithNameExist = (node, name) => node.inputs ? node.inputs.some((input) => input.name === name) : false;
+const doesInputLinkExist = (node, name) => node.inputs ? node.inputs.some((input) => input.link != null) : false;
 
 function updateNodeHeight(node) {
 	node.setSize([node.size[0], node.computeSize()[1]]);
@@ -12,7 +12,7 @@ function updateNodeHeight(node) {
 }
 
 function toggleWidget(node, widget, show = false, suffix = "") {
-	if (!widget || doesInputWithNameExist(node, widget.name)) return;
+	if (!widget || doesInputLinkExist(node, widget.name)) return;
 	if (!origProps[widget.name]) {
 		origProps[widget.name] = { origType: widget.type, origComputeSize: widget.computeSize, origComputedHeight: widget.computedHeight };	
 	}
