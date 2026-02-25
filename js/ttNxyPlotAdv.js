@@ -2,6 +2,10 @@ import { app } from "../../scripts/app.js";
 import { ttN_CreateDropdown, ttN_RemoveDropdown } from "./ttNdropdown.js";
 
 const widgets_to_ignore = ['control_after_generate', 'empty_latent_aspect', 'empty_latent_width', 'empty_latent_height', 'batch_size']
+const valueCompletionRegex = /^\[(\d+):([^=\]]+)=(['"])([^'"]*)$/
+const widgetCompletionRegex = /^\[(\d+):([^=\]]*)$/
+const nodeCompletionRegex = /^\[([^:\]=]*)$/
+const nodeLabelRegex = /^\[(\d+)\]\s-\s(.+)$/
 
 function getWidgetsOptions(node) {
     const widgetsOptions = {}
@@ -12,7 +16,7 @@ function getWidgetsOptions(node) {
         const current_value = w.value
         if (widgets_to_ignore.includes(w.name)) continue
         //console.log(`WIDGET ${w.name}, ${w.type}, ${w.options}`) 
-        if (w.name === 'seed' || (w.name === 'value' && node.constructor.title.toLowerCase() == 'seed')) {
+        if (w.name === 'seed' || (w.name === 'value' && node.constructor.title.toLowerCase() === 'seed')) {
             widgetsOptions[w.name] = {'Random Seed': `${w.options.max}/${w.options.min}/${w.options.step}`}
             continue
         }
@@ -123,9 +127,311 @@ function getNodesWidgetsDict(xyNode, plotLines=false) {
         }
         const options = getWidgetsOptions(iNode)
         if (!options) continue
-        nodeWidgets[`[${iID}] - ${iNodeTitle}`] = getWidgetsOptions(iNode)
+        nodeWidgets[`[${iID}] - ${iNodeTitle}`] = options
     }
     return nodeWidgets
+}
+
+function getOpenExpressionContext(inputText, cursorPosition) {
+    const textBeforeCursor = inputText.slice(0, cursorPosition);
+    const expressionStart = textBeforeCursor.lastIndexOf('[');
+
+    if (expressionStart === -1 || textBeforeCursor.indexOf(']', expressionStart) !== -1) {
+        return null;
+    }
+
+    return {
+        expressionStart,
+        expressionBeforeCursor: textBeforeCursor.slice(expressionStart),
+    };
+}
+
+function getValueCompletionContext(inputText, cursorPosition) {
+    const expressionContext = getOpenExpressionContext(inputText, cursorPosition);
+    if (!expressionContext) {
+        return null;
+    }
+
+    const expressionBeforeCursor = expressionContext.expressionBeforeCursor;
+    const match = expressionBeforeCursor.match(valueCompletionRegex);
+    if (!match) {
+        return null;
+    }
+
+    const [, nodeId, rawWidgetName, quoteChar, valueQuery] = match;
+    const widgetName = rawWidgetName.trim();
+    const replaceEndIndex = inputText.indexOf(']', cursorPosition);
+
+    return {
+        nodeId,
+        widgetName,
+        lookupWidgetName: widgetName.replace(/\.append$/, ''),
+        quoteChar,
+        valueQuery,
+        replaceStart: expressionContext.expressionStart,
+        replaceEnd: replaceEndIndex === -1 ? cursorPosition : replaceEndIndex + 1,
+    };
+}
+
+function getWidgetCompletionContext(inputText, cursorPosition) {
+    const expressionContext = getOpenExpressionContext(inputText, cursorPosition);
+    if (!expressionContext) {
+        return null;
+    }
+
+    const match = expressionContext.expressionBeforeCursor.match(widgetCompletionRegex);
+    if (!match) {
+        return null;
+    }
+
+    const [, nodeId, rawWidgetQuery] = match;
+    const widgetStart = expressionContext.expressionStart + nodeId.length + 2;
+    const equalIndex = inputText.indexOf('=', widgetStart);
+    const bracketIndex = inputText.indexOf(']', widgetStart);
+    const hasEquals = equalIndex !== -1 && (bracketIndex === -1 || equalIndex < bracketIndex);
+    const widgetEnd = hasEquals ? equalIndex : (bracketIndex === -1 ? cursorPosition : Math.min(cursorPosition, bracketIndex));
+
+    return {
+        nodeId,
+        widgetQuery: rawWidgetQuery.trim(),
+        widgetStart,
+        widgetEnd,
+        hasEquals,
+    };
+}
+
+function getNodeCompletionContext(inputText, cursorPosition) {
+    const expressionContext = getOpenExpressionContext(inputText, cursorPosition);
+    if (!expressionContext) {
+        return null;
+    }
+
+    const match = expressionContext.expressionBeforeCursor.match(nodeCompletionRegex);
+    if (!match) {
+        return null;
+    }
+
+    const nodeStart = expressionContext.expressionStart + 1;
+    const colonIndex = inputText.indexOf(':', nodeStart);
+    const equalIndex = inputText.indexOf('=', nodeStart);
+    const bracketIndex = inputText.indexOf(']', nodeStart);
+
+    const delimiters = [colonIndex, equalIndex, bracketIndex].filter((index) => index !== -1);
+    const firstDelimiterIndex = delimiters.length > 0 ? Math.min(...delimiters) : -1;
+    const hasColon = colonIndex !== -1 && (firstDelimiterIndex === -1 || colonIndex === firstDelimiterIndex);
+    const nodeEnd = hasColon ? colonIndex : (firstDelimiterIndex === -1 ? cursorPosition : Math.min(cursorPosition, firstDelimiterIndex));
+
+    return {
+        nodeQuery: match[1].trim(),
+        nodeStart,
+        nodeEnd,
+        hasColon,
+    };
+}
+
+function getNodeWidgetOptions(nodeWidgets, nodeId) {
+    const nodeKey = Object.keys(nodeWidgets).find((key) => key.startsWith(`[${nodeId}] - `));
+    if (!nodeKey) {
+        return null;
+    }
+
+    const widgetOptions = nodeWidgets[nodeKey];
+    if (!widgetOptions || typeof widgetOptions !== 'object') {
+        return null;
+    }
+
+    return widgetOptions;
+}
+
+function getNodeWidgetValues(nodeWidgets, nodeId, widgetName, lookupWidgetName) {
+    const widgetOptions = getNodeWidgetOptions(nodeWidgets, nodeId);
+    if (!widgetOptions) {
+        return [];
+    }
+
+    const valuesDict = widgetOptions[widgetName] ?? widgetOptions[lookupWidgetName];
+    if (!valuesDict || typeof valuesDict !== 'object') {
+        return [];
+    }
+
+    return Object.keys(valuesDict).filter((value) => value && value !== 'string');
+}
+
+function getNodeWidgetNames(nodeWidgets, nodeId) {
+    const widgetOptions = getNodeWidgetOptions(nodeWidgets, nodeId);
+    if (!widgetOptions) {
+        return [];
+    }
+
+    return Object.keys(widgetOptions).filter((widgetName) => widgetName && widgetName !== 'string');
+}
+
+function getNodeEntries(nodeWidgets) {
+    return Object.keys(nodeWidgets)
+        .map((key) => {
+            const match = key.match(nodeLabelRegex);
+            if (!match) {
+                return null;
+            }
+            const [, nodeId, nodeTitle] = match;
+            return {
+                nodeId,
+                nodeTitle,
+                label: `[${nodeId}] - ${nodeTitle}`,
+                searchText: `${nodeId} ${nodeTitle}`,
+            };
+        })
+        .filter(Boolean);
+}
+
+function rankAutocompleteEntries(entries, query, textSelector = (entry) => entry) {
+    const normalizedQuery = query.toLowerCase().trim();
+    const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+
+    if (tokens.length === 0) {
+        return entries;
+    }
+
+    return entries
+        .map((entry) => {
+            const normalizedValue = textSelector(entry).toLowerCase();
+            if (tokens.some((token) => !normalizedValue.includes(token))) {
+                return null;
+            }
+
+            let score = 0;
+
+            if (normalizedValue.includes(normalizedQuery)) {
+                score += 120;
+            }
+            if (normalizedValue.startsWith(normalizedQuery)) {
+                score += 60;
+            }
+
+            for (const token of tokens) {
+                const tokenIndex = normalizedValue.indexOf(token);
+                if (tokenIndex === 0) {
+                    score += 24;
+                }
+                score += Math.max(0, 12 - Math.min(tokenIndex, 12));
+            }
+
+            const firstTokenIndex = normalizedValue.indexOf(tokens[0]);
+            return {
+                entry,
+                score,
+                firstTokenIndex: firstTokenIndex === -1 ? Number.MAX_SAFE_INTEGER : firstTokenIndex,
+                normalizedValue,
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.score - a.score || a.firstTokenIndex - b.firstTokenIndex || a.normalizedValue.localeCompare(b.normalizedValue))
+        .map((item) => item.entry);
+}
+
+function rankWidgetValues(values, query) {
+    const uniqueValues = [...new Set(values)];
+    return rankAutocompleteEntries(uniqueValues, query);
+}
+
+function insertWidgetValue(inputEl, inputText, context, selectedOption) {
+    const replacement = `[${context.nodeId}:${context.widgetName}=${context.quoteChar}${selectedOption}${context.quoteChar}]`;
+    const nextValue = inputText.slice(0, context.replaceStart) + replacement + inputText.slice(context.replaceEnd);
+    inputEl.value = nextValue;
+
+    const cursorIndex = context.replaceStart + replacement.length;
+    inputEl.setSelectionRange(cursorIndex, cursorIndex);
+}
+
+function insertWidgetName(inputEl, inputText, context, selectedWidgetName) {
+    const before = inputText.slice(0, context.widgetStart);
+    const after = inputText.slice(context.widgetEnd);
+
+    let nextValue = before + selectedWidgetName + after;
+    let cursorIndex = context.widgetStart + selectedWidgetName.length;
+
+    if (!context.hasEquals) {
+        nextValue = nextValue.slice(0, cursorIndex) + "='" + nextValue.slice(cursorIndex);
+        cursorIndex += 2;
+    }
+
+    inputEl.value = nextValue;
+    inputEl.setSelectionRange(cursorIndex, cursorIndex);
+}
+
+function insertNodeId(inputEl, inputText, context, selectedNodeId) {
+    const before = inputText.slice(0, context.nodeStart);
+    const after = inputText.slice(context.nodeEnd);
+    const separator = context.hasColon ? '' : ':';
+    const nextValue = before + selectedNodeId + separator + after;
+    const cursorIndex = context.nodeStart + selectedNodeId.length + 1;
+
+    inputEl.value = nextValue;
+    inputEl.setSelectionRange(cursorIndex, cursorIndex);
+}
+
+function showAutocompleteOptions(inputEl, options, onSelect) {
+    if (options.length === 0) {
+        ttN_RemoveDropdown();
+        return;
+    }
+
+    ttN_CreateDropdown(inputEl, options, onSelect);
+}
+
+function tryValueCompletion(inputEl, inputText, cursorPosition, nodeWidgets) {
+    const valueCompletionContext = getValueCompletionContext(inputText, cursorPosition);
+    if (!valueCompletionContext) {
+        return false;
+    }
+
+    const widgetValues = getNodeWidgetValues(
+        nodeWidgets,
+        valueCompletionContext.nodeId,
+        valueCompletionContext.widgetName,
+        valueCompletionContext.lookupWidgetName,
+    );
+
+    const filteredValues = rankWidgetValues(widgetValues, valueCompletionContext.valueQuery);
+    showAutocompleteOptions(inputEl, filteredValues, (selectedOption) => {
+        insertWidgetValue(inputEl, inputEl.value, valueCompletionContext, selectedOption);
+    });
+    return true;
+}
+
+function tryWidgetCompletion(inputEl, inputText, cursorPosition, nodeWidgets) {
+    const widgetCompletionContext = getWidgetCompletionContext(inputText, cursorPosition);
+    if (!widgetCompletionContext) {
+        return false;
+    }
+
+    const widgetNames = getNodeWidgetNames(nodeWidgets, widgetCompletionContext.nodeId);
+    const filteredWidgetNames = rankAutocompleteEntries(widgetNames, widgetCompletionContext.widgetQuery);
+    showAutocompleteOptions(inputEl, filteredWidgetNames, (selectedWidgetName) => {
+        insertWidgetName(inputEl, inputEl.value, widgetCompletionContext, selectedWidgetName);
+    });
+    return true;
+}
+
+function tryNodeCompletion(inputEl, inputText, cursorPosition, nodeWidgets) {
+    const nodeCompletionContext = getNodeCompletionContext(inputText, cursorPosition);
+    if (!nodeCompletionContext) {
+        return false;
+    }
+
+    const nodeEntries = getNodeEntries(nodeWidgets);
+    const filteredNodeEntries = rankAutocompleteEntries(nodeEntries, nodeCompletionContext.nodeQuery, (nodeEntry) => nodeEntry.searchText);
+    const nodeIdByLabel = new Map(filteredNodeEntries.map((nodeEntry) => [nodeEntry.label, nodeEntry.nodeId]));
+    const nodeOptions = filteredNodeEntries.map((nodeEntry) => nodeEntry.label);
+
+    showAutocompleteOptions(inputEl, nodeOptions, (selectedNodeLabel) => {
+        const selectedNodeId = nodeIdByLabel.get(selectedNodeLabel);
+        if (!selectedNodeId) {
+            return;
+        }
+        insertNodeId(inputEl, inputEl.value, nodeCompletionContext, selectedNodeId);
+    });
+    return true;
 }
 
 function dropdownCreator(node) {
@@ -140,6 +446,18 @@ function dropdownCreator(node) {
                 const nodeWidgets = getNodesWidgetsDict(node, true);
                 const inputText = w.inputEl.value;
                 const cursorPosition = w.inputEl.selectionStart;
+
+                if (tryValueCompletion(w.inputEl, inputText, cursorPosition, nodeWidgets)) {
+                    return;
+                }
+
+                if (tryWidgetCompletion(w.inputEl, inputText, cursorPosition, nodeWidgets)) {
+                    return;
+                }
+
+                if (tryNodeCompletion(w.inputEl, inputText, cursorPosition, nodeWidgets)) {
+                    return;
+                }
 
                 let lines = inputText.split('\n');
                 if (lines.length === 0) return;

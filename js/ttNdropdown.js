@@ -30,6 +30,7 @@ class Dropdown {
         if (this.isDict) {
             this.buildNestedDropdown(this.options, this.dropdown);
         } else {
+            this.dropdown.classList.add('ttN-dropdown-scrollable');
             this.options.forEach((suggestion, index) => {
                 this.addListItem(suggestion, index, this.dropdown);
             });
@@ -64,6 +65,12 @@ class Dropdown {
                 const nestedDropdown = document.createElement('ul');
                 nestedDropdown.setAttribute('role', 'listbox');
                 nestedDropdown.classList.add('ttN-nested-dropdown');
+
+                const hasChildFolders = Object.values(item).some((child) => typeof child === 'object' && child !== null);
+                if (!hasChildFolders) {
+                    nestedDropdown.classList.add('ttN-dropdown-scrollable');
+                }
+
                 const parentListItem = document.createElement('li');
                 parentListItem.classList.add('folder');
                 parentListItem.textContent = key;
@@ -87,9 +94,10 @@ class Dropdown {
 
     addListItem(item, index, parentElement) {
         const listItem = document.createElement('li');
+        listItem.classList.add('item');
         listItem.setAttribute('role', 'option');
         listItem.textContent = item;
-        listItem.addEventListener('mouseover', (e) => this.onMouseOver(index));
+        listItem.addEventListener('mouseover', () => this.onMouseOver(index));
         listItem.addEventListener('mousedown', (e) => this.onMouseDown(item, e));
         parentElement.appendChild(listItem);
     }
@@ -106,6 +114,14 @@ class Dropdown {
         document.removeEventListener('click', this.onClickBound);
     }
 
+    closeDropdown() {
+        if (activeDropdown === this) {
+            activeDropdown = null;
+        }
+        this.removeEventListeners();
+        this.dropdown.remove();
+    }
+
     onMouseOver(index, parentElement=null) {
         if (parentElement) {
             this.focusedDropdown = parentElement;
@@ -114,16 +130,10 @@ class Dropdown {
         this.updateSelection();
     }
 
-    onMouseOut() {
-        this.selectedIndex = -1;
-        this.updateSelection();
-    }
-
     onMouseDown(suggestion, event, fullPath='') {
         event.preventDefault();
         this.onSelect(suggestion, fullPath);
-        this.dropdown.remove();
-        this.removeEventListeners();
+        this.closeDropdown();
     }
 
     onKeyDown(event) {
@@ -176,8 +186,7 @@ class Dropdown {
                 event.preventDefault();
                 if (selectedItem.classList.contains('item')) {
                     this.onSelect(items[this.selectedIndex].textContent);
-                    this.dropdown.remove();
-                    this.removeEventListeners();
+                    this.closeDropdown();
                 }
                 
                 const nestedDropdown = selectedItem.querySelector('.ttN-nested-dropdown');
@@ -189,25 +198,42 @@ class Dropdown {
             }
             
             else if (event.keyCode === escKeyCode) {
-                this.dropdown.remove();
-                this.removeEventListeners();
+                this.closeDropdown();
             }
         } 
     }
 
     onWheel(event) {
-        const top = parseInt(this.dropdown.style.top);
-        if (localStorage.getItem("Comfy.Settings.Comfy.InvertMenuScrolling")) {
-            this.dropdown.style.top = (top + (event.deltaY < 0 ? 10 : -10)) + "px";
-        } else {
-            this.dropdown.style.top = (top + (event.deltaY < 0 ? -10 : 10)) + "px";
+        event.preventDefault();
+        event.stopPropagation();
+
+        const invertScroll = !!localStorage.getItem("Comfy.Settings.Comfy.InvertMenuScrolling");
+        const delta = invertScroll ? -event.deltaY : event.deltaY;
+        const hoveredDropdown = event.target.closest('.ttN-dropdown, .ttN-nested-dropdown');
+        const scrollTarget = hoveredDropdown || this.focusedDropdown || this.dropdown;
+
+        if (scrollTarget.scrollHeight > scrollTarget.clientHeight) {
+            scrollTarget.scrollTop += delta;
+            return;
         }
+
+        const offsetStep = invertScroll
+            ? (event.deltaY < 0 ? 10 : -10)
+            : (event.deltaY < 0 ? -10 : 10);
+
+        if (scrollTarget !== this.dropdown && scrollTarget.classList.contains('ttN-nested-dropdown')) {
+            const nestedTop = parseInt(scrollTarget.style.top, 10) || 0;
+            scrollTarget.style.top = `${nestedTop + offsetStep}px`;
+            return;
+        }
+
+        const top = parseInt(this.dropdown.style.top, 10) || 0;
+        this.dropdown.style.top = `${top + offsetStep}px`;
     }
 
     onClick(event) {
         if (!this.dropdown.contains(event.target) && event.target !== this.inputEl) {
-            this.dropdown.remove();
-            this.removeEventListeners();
+            this.closeDropdown();
         }
     }
 
@@ -218,6 +244,7 @@ class Dropdown {
             Array.from(this.focusedDropdown.children).forEach((li, index) => {
                 if (index === this.selectedIndex) {
                     li.classList.add('selected');
+                    li.scrollIntoView({ block: 'nearest' });
                 } else {
                     li.classList.remove('selected');
                 }
@@ -228,9 +255,7 @@ class Dropdown {
 
 export function ttN_RemoveDropdown() {
     if (activeDropdown) {
-        activeDropdown.removeEventListeners();
-        activeDropdown.dropdown.remove();
-        activeDropdown = null;
+        activeDropdown.closeDropdown();
     }
 }
 

@@ -41,6 +41,44 @@
     border-radius: 0;
 }
 
+.ttN-dropdown.ttN-dropdown-scrollable {
+    max-height: min(48vh, 360px);
+    min-width: 220px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+
+.ttN-nested-dropdown.ttN-dropdown-scrollable {
+    max-height: min(48vh, 360px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+
+.ttN-dropdown.ttN-dropdown-scrollable::-webkit-scrollbar,
+.ttN-nested-dropdown.ttN-dropdown-scrollable::-webkit-scrollbar {
+    width: 10px;
+}
+
+.ttN-dropdown.ttN-dropdown-scrollable::-webkit-scrollbar-track,
+.ttN-nested-dropdown.ttN-dropdown-scrollable::-webkit-scrollbar-track {
+    background: #121212;
+}
+
+.ttN-dropdown.ttN-dropdown-scrollable::-webkit-scrollbar-thumb,
+.ttN-nested-dropdown.ttN-dropdown-scrollable::-webkit-scrollbar-thumb {
+    background: #4b4b4b;
+    border-radius: 8px;
+}
+
+.ttN-dropdown.ttN-dropdown-scrollable::-webkit-scrollbar-thumb:hover,
+.ttN-nested-dropdown.ttN-dropdown-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #646464;
+}
+
 /* Style for final items */
 .ttN-dropdown li.item, .ttN-nested-dropdown li.item {
     font-weight: normal;
