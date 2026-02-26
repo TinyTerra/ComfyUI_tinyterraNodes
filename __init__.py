@@ -132,7 +132,7 @@ if os.path.exists(web_extension_path):
 
 js_files = {
     "interface": "enable_interface",
-    "fullscreen": "enable_fullscreen",
+    "imgViewer": "enable_fullscreen",
     "embedAC": "enable_embed_autocomplete",
     "dynamicWidgets": "enable_dynamic_widgets",
 }

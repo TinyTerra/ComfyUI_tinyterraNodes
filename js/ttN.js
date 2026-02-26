@@ -1,6 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { tinyterraReloadNode, wait, rebootAPI, getConfig, convertToInput, hideWidget } from "./utils.js";
-import { openFullscreenApp, _setDefaultFullscreenNode } from "./ttNfullscreen.js";
+import { openFullscreenApp, openPopoutViewer, _setDefaultFullscreenNode } from "./ttNimgViewer.js";
 
 class TinyTerra extends EventTarget {
     constructor() {
@@ -564,15 +564,19 @@ class TinyTerra extends EventTarget {
     getTinyTerraNodeMenuItems(node) {
         return [
             {
-                content: "🌏 Fullscreen",
+                content: "🌏 Fullscreen Image Viewer",
                 callback: () => { openFullscreenApp(node) }
             },
+                        {
+                content: "🌏 Pop-Out Image Viewer",
+                callback: () => { openPopoutViewer(node) }
+            },
             {
-                content: "🌏 Set Default Fullscreen Node",
+                content: "🌏 Set Default Viewer Node",
                 callback: _setDefaultFullscreenNode
             },
             {
-                content: "🌏 Clear Default Fullscreen Node",
+                content: "🌏 Clear Default Viewer Node",
                 callback: function () {
                     sessionStorage.removeItem('Comfy.Settings.ttN.default_fullscreen_node');
                 }
