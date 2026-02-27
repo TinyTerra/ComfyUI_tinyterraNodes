@@ -4,7 +4,7 @@ let origProps = {};
 
 const findWidgetByName = (node, name) => node.widgets.find((w) => w.name === name);
 
-const doesInputLinkExist = (node, name) => node.inputs ? node.inputs.some((input) => input.link != null) : false;
+const doesInputLinkExist = (node, name) => node.inputs ? node.inputs.some(item => item.name === name && item.link != null) : false;
 
 function updateNodeHeight(node) {
 	node.setSize([node.size[0], node.computeSize()[1]]);
@@ -267,6 +267,33 @@ function widgetLogic(node, widget) {
                 toggleWidget(node, findWidgetByName(node, 'overwrite_existing'), true)
                 toggleWidget(node, findWidgetByName(node, 'file_type'), true)
             }
+			break;
+
+		case 'multi_input':
+			if (widget.value === 0) {
+				toggleWidget(node, findWidgetByName(node, 'p_1'), true)
+				toggleWidget(node, findWidgetByName(node, 'p_2'), true)
+				toggleWidget(node, findWidgetByName(node, 'p_3'), true)
+				toggleWidget(node, findWidgetByName(node, 'p_4'), true)
+				toggleWidget(node, findWidgetByName(node, 'p_5'), true)
+				toggleWidget(node, findWidgetByName(node, 'p_6'), true)
+				toggleWidget(node, findWidgetByName(node, 'p_7'), true)
+				toggleWidget(node, findWidgetByName(node, 'p_8'), true)
+				toggleWidget(node, findWidgetByName(node, 'p_9'), true)
+				toggleWidget(node, findWidgetByName(node, 'p_10'), true)
+			} else {
+				toggleWidget(node, findWidgetByName(node, 'p_1'), widget.value === 1)
+				toggleWidget(node, findWidgetByName(node, 'p_2'), widget.value === 2)
+				toggleWidget(node, findWidgetByName(node, 'p_3'), widget.value === 3)
+				toggleWidget(node, findWidgetByName(node, 'p_4'), widget.value === 4)
+				toggleWidget(node, findWidgetByName(node, 'p_5'), widget.value === 5)
+				toggleWidget(node, findWidgetByName(node, 'p_6'), widget.value === 6)
+				toggleWidget(node, findWidgetByName(node, 'p_7'), widget.value === 7)
+				toggleWidget(node, findWidgetByName(node, 'p_8'), widget.value === 8)
+				toggleWidget(node, findWidgetByName(node, 'p_9'), widget.value === 9)
+				toggleWidget(node, findWidgetByName(node, 'p_10'), widget.value === 10)
+			}
+			break;
             
 		case 'add_noise':
 			if (widget.value === "disable") {
@@ -491,7 +518,7 @@ function widgetLogic(node, widget) {
 	}
 }
 
-const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 
+const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 'multi_input', 
 						'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 
 						'refiner_lora1_name', 'refiner_lora2_name', 'refiner_steps', 'upscale_method', 
 						'image_output', 'text_output', 'add_noise', 
@@ -523,6 +550,7 @@ const getSetTitles = [
     "advPlot images",
     "advPlot string",
     "textOutput",
+	"multiText", 
 ];
 
 function getSetters(node) {
