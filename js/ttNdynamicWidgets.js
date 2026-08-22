@@ -4,29 +4,31 @@ let origProps = {};
 
 const findWidgetByName = (node, name) => node.widgets.find((w) => w.name === name);
 
-const doesInputLinkExist = (node, name) => node.inputs ? node.inputs.some((input) => input.link != null) : false;
+const doesInputLinkExist = (node, name) => node.inputs ? node.inputs.some(item => item.name === name && item.link != null) : false;
 
 function updateNodeHeight(node) {
 	node.setSize([node.size[0], node.computeSize()[1]]);
     app.canvas.dirty_canvas = true;
 }
 
-function toggleWidget(node, widget, show = false, suffix = "") {
+function toggleWidget(node, widget, show = false, suffix = "", keepSize = false) {
 	if (!widget || doesInputLinkExist(node, widget.name)) return;
 	if (!origProps[widget.name]) {
 		origProps[widget.name] = { origType: widget.type, origComputeSize: widget.computeSize, origComputedHeight: widget.computedHeight };	
 	}
-	const origSize = node.size;
 
 	widget.type = show ? origProps[widget.name].origType : "ttNhidden" + suffix;
 	widget.computeSize = show ? origProps[widget.name].origComputeSize : () => [0, -4];
 	widget.computedHeight = show ? origProps[widget.name].origComputedHeight : 0;
+	widget.hidden = !show;
 
 	widget.linkedWidgets?.forEach(w => toggleWidget(node, w, ":" + widget.name, show));	
 
-	const height = show ? Math.max(node.computeSize()[1], origSize[1]) : node.size[1];
-	node.setSize([node.size[0], height]);
-    app.canvas.dirty_canvas = true
+	if (!keepSize) {
+		const height = show ? Math.max(node.computeSize()[1], node.size[1]) : node.size[1];
+		node.setSize([node.size[0], height]);
+	}
+	app.canvas.dirty_canvas = true
 }
 
 function widgetLogic(node, widget) {
@@ -267,6 +269,14 @@ function widgetLogic(node, widget) {
                 toggleWidget(node, findWidgetByName(node, 'overwrite_existing'), true)
                 toggleWidget(node, findWidgetByName(node, 'file_type'), true)
             }
+			break;
+
+		case 'multi_input': {
+			for (let i = 1; i <= 10; i++) {
+				toggleWidget(node, findWidgetByName(node, 'p_' + i), widget.value === 0 || widget.value === i, "", true);
+			}
+			break;
+		}
             
 		case 'add_noise':
 			if (widget.value === "disable") {
@@ -491,7 +501,7 @@ function widgetLogic(node, widget) {
 	}
 }
 
-const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 
+const getSetWidgets = ['rescale_after_model', 'rescale', 'image_output', 'multi_input', 
 						'lora_name', 'lora1_name', 'lora2_name', 'lora3_name', 
 						'refiner_lora1_name', 'refiner_lora2_name', 'refiner_steps', 'upscale_method', 
 						'image_output', 'text_output', 'add_noise', 
@@ -523,6 +533,7 @@ const getSetTitles = [
     "advPlot images",
     "advPlot string",
     "textOutput",
+	"multiText", 
 ];
 
 function getSetters(node) {

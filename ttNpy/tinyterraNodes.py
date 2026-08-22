@@ -3155,6 +3155,127 @@ class ttN_text:
     def conmeow(text):
         return text,
 
+class ttN_multiText:
+    version = '1.0.0'
+    def __init__(self):
+        pass
+
+# "p_1": ("STRING", {"multiline": True, "dynamicPrompts": True, "placeholder": "Prompt Slot 1"}),
+# "index": ("INT", {"default": 1, "min": 1, "max": 8}),
+# "multi_input": (["1","2", "3", "4", "5", "6", "7", "8", "9", "10"], {"default": "1"}),
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+            "multi_input": ("INT", {"default": 1, "min": 0, "max": 10}),
+            "p_1": ("STRING", {"multiline": True, "dynamicPrompts": True, "placeholder": "Prompt Slot 1"}),
+            "p_2": ("STRING", {"multiline": True, "dynamicPrompts": True, "placeholder": "Prompt Slot 2"}),
+            "p_3": ("STRING", {"multiline": True, "dynamicPrompts": True, "placeholder": "Prompt Slot 3"}),
+            "p_4": ("STRING", {"multiline": True, "dynamicPrompts": True, "placeholder": "Prompt Slot 4"}),
+            "p_5": ("STRING", {"multiline": True, "dynamicPrompts": True, "placeholder": "Prompt Slot 5"}),
+            "p_6": ("STRING", {"multiline": True, "dynamicPrompts": True, "placeholder": "Prompt Slot 6"}),
+            "p_7": ("STRING", {"multiline": True, "dynamicPrompts": True, "placeholder": "Prompt Slot 7"}),
+            "p_8": ("STRING", {"multiline": True, "dynamicPrompts": True, "placeholder": "Prompt Slot 8"}),
+            "p_9": ("STRING", {"multiline": True, "dynamicPrompts": True, "placeholder": "Prompt Slot 9"}),
+            "p_10": ("STRING", {"multiline": True, "dynamicPrompts": True, "placeholder": "Prompt Slot 10"}),
+            },
+            "optional": {
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            },
+            "hidden": {"ttNnodeVersion": ttN_multiText.version},
+        }
+    
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("Prompt",)
+    FUNCTION = "conmeow"
+
+    CATEGORY = "🌏 tinyterra/text"
+
+    @staticmethod
+    def conmeow(multi_input, seed, p_1, p_2, p_3, p_4, p_5, p_6, p_7, p_8, p_9, p_10):
+        # Custom wildcards encapsuled in [], separated by |, disabled option with #
+        # [apple|pear|#banana] - only apple and pear will be valid options
+        def resolve_wildcards(text):
+            def resolve_block(s):
+                result = []
+                i = 0
+                while i < len(s):
+                    if s[i] == "[":
+                        # Find matching closing bracket using stack depth
+                        depth = 1
+                        j = i + 1
+                        while j < len(s) and depth > 0:
+                            if s[j] == "[":
+                                depth += 1
+                            elif s[j] == "]":
+                                depth -= 1
+                            j += 1
+                        if depth != 0:
+                            raise ValueError("Unmatched '[' in input")
+                        inner = s[i+1:j-1]
+                        resolved = choose_option(inner)
+                        result.append(resolved)
+                        i = j
+                    else:
+                        result.append(s[i])
+                        i += 1
+                return "".join(result)
+
+            def choose_option(content):
+                options = []
+                current = []
+                depth = 0
+                for char in content:
+                    if char == "[":
+                        depth += 1
+                        current.append(char)
+                    elif char == "]":
+                        depth -= 1
+                        current.append(char)
+                    elif char == "|" and depth == 0:
+                        option = "".join(current).strip()
+                        if option and not option.startswith("#"):
+                            options.append(option)
+                        current = []
+                    else:
+                        current.append(char)
+                # Add last option
+                option = "".join(current).strip()
+                if option and not option.startswith("#"):
+                    options.append(option)
+                if not options:
+                    return ""
+                chosen = random.choice(options)
+                # Recursively resolve nested content
+                return resolve_block(chosen)
+            return resolve_block(text)
+
+        prompts = [
+            p_1,
+            p_2,
+            p_3,
+            p_4,
+            p_5,
+            p_6,
+            p_7,
+            p_8,
+            p_9,
+            p_10
+        ]
+        random.seed(seed)
+        if multi_input == 0:
+            prompt = ""
+            i = 0
+            while prompt == "":
+                k = random.randint(0,9)
+                random.seed(seed + i)
+                prompt = prompts[k]
+                i+= 1
+                if(prompt != "" or i >= 20):
+                    return (resolve_wildcards(prompt,),)
+        else:
+            return (resolve_wildcards(prompts[multi_input - 1],),)
+
 class ttN_textDebug:
     version = '1.0.'
     def __init__(self):
@@ -3707,6 +3828,7 @@ TTN_VERSIONS = {
     "multiModelMerge": ttN_multiModelMerge.version,
     "debugInput": ttN_debugInput.version,
     "text": ttN_text.version,
+    "multiText": ttN_multiText.version,
     "textDebug": ttN_textDebug.version,
     "concat": ttN_concat.version,
     "text3BOX_3WAYconcat": ttN_text3BOX_3WAYconcat.version,    
@@ -3750,6 +3872,7 @@ NODE_CLASS_MAPPINGS = {
 
     #ttN/text
     "ttN text": ttN_text,
+    "ttN multiText": ttN_multiText,
     "ttN textDebug": ttN_textDebug,
     "ttN concat": ttN_concat,
     "ttN text3BOX_3WAYconcat": ttN_text3BOX_3WAYconcat,    
@@ -3799,6 +3922,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 
     #ttN/text
     "ttN text": "text",
+    "ttN multiText": "multiText",
     "ttN textDebug": "textDebug",
     "ttN concat": "textConcat",
     "ttN text7BOX_concat": "7x TXT Loader Concat",
