@@ -11,22 +11,24 @@ function updateNodeHeight(node) {
     app.canvas.dirty_canvas = true;
 }
 
-function toggleWidget(node, widget, show = false, suffix = "") {
+function toggleWidget(node, widget, show = false, suffix = "", keepSize = false) {
 	if (!widget || doesInputLinkExist(node, widget.name)) return;
 	if (!origProps[widget.name]) {
 		origProps[widget.name] = { origType: widget.type, origComputeSize: widget.computeSize, origComputedHeight: widget.computedHeight };	
 	}
-	const origSize = node.size;
 
 	widget.type = show ? origProps[widget.name].origType : "ttNhidden" + suffix;
 	widget.computeSize = show ? origProps[widget.name].origComputeSize : () => [0, -4];
 	widget.computedHeight = show ? origProps[widget.name].origComputedHeight : 0;
+	widget.hidden = !show;
 
 	widget.linkedWidgets?.forEach(w => toggleWidget(node, w, ":" + widget.name, show));	
 
-	const height = show ? Math.max(node.computeSize()[1], origSize[1]) : node.size[1];
-	node.setSize([node.size[0], height]);
-    app.canvas.dirty_canvas = true
+	if (!keepSize) {
+		const height = show ? Math.max(node.computeSize()[1], node.size[1]) : node.size[1];
+		node.setSize([node.size[0], height]);
+	}
+	app.canvas.dirty_canvas = true
 }
 
 function widgetLogic(node, widget) {
@@ -269,31 +271,12 @@ function widgetLogic(node, widget) {
             }
 			break;
 
-		case 'multi_input':
-			if (widget.value === 0) {
-				toggleWidget(node, findWidgetByName(node, 'p_1'), true)
-				toggleWidget(node, findWidgetByName(node, 'p_2'), true)
-				toggleWidget(node, findWidgetByName(node, 'p_3'), true)
-				toggleWidget(node, findWidgetByName(node, 'p_4'), true)
-				toggleWidget(node, findWidgetByName(node, 'p_5'), true)
-				toggleWidget(node, findWidgetByName(node, 'p_6'), true)
-				toggleWidget(node, findWidgetByName(node, 'p_7'), true)
-				toggleWidget(node, findWidgetByName(node, 'p_8'), true)
-				toggleWidget(node, findWidgetByName(node, 'p_9'), true)
-				toggleWidget(node, findWidgetByName(node, 'p_10'), true)
-			} else {
-				toggleWidget(node, findWidgetByName(node, 'p_1'), widget.value === 1)
-				toggleWidget(node, findWidgetByName(node, 'p_2'), widget.value === 2)
-				toggleWidget(node, findWidgetByName(node, 'p_3'), widget.value === 3)
-				toggleWidget(node, findWidgetByName(node, 'p_4'), widget.value === 4)
-				toggleWidget(node, findWidgetByName(node, 'p_5'), widget.value === 5)
-				toggleWidget(node, findWidgetByName(node, 'p_6'), widget.value === 6)
-				toggleWidget(node, findWidgetByName(node, 'p_7'), widget.value === 7)
-				toggleWidget(node, findWidgetByName(node, 'p_8'), widget.value === 8)
-				toggleWidget(node, findWidgetByName(node, 'p_9'), widget.value === 9)
-				toggleWidget(node, findWidgetByName(node, 'p_10'), widget.value === 10)
+		case 'multi_input': {
+			for (let i = 1; i <= 10; i++) {
+				toggleWidget(node, findWidgetByName(node, 'p_' + i), widget.value === 0 || widget.value === i, "", true);
 			}
 			break;
+		}
             
 		case 'add_noise':
 			if (widget.value === "disable") {
